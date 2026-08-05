@@ -652,17 +652,33 @@
       position: sticky; top: 0; z-index: 10;
       background: #fff;
       display: flex; justify-content: space-between; align-items: center;
-      padding: 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid rgba(0,0,0,.08);
+      padding-top: max(12px, env(safe-area-inset-top));
     }
     .pd-header-title {
       font-size: 17px; font-weight: 700;
       flex: 1; text-align: center;
     }
     .pd-back {
-      background: none; border: none; font-size: 22px;
-      color: #52525B; cursor: pointer; padding: 4px 8px;
+      background: rgba(75, 63, 227, .08); border: none; font-size: 20px;
+      color: #4B3FE3; cursor: pointer;
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
+    .pd-back:active { background: rgba(75, 63, 227, .18); }
+    .pd-back-bottom {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      padding: 20px 16px; padding-bottom: max(20px, env(safe-area-inset-bottom));
+      background: #fff; border-top: 1px solid rgba(0,0,0,.06);
+    }
+    .pd-back-bottom button {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: #4B3FE3; color: #fff; font-size: 16px; font-weight: 600;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .pd-back-bottom button:active { background: #3a32b8; }
     .pd-body {
       padding: 16px;
       display: flex; flex-direction: column; gap: 20px;
@@ -2618,6 +2634,9 @@
       <div style="width:38px;"></div>
     </div>
     <div class="pd-body" id="pdBody"></div>
+    <div class="pd-back-bottom">
+      <button type="button" data-pd-back>&larr; 返回项目列表</button>
+    </div>
   </div>
 </div>
 
