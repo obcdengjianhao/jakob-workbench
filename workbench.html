@@ -121,114 +121,6 @@
   .card:hover { box-shadow: var(--shadow-hover); }
   [data-jump-tab] { cursor: pointer; }
 
-  .workspace-card {
-    margin: 0 0 20px;
-    border: 1px solid rgba(75,63,227,0.12);
-    background: linear-gradient(135deg, #fff 0%, #f8f8ff 100%);
-  }
-  .workspace-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 14px;
-  }
-  .workspace-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--primary-text);
-  }
-  .workspace-desc {
-    margin-top: 4px;
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-  .workspace-status {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(75,63,227,0.08);
-    color: var(--primary);
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .workspace-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .workspace-btn {
-    border: 1px solid rgba(75,63,227,0.22);
-    border-radius: 10px;
-    padding: 8px 12px;
-    background: #fff;
-    color: var(--primary);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .workspace-btn.primary {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-  }
-  .workspace-btn:hover { filter: brightness(.98); }
-  .workspace-folders {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .workspace-folder-btn {
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    background: #fff;
-    text-align: left;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .workspace-folder-btn strong {
-    display: block;
-    color: var(--text);
-    font-size: 14px;
-    margin-bottom: 3px;
-  }
-  .workspace-folder-btn span {
-    color: var(--text-secondary);
-    font-size: 12px;
-  }
-  .workspace-folder-list {
-    display: none;
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #fff;
-  }
-  .workspace-folder-list.show { display: block; }
-  .workspace-folder-list-title {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-  .workspace-file-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-  }
-  .workspace-file-row:last-child { border-bottom: none; }
-  .workspace-file-row a { color: var(--primary); text-decoration: none; word-break: break-all; }
-
   .card-title {
     font-size: 16px;
     font-weight: 600;
@@ -1596,27 +1488,6 @@
     </div>
   </div>
 
-  <!-- 工作台地址 -->
-  <div class="card workspace-card">
-    <div class="workspace-head">
-      <div>
-        <div class="workspace-title">工作台地址</div>
-        <div class="workspace-desc">选择一个本机文件夹后，系统会在该地址下创建并更新 Jakob的工作台 文件夹，附件按“零碎事项管理 / 项目 / 配方”和分类自动存放。</div>
-      </div>
-      <div class="workspace-status" id="workspaceStatus">未选择地址</div>
-    </div>
-    <div class="workspace-actions">
-      <button class="workspace-btn primary" type="button" data-workspace-pick>选择工作台地址</button>
-      <button class="workspace-btn" type="button" data-workspace-sync>同步现有附件</button>
-    </div>
-    <div class="workspace-folders">
-      <button class="workspace-folder-btn" type="button" data-workspace-open="task"><strong>零碎事项管理附件</strong><span>按分类查看事项附件</span></button>
-      <button class="workspace-folder-btn" type="button" data-workspace-open="project"><strong>项目附件</strong><span>按分类查看项目附件</span></button>
-      <button class="workspace-folder-btn" type="button" data-workspace-open="formula"><strong>配方附件</strong><span>预留配方附件目录</span></button>
-    </div>
-    <div class="workspace-folder-list" id="workspaceFolderList"></div>
-  </div>
-
 </section>
 
 <!-- ==================== 零碎事项管理 ==================== -->
@@ -2250,69 +2121,6 @@
 
   const attachmentCategories = ['未分类', '文档', '图片', '表格', '报告', '其他'];
 
-  const workspaceDbName = 'jacobWorkbenchFolderDb';
-  const workspaceStoreName = 'handles';
-  const workspaceFolderName = 'Jakob的工作台';
-  const workspaceScopeNames = { task: '零碎事项管理', project: '项目', formula: '配方' };
-
-  function isWorkspaceApiSupported() {
-    return 'showDirectoryPicker' in window && 'indexedDB' in window;
-  }
-
-  function openWorkspaceDb() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(workspaceDbName, 1);
-      request.onupgradeneeded = () => request.result.createObjectStore(workspaceStoreName);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async function saveWorkspaceRootHandle(handle) {
-    const db = await openWorkspaceDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(workspaceStoreName, 'readwrite');
-      tx.objectStore(workspaceStoreName).put(handle, 'root');
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  async function getWorkspaceRootHandle() {
-    if (!isWorkspaceApiSupported()) return null;
-    const db = await openWorkspaceDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction(workspaceStoreName, 'readonly');
-      const request = tx.objectStore(workspaceStoreName).get('root');
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => resolve(null);
-    });
-  }
-
-  async function verifyWorkspacePermission(handle, write = true) {
-    if (!handle) return false;
-    const options = { mode: write ? 'readwrite' : 'read' };
-    if ((await handle.queryPermission(options)) === 'granted') return true;
-    return (await handle.requestPermission(options)) === 'granted';
-  }
-
-  async function getWorkspaceBaseHandle(create = true) {
-    const root = await getWorkspaceRootHandle();
-    if (!root) return null;
-    const ok = await verifyWorkspacePermission(root, true);
-    if (!ok) return null;
-    return root.getDirectoryHandle(workspaceFolderName, { create });
-  }
-
-  async function ensureWorkspaceFolders() {
-    const base = await getWorkspaceBaseHandle(true);
-    if (!base) return null;
-    for (const scopeName of Object.values(workspaceScopeNames)) {
-      await base.getDirectoryHandle(scopeName, { create: true });
-    }
-    return base;
-  }
-
   function dataUrlToBlob(dataUrl) {
     const [meta, raw] = String(dataUrl || '').split(',');
     const mime = (meta.match(/data:(.*?);/) || [])[1] || 'application/octet-stream';
@@ -2326,214 +2134,27 @@
     return String(name || '附件').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || '附件';
   }
 
-  async function copyFileToWorkspace(scope, ownerName, fileObj, category) {
-    const base = await ensureWorkspaceFolders();
-    if (!base || !fileObj) return null;
-    const scopeName = workspaceScopeNames[scope] || workspaceScopeNames.project;
-    const cat = attachmentCategories.includes(category) ? category : '未分类';
-    const scopeDir = await base.getDirectoryHandle(scopeName, { create: true });
-    const ownerDir = await scopeDir.getDirectoryHandle(safeFileName(ownerName || '未命名'), { create: true });
-    const categoryDir = await ownerDir.getDirectoryHandle(cat, { create: true });
-    const finalName = safeFileName(fileObj.name);
-    const fileHandle = await categoryDir.getFileHandle(finalName, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(fileObj);
-    await writable.close();
-    return {
-      name: fileObj.name,
-      type: fileObj.type || '',
-      size: fileObj.size || 0,
-      path: `${scopeName}/${safeFileName(ownerName || '未命名')}/${cat}/${finalName}`,
-      uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
-      category: cat
-    };
-  }
-
-  async function moveAttachmentFile(oldPath, newPath) {
-    if (!oldPath || !newPath || oldPath === newPath) return;
-    try {
-      const file = await readLocalFile(oldPath);
-      if (!file) return;
-      const parts = newPath.split('/');
-      const base = await getWorkspaceBaseHandle(true);
-      let dir = base;
-      for (let i = 0; i < parts.length - 1; i++) {
-        dir = await dir.getDirectoryHandle(parts[i], { create: true });
-      }
-      const newHandle = await dir.getFileHandle(parts[parts.length - 1], { create: true });
-      const writable = await newHandle.createWritable();
-      await writable.write(file);
-      await writable.close();
-      const oldParts = oldPath.split('/');
-      let oldDir = base;
-      for (let i = 0; i < oldParts.length - 1; i++) {
-        oldDir = await oldDir.getDirectoryHandle(oldParts[i]);
-      }
-      await oldDir.removeEntry(oldParts[oldParts.length - 1]);
-    } catch (e) {
-      console.error('移动附件失败', e);
-    }
-  }
-
   function getAttachmentOwnerName(ctx) {
     if (!ctx) return '';
     if (ctx.scope === 'task') return desktopTasks[ctx.index]?.title || ctx.name || '事项';
     return ctx.name || ctx.cell?.closest('tr')?.querySelector('td')?.textContent.trim() || '项目';
   }
 
-  async function saveAttachmentFilesToWorkspace(ctx, files) {
-    if (!ctx || !files?.length) return;
-    const root = await getWorkspaceRootHandle();
-    if (!root) return;
-    const ownerName = getAttachmentOwnerName(ctx);
-    for (const file of normalizeAttachments(files)) {
-      if (file.dataUrl && !file.path) {
-        const blob = dataUrlToBlob(file.dataUrl);
-        const fileObj = new File([blob], file.name, { type: file.type });
-        const meta = await copyFileToWorkspace(ctx.scope, ownerName, fileObj, file.category);
-        if (meta) { file.path = meta.path; delete file.dataUrl; }
-      }
-    }
-    updateWorkspaceStatus();
-  }
-
-  async function syncAllAttachmentsToWorkspace() {
-    const root = await getWorkspaceRootHandle();
-    if (!root) {
-      alert('请先选择工作台地址。');
-      return;
-    }
-    await ensureWorkspaceFolders();
-    for (const task of desktopTasks) {
-      for (const file of task.attachments || []) {
-        if (file.dataUrl && !file.path) {
-          const blob = dataUrlToBlob(file.dataUrl);
-          const fileObj = new File([blob], file.name, { type: file.type });
-          const meta = await copyFileToWorkspace('task', task.title, fileObj, file.category || '未分类');
-          if (meta) { file.path = meta.path; delete file.dataUrl; }
-        }
-      }
-    }
-    for (const project of getProjectRows()) {
-      for (const file of project.attachments || []) {
-        if (file.dataUrl && !file.path) {
-          const blob = dataUrlToBlob(file.dataUrl);
-          const fileObj = new File([blob], file.name, { type: file.type });
-          const meta = await copyFileToWorkspace('project', project.name, fileObj, file.category || '未分类');
-          if (meta) { file.path = meta.path; delete file.dataUrl; }
-        }
-      }
-    }
-    saveDesktopState();
-    updateWorkspaceStatus('已同步现有附件');
-  }
-
-  async function chooseWorkspaceRoot() {
-    if (!isWorkspaceApiSupported()) {
-      alert('当前浏览器不支持直接选择并写入本机文件夹。请使用最新版 Chrome 或 Edge 打开工作台。');
-      return;
-    }
-    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-    await saveWorkspaceRootHandle(handle);
-    await ensureWorkspaceFolders();
-    updateWorkspaceStatus(`已选择：${handle.name}`);
-  }
-
-  async function updateWorkspaceStatus(text) {
-    const el = document.getElementById('workspaceStatus');
-    if (!el) return;
-    if (text) {
-      el.textContent = text;
-      return;
-    }
-    const handle = await getWorkspaceRootHandle();
-    el.textContent = handle ? `已选择：${handle.name}` : '未选择地址';
-  }
-
-  async function listWorkspaceFolder(scope) {
-    const box = document.getElementById('workspaceFolderList');
-    if (!box) return;
-    const base = await getWorkspaceBaseHandle(false);
-    if (!base) {
-      box.classList.add('show');
-      box.innerHTML = '<div class="workspace-folder-list-title">请先选择工作台地址</div>';
-      return;
-    }
-    const scopeName = workspaceScopeNames[scope] || workspaceScopeNames.project;
-    const scopeDir = await base.getDirectoryHandle(scopeName, { create: true });
-    const rows = [];
-    for await (const [ownerName, ownerHandle] of scopeDir.entries()) {
-      if (ownerHandle.kind !== 'directory') continue;
-      let ownerHasFile = false;
-      for await (const [catName, catHandle] of ownerHandle.entries()) {
-        if (catHandle.kind !== 'directory') continue;
-        let catHasFile = false;
-        for await (const [fileName, fileHandle] of catHandle.entries()) {
-          if (fileHandle.kind !== 'file') continue;
-          ownerHasFile = true;
-          catHasFile = true;
-          const file = await fileHandle.getFile();
-          const url = URL.createObjectURL(file);
-          rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / ${escapeHtml(catName)} / <a href="${url}" target="_blank">${escapeHtml(fileName)}</a></span><span>${formatFileSize(file.size) || ''}</span></div>`);
-        }
-        if (!catHasFile) rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / ${escapeHtml(catName)} / 暂无文件</span><span></span></div>`);
-      }
-      if (!ownerHasFile) rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / 暂无文件</span><span></span></div>`);
-    }
-    box.classList.add('show');
-    box.innerHTML = `<div class="workspace-folder-list-title">${escapeHtml(scopeName)} 文件夹</div>${rows.join('') || '<div class="workspace-file-row"><span>暂无文件</span><span></span></div>'}`;
-  }
-
-  function setupWorkspaceFolderModule() {
-    updateWorkspaceStatus();
-    document.addEventListener('click', event => {
-      if (event.target.matches('[data-workspace-pick]')) chooseWorkspaceRoot();
-      if (event.target.matches('[data-workspace-sync]')) syncAllAttachmentsToWorkspace();
-      if (event.target.matches('[data-workspace-open]')) listWorkspaceFolder(event.target.dataset.workspaceOpen);
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
+  async function saveAttachmentFilesToWorkspace() {}
+  async function moveAttachmentFile() {}
+  async function getLocalFileUrl() { return ''; }
+  async function downloadLocalFile() {}
+
   let attachModalContext = null;
-
-  const attachmentBlobCache = new Map();
-
-  async function readLocalFile(path) {
-    if (!path) return null;
-    const parts = path.split('/');
-    if (parts.length < 2) return null;
-    const base = await getWorkspaceBaseHandle(false);
-    if (!base) return null;
-    let dir = base;
-    for (let i = 0; i < parts.length - 1; i++) {
-      dir = await dir.getDirectoryHandle(parts[i], { create: false });
-    }
-    const fileHandle = await dir.getFileHandle(parts[parts.length - 1]);
-    return await fileHandle.getFile();
-  }
-
-  async function getLocalFileUrl(path) {
-    if (!path) return '';
-    if (attachmentBlobCache.has(path)) return attachmentBlobCache.get(path);
-    try {
-      const file = await readLocalFile(path);
-      if (!file) return '';
-      const url = URL.createObjectURL(file);
-      attachmentBlobCache.set(path, url);
-      return url;
-    } catch {
-      return '';
-    }
-  }
-
-  async function downloadLocalFile(path, name) {
-    const url = await getLocalFileUrl(path);
-    if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name || '附件';
-    a.target = '_blank';
-    a.click();
-  }
 
   function normalizeAttachments(attachments) {
     return Array.isArray(attachments) ? attachments.filter(file => file && file.name && (file.path || file.dataUrl)).map(file => {
@@ -2571,15 +2192,18 @@
 
   async function copyFilesToWorkspace(ctx, rawFiles) {
     if (!ctx || !rawFiles?.length) return [];
-    const root = await getWorkspaceRootHandle();
-    if (!root) { alert('请先选择工作台地址。'); return []; }
-    const ownerName = getAttachmentOwnerName(ctx);
     const results = [];
     for (const file of Array.from(rawFiles)) {
-      const meta = await copyFileToWorkspace(ctx.scope, ownerName, file, '未分类');
-      if (meta) results.push(meta);
+      const dataUrl = await fileToDataUrl(file);
+      results.push({
+        name: file.name,
+        type: file.type || '',
+        size: file.size || 0,
+        dataUrl,
+        uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+        category: '未分类'
+      });
     }
-    updateWorkspaceStatus();
     return results;
   }
 
@@ -2625,7 +2249,7 @@
   function renderAttachmentPreview(file, index) {
     if (!file) return '';
     const t = (file.type || '').toLowerCase();
-    const cachedUrl = file.dataUrl || attachmentBlobCache.get(file.path) || '';
+    const cachedUrl = file.dataUrl || '';
     const url = escapeHtml(cachedUrl);
     let body = '';
     if (!cachedUrl) {
@@ -4051,7 +3675,6 @@
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
-    setupWorkspaceFolderModule();
 
     document.addEventListener('click', (event) => {
       if (event.target.matches('#addTaskBtn')) {
