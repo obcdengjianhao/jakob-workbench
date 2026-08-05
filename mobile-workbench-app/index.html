@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4B3FE3">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Jakob的工作台">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Jakob的工作台</title>
+  <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Jakob的工作台&quot;,&quot;short_name&quot;:&quot;Jakob工作台&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#f5f6fa&quot;,&quot;theme_color&quot;:&quot;#4B3FE3&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234B3FE3'/%3E%3Ccircle cx='156' cy='154' r='34' fill='%23FFFFFF' opacity='.95'/%3E%3Cpath d='M256 116c58 0 105 47 105 105 0 76-105 175-105 175S151 297 151 221c0-58 47-105 105-105Z' fill='%23FFFFFF' opacity='.92'/%3E%3Ccircle cx='256' cy='221' r='42' fill='%234B3FE3'/%3E%3Cpath d='M172 358h168c16 0 29 13 29 29s-13 29-29 29H172c-16 0-29-13-29-29s13-29 29-29Z' fill='%23FFFFFF' opacity='.92'/%3E%3Cpath d='M357 127l32 32 49-59' fill='none' stroke='%23FFFFFF' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any maskable&quot;}]}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234B3FE3'/%3E%3Ccircle cx='156' cy='154' r='34' fill='%23FFFFFF' opacity='.95'/%3E%3Cpath d='M256 116c58 0 105 47 105 105 0 76-105 175-105 175S151 297 151 221c0-58 47-105 105-105Z' fill='%23FFFFFF' opacity='.92'/%3E%3Ccircle cx='256' cy='221' r='42' fill='%234B3FE3'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%234B3FE3'/%3E%3Ccircle cx='156' cy='154' r='34' fill='%23FFFFFF' opacity='.95'/%3E%3Cpath d='M256 116c58 0 105 47 105 105 0 76-105 175-105 175S151 297 151 221c0-58 47-105 105-105Z' fill='%23FFFFFF' opacity='.92'/%3E%3Ccircle cx='256' cy='221' r='42' fill='%234B3FE3'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #171717;
+      --muted: #6b7280;
+      --border: rgba(15, 23, 42, .08);
+      --primary: #4B3FE3;
+      --primary-soft: #f0efff;
+      --success: #1ca877;
+      --warning: #d98a00;
+      --danger: #d9473f;
+      --info: #1476d4;
+      --shadow: 0 8px 24px rgba(15, 23, 42, .08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 520px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: max(18px, env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .kicker {
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    h1 {
+      margin: 4px 0 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .date-pill {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: rise .18s ease-out; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric, .card, .project-card, .formula-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      padding: 16px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .metric .note {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .card {
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 750;
+    }
+
+    .muted { color: var(--muted); }
+
+    .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item:last-child { border-bottom: none; padding-bottom: 0; }
+    .item:first-of-type { padding-top: 0; }
+
+    .check {
+      width: 22px;
+      height: 22px;
+      border: 2px solid rgba(75, 63, 227, .25);
+      border-radius: 7px;
+      margin-top: 1px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .item.done .check {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .item.done .check::after { content: "✓"; font-size: 13px; font-weight: 800; }
+    .item.done .title { text-decoration: line-through; color: var(--muted); }
+
+    .title {
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.45;
+    }
+
+    .meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .tag.normal { background: rgba(75, 63, 227, .1); color: var(--primary); }
+    .tag.done { background: rgba(28, 168, 119, .1); color: var(--success); }
+    .tag.warn { background: rgba(217, 138, 0, .12); color: var(--warning); }
+    .tag.urgent { background: rgba(217, 71, 63, .12); color: var(--danger); }
+
+    .attach-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border: 1px solid rgba(75, 63, 227, .22);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .attach-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .attach-badge.empty { background: rgba(75, 63, 227, .18); color: var(--primary); }
+
+    .attach-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .attach-overlay.show { display: flex; }
+
+    .attach-modal {
+      width: 100%;
+      max-width: 520px;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -8px 40px rgba(15, 23, 42, .2);
+      overflow: hidden;
+      animation: slideUp .2s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .attach-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .attach-modal-title { font-size: 16px; font-weight: 700; }
+
+    .attach-modal-close {
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    .attach-modal-body { padding: 14px 16px 20px; max-height: 60vh; overflow-y: auto; }
+
+    .attach-upload-zone {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px;
+      border: 2px dashed rgba(75, 63, 227, .25);
+      border-radius: 12px;
+      background: rgba(75, 63, 227, .03);
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .attach-upload-zone input { display: none; }
+    .attach-upload-icon { font-size: 22px; }
+    .attach-upload-text { font-size: 13px; color: var(--muted); }
+    .attach-upload-text strong { color: var(--primary); }
+
+    .attach-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .attach-filter-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .attach-filter-select {
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .attach-file-list { display: grid; gap: 8px; }
+
+    .attach-file-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+
+    .attach-file-icon {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      background: rgba(75, 63, 227, .08);
+    }
+
+    .attach-file-info { flex: 1; min-width: 0; }
+
+    .attach-file-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+
+    .attach-file-name {
+      font-size: 13px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .attach-file-name-input {
+      flex: 1;
+      padding: 4px 6px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .attach-file-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+
+    .attach-file-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .attach-cat-select {
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      background: #fff;
+    }
+
+    .attach-mini-btn {
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+      color: var(--text);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .attach-mini-btn.danger { color: var(--danger); border-color: rgba(217, 71, 63, .2); }
+    .attach-mini-btn.primary { color: var(--primary); border-color: rgba(75, 63, 227, .2); }
+
+    .attach-file-download {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .attach-preview {
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafbfc;
+      overflow: hidden;
+    }
+
+    .attach-preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .attach-preview-title {
+      font-size: 12px;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .attach-preview-body {
+      padding: 10px;
+      max-height: 42vh;
+      overflow: auto;
+    }
+
+    .attach-preview-body img,
+    .attach-preview-body video {
+      display: block;
+      max-width: 100%;
+      max-height: 38vh;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .attach-preview-body audio { width: 100%; }
+
+    .attach-preview-frame {
+      width: 100%;
+      height: 38vh;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .attach-preview-object {
+      width: 100%;
+      height: 38vh;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      display: block;
+    }
+
+    .attach-preview-fallback {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .attach-preview-text {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .attach-empty-hint {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 13px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: var(--card);
+      color: var(--primary);
+      border: 1px solid rgba(75, 63, 227, .22);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    .field:focus {
+      border-color: rgba(75, 63, 227, .5);
+      box-shadow: 0 0 0 3px rgba(75, 63, 227, .12);
+    }
+
+    .project-card {
+      padding: 14px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .project-card.risk { border-left-color: var(--danger); }
+    .project-card.pause { border-left-color: var(--warning); }
+    .project-card.complete { border-left-color: var(--success); }
+
+    .pd-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,.5);
+      display: none;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pd-overlay.show { display: block; }
+    .pd-page {
+      background: #fff;
+      min-height: 100vh;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+    .pd-header {
+      position: sticky; top: 0; z-index: 10;
+      background: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+    .pd-header-title {
+      font-size: 17px; font-weight: 700;
+      flex: 1; text-align: center;
+    }
+    .pd-back {
+      background: rgba(75, 63, 227, .08); border: none; font-size: 20px;
+      color: #4B3FE3; cursor: pointer;
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pd-back:active { background: rgba(75, 63, 227, .18); }
+    .pd-back-bottom {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      padding: 20px 16px; padding-bottom: max(20px, env(safe-area-inset-bottom));
+      background: #fff; border-top: 1px solid rgba(0,0,0,.06);
+    }
+    .pd-back-bottom button {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: #4B3FE3; color: #fff; font-size: 16px; font-weight: 600;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .pd-back-bottom button:active { background: #3a32b8; }
+    .pd-body {
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .pd-section { display: flex; flex-direction: column; gap: 8px; }
+    .pd-section-title {
+      font-size: 14px; font-weight: 600; color: #52525B;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pd-section-title::before {
+      content: ''; width: 3px; height: 14px;
+      background: #4B3FE3; border-radius: 2px;
+    }
+    .pd-field {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,.08); border-radius: 8px;
+      font-size: 14px; background: #f5f6fa;
+      resize: vertical; min-height: 40px;
+      font-family: inherit; line-height: 1.6;
+    }
+    .pd-field:focus { outline: none; border-color: #4B3FE3; background: #fff; }
+    .pd-select {
+      padding: 8px 12px; border: 1px solid rgba(0,0,0,.08);
+      border-radius: 8px; font-size: 14px; background: #f5f6fa;
+    }
+    .pd-info-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .pd-info-item { display: flex; flex-direction: column; gap: 4px; }
+    .pd-info-label { font-size: 12px; color: #52525B; }
+    .pd-phase-row {
+      display: flex; gap: 4px; overflow-x: auto;
+      padding: 8px 0;
+    }
+    .pd-phase-step {
+      flex-shrink: 0; min-width: 80px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .pd-phase-dot {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      border: 2px solid rgba(0,0,0,.1); background: #f5f6fa; color: #52525B;
+    }
+    .pd-phase-step.done .pd-phase-dot { background: #1DC981; border-color: #1DC981; color: #fff; }
+    .pd-phase-step.current .pd-phase-dot { background: #4B3FE3; border-color: #4B3FE3; color: #fff; }
+    .pd-phase-label { font-size: 10px; color: #52525B; text-align: center; line-height: 1.3; }
+    .pd-phase-step.current .pd-phase-label { color: #4B3FE3; font-weight: 600; }
+    .pd-progress-entry {
+      display: flex; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    .pd-progress-date { font-size: 12px; font-weight: 600; color: #4B3FE3; min-width: 60px; }
+    .pd-progress-content { flex: 1; font-size: 13px; line-height: 1.5; }
+    .pd-progress-remark { font-size: 11px; color: #52525B; margin-top: 3px; }
+    .pd-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .project-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .project-name {
+      font-size: 15px;
+      font-weight: 780;
+      line-height: 1.35;
+    }
+
+    .project-selects {
+      display: grid;
+      grid-template-columns: 88px 1fr 86px;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .progress {
+      display: grid;
+      grid-template-columns: 1fr 38px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e9ecf4;
+    }
+
+    .fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: inherit;
+    }
+
+    .danger-text { color: var(--danger); }
+    .warn-text { color: var(--warning); }
+    .success-text { color: var(--success); }
+
+    .formula-card {
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 4px 0;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(520px, 100%);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      background: rgba(255, 255, 255, .94);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      border-radius: 14px;
+      padding: 8px 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      display: grid;
+      gap: 3px;
+      place-items: center;
+    }
+
+    .nav-btn span:first-child { font-size: 20px; line-height: 1; }
+    .nav-btn.active { background: var(--primary-soft); color: var(--primary); }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 88px;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 488px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #111827;
+      color: #fff;
+      font-size: 13px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      z-index: 30;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -6px);
+    }
+
+    .voice-btn {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(75, 63, 227, .22);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--primary);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .voice-btn.recording {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .6; }
+    }
+
+    .input-with-voice {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .input-with-voice .field { flex: 1; }
+
+    .ios-notice {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(217, 138, 0, .08);
+      color: var(--warning);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .voice-hint {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+
+    .voice-hint.active {
+      color: var(--danger);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <!-- PWA安装引导横幅 -->
+  <div id="pwaInstallBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#4B3FE3,#6C5CE7);color:#fff;padding:12px 16px;box-shadow:0 2px 12px rgba(75,63,227,.3);align-items:center;gap:12px;">
+    <div style="flex:1;display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:#4B3FE3;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📋</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;">安装Jakob工作台</div>
+        <div style="font-size:12px;opacity:.85;">添加到主屏幕，像App一样使用</div>
+      </div>
+    </div>
+    <button id="pwaInstallBtn" style="background:#fff;color:#4B3FE3;border:none;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">安装</button>
+    <button id="pwaDismissBtn" style="background:rgba(255,255,255,.2);color:#fff;border:none;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+  </div>
+  <main class="app">
+    <header class="top">
+      <div>
+        <div class="kicker">JACOB WORKBENCH</div>
+        <h1>Jakob的工作台</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="syncBtn" type="button" style="background:var(--primary);color:#fff;border:none;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+          <span id="syncIcon">🔄</span><span id="syncText">同步</span>
+        </button>
+        <button id="syncSettingBtn" type="button" style="background:var(--card);color:var(--text);border:1px solid var(--border);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⚙</button>
+        <div class="date-pill" id="todayText"></div>
+      </div>
+    </header>
+
+    <section class="screen active" id="home">
+      <div class="grid">
+        <div class="metric">
+          <div class="label">待办事项</div>
+          <div class="value" id="todoCount">0</div>
+          <div class="note">未完成事项</div>
+        </div>
+        <div class="metric">
+          <div class="label">日程提醒</div>
+          <div class="value" id="scheduleCount">0</div>
+          <div class="note">今天/明天重点</div>
+        </div>
+        <div class="metric">
+          <div class="label">进行中项目</div>
+          <div class="value" id="activeProjectCount">0</div>
+          <div class="note">需持续跟进</div>
+        </div>
+        <div class="metric">
+          <div class="label">风险提醒</div>
+          <div class="value" id="riskCount">0</div>
+          <div class="note">含暂停/待确认</div>
+        </div>
+      </div>
+
+
+      <div class="card">
+        <div class="card-title">事项动态 <span class="muted">最近</span></div>
+        <div id="recentList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">项目进度概览 <span class="muted">Top 4</span></div>
+        <div id="homeProjects"></div>
+      </div>
+
+    </section>
+
+    <section class="screen" id="tasks">
+      <div class="card">
+        <div class="card-title">新增日程 / 待办</div>
+        <div class="input-row">
+          <div class="input-with-voice">
+            <input class="field" id="taskTitle" placeholder="例如：明天跟进成本测算">
+            <button class="voice-btn" type="button" data-voice="taskTitle" title="语音输入">🎤</button>
+          </div>
+          <div class="input-with-voice">
+            <input class="field" id="taskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
+            <button class="voice-btn" type="button" data-voice="taskMeta" title="语音输入">🎤</button>
+          </div>
+          <div class="voice-hint" id="voiceHint"></div>
+          <button class="btn" id="addTaskBtn">加入工作台</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">待办清单 <span class="muted" id="taskDoneText"></span></div>
+        <div id="taskList"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="projects">
+      <div class="card">
+        <div class="card-title">新增项目</div>
+        <div class="input-row">
+          <div class="input-with-voice">
+            <input class="field" id="projectName" placeholder="项目名称">
+            <button class="voice-btn" type="button" data-voice="projectName" title="语音输入">🎤</button>
+          </div>
+          <div class="input-with-voice">
+            <input class="field" id="projectNext" placeholder="本周重点 / 下一步">
+            <button class="voice-btn" type="button" data-voice="projectNext" title="语音输入">🎤</button>
+          </div>
+          <div class="voice-hint" id="voiceHintProject"></div>
+          <button class="btn" id="addProjectBtn">新增项目</button>
+        </div>
+      </div>
+      <div id="projectList"></div>
+    </section>
+
+    <section class="screen" id="formulas">
+      <div class="card">
+        <div class="card-title">配方管理</div>
+        <div class="empty">这里保留基础配方、定制配方、试验记录、感官数据和原料信息的入口。后续可以继续扩展为可编辑配方库。</div>
+      </div>
+
+      <div class="formula-card">
+        <div class="title">基础配方定位</div>
+        <div class="meta">先根据客户需求定位基础配方，再微调甜度、风味、成本、质构和工艺参数。</div>
+      </div>
+      <div class="formula-card">
+        <div class="title">试验与感官记录</div>
+        <div class="meta">集中记录小试、中试、复测、异常、口感、风味、色泽和稳定性。</div>
+      </div>
+      <div class="formula-card">
+        <div class="title">原料与成本关注</div>
+        <div class="meta">沉淀原料名称、供应商、成本、资质和配方影响。</div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="home"><span>🏠</span><span>总览</span></button>
+    <button class="nav-btn" data-screen="tasks"><span>📝</span><span>事项</span></button>
+    <button class="nav-btn" data-screen="projects"><span>📌</span><span>项目</span></button>
+    <button class="nav-btn" data-screen="formulas"><span>🧪</span><span>配方</span></button>
+  </nav>
+  <div class="toast" id="toast"></div>
+
+  <!-- 同步设置弹窗 -->
+  <div id="syncSettingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--card);border-radius:16px;padding:24px;max-width:360px;width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-size:17px;font-weight:600;">同步设置</span>
+        <button id="syncSettingClose" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);">&times;</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">输入电脑端服务器地址（含端口号），例如：<br>192.168.1.214:3000</div>
+      <input id="syncUrlInput" type="text" placeholder="192.168.1.214:3000" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:12px;box-sizing:border-box;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">保存后，在同一个WiFi下点击「同步」按钮即可与电脑端同步数据。平时不用同步时，工作台完全离线可用。</div>
+      <button id="syncUrlSave" style="width:100%;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">保存</button>
+    </div>
+  </div>
+
+  <div class="attach-overlay" id="attachOverlay">
+    <div class="attach-modal">
+      <div class="attach-modal-header">
+        <span class="attach-modal-title">附件管理</span>
+        <button class="attach-modal-close" data-attach-close>&times;</button>
+      </div>
+      <div class="attach-modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const phaseOptions = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
+    const statusOptions = ['进行', '完结', '暂停'];
+    const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
+    const storageKey = 'formulaWorkbenchSharedData';
+    const oldMobileStorageKey = 'formulaWorkbenchMobileApp';
+
+    // 同步服务器地址：优先使用用户在⚙中设置的地址，否则云端模式用默认/api/state
+    function getApiStateUrl() {
+      const savedUrl = localStorage.getItem('workbench_sync_url') || '';
+      if (savedUrl) {
+        // 用户手动设置了同步地址（如电脑端IP:端口），直接使用
+        return 'http://' + savedUrl + '/api/state';
+      }
+      if (window.location.protocol === 'file:') {
+        return '';
+      }
+      // 云端模式（如GitHub Pages），默认尝试同源 /api/state
+      return '/api/state';
+    }
+    let apiStateUrl = getApiStateUrl();
+
+    const seed = {
+      tasks: [
+        { title: '做好奥乐齐有机料酒卖点梳理', meta: '今天下午 · 关联 14:00-15:00 标签设计会', done: false, kind: 'urgent' },
+        { title: '盘完奥乐齐有机料酒大日程并给出明确供货时间', meta: '下周二 · 判断 9 月供货是否可达成', done: false, kind: 'urgent' },
+        { title: '跟进奥乐齐有机糯米料酒成本测算', meta: '明天 · 工作台日程提醒', done: false, kind: 'normal' }
+      ],
+      projects: [
+        { name: '⭐⭐⭐料酒品类重塑', category: '战略规划', phase: '方向确认', status: '进行', next: '技术资料收集、构想沟通、输出 3 个具体产品方案', risk: '时间严重滞后，方向需向上对齐' },
+        { name: '⭐电商1.9L料酒定制', category: '定制品', phase: '产品开发&确认', status: '进行', next: '跟进包装物进度，计划发产品上市通知', risk: '品质可行性、拼凑生产模式、排期与销量承接风险' },
+        { name: '奥乐齐有机糯米料酒', category: '新品定制', phase: '方向确认', status: '进行', next: '确认外部项目进度；开展竞品调研，预测价格与竞争力', risk: '12 度可行性及时效性待确认' },
+        { name: '广西桂菜项目', category: '事务性工作 / 新品', phase: '方向确认', status: '进行', next: '收集战区试菜结果；跟进 4 种原料酱油推进进度', risk: '需确认是否满足 10 月广西战区产品需求' },
+        { name: '料酒5L包装线改造升级可行性分析', category: '优化业务', phase: '方向确认', status: '暂停', next: '待评估销售端承接能力', risk: '需达到一定产量才能满足降本条件' },
+        { name: '料酒新国标改版', category: '产品升级', phase: '生产上市', status: '进行', next: '跟进改版卡点；纯粮料酒待品牌管理部重新设计后跟进通知', risk: '目前改版工作按计划进行' },
+        { name: '⭐⭐金品料酒500ml开品', category: '新品', phase: '开发过程执行', status: '完结', next: '已完成立项审批和产品上市', risk: '/' }
+      ]
+    };
+
+    function splitProjectPriority(project) {
+      const rawName = (project.name || '').trim();
+      const match = rawName.match(/^(⭐{1,3})(.*)$/);
+      return {
+        ...project,
+        name: match ? match[2].trim() : rawName,
+        priority: project.priority || (match ? match[1] : '普通')
+      };
+    }
+
+    function normalizeProject(project) {
+      const normalized = splitProjectPriority(project || {});
+      return {
+        name: normalized.name || '',
+        priority: priorityOptions.includes(normalized.priority) ? normalized.priority : '普通',
+        category: normalized.category || '未分类',
+        phase: normalized.phase || '方向确认',
+        status: statusOptions.includes(normalized.status) ? normalized.status : '进行',
+        next: normalized.next || '补充本周重点或下一步',
+        risk: normalized.risk || '/',
+        background: normalized.background || '',
+        attachments: normalizeAttachments(normalized.attachments),
+        progressLog: Array.isArray(normalized.progressLog) ? normalized.progressLog.map(e => ({
+          date: String(e.date || ''),
+          progress: String(e.progress || ''),
+          remark: String(e.remark || '')
+        })) : []
+      };
+    }
+
+    function getLatestProgress(project) {
+      const log = Array.isArray(project.progressLog) ? project.progressLog : [];
+      return log.length ? log[log.length - 1] : null;
+    }
+    function formatProgressDate(dateStr) {
+      if (!dateStr) return '暂无';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    }
+
+    function normalizeTask(task) {
+      return {
+        ...task,
+        title: task?.title || '未命名事项',
+        meta: task?.meta || '工作台提醒',
+        done: Boolean(task?.done),
+        kind: task?.kind || 'normal',
+        attachments: normalizeAttachments(task?.attachments)
+      };
+    }
+
+    function normalizeState(data) {
+      return {
+        tasks: Array.isArray(data?.tasks) ? data.tasks.map(normalizeTask) : [],
+        projects: sortProjectsByPriority(Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : [])
+      };
+    }
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const shared = localStorage.getItem(storageKey);
+        const oldMobile = localStorage.getItem(oldMobileStorageKey);
+        return normalizeState(JSON.parse(shared || oldMobile) || structuredClone(seed));
+      } catch {
+        return normalizeState(JSON.parse(JSON.stringify(seed)));
+      }
+    }
+
+    function saveState() {
+      state = normalizeState(state);
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      // 仅保存到本地，不自动推送
+    }
+
+    // 智能合并本地与远程数据
+    function mergeStates(localState, remoteState) {
+      const localTasks = localState.tasks || [];
+      const remoteTasks = remoteState.tasks || [];
+      const taskMap = new Map();
+
+      // 先放入远程数据
+      remoteTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (key) taskMap.set(key, { ...t });
+      });
+      // 再放入本地数据，同标题以完成状态优先
+      localTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (!key) return;
+        const existing = taskMap.get(key);
+        if (!existing) {
+          taskMap.set(key, { ...t });
+        } else if (t.done && !existing.done) {
+          taskMap.set(key, { ...t });
+        }
+      });
+
+      // 合并项目，按名称去重
+      const localProjects = localState.projects || [];
+      const remoteProjects = remoteState.projects || [];
+      const projectMap = new Map();
+
+      remoteProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (key) projectMap.set(key, { ...p });
+      });
+      localProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (!key) return;
+        const existing = projectMap.get(key);
+        if (!existing) {
+          projectMap.set(key, { ...p });
+        } else {
+          // 合并字段：取非空且更有信息量的值
+          const merged = { ...existing };
+          ['category', 'phase', 'status', 'priority', 'next', 'risk', 'background'].forEach(field => {
+            const localVal = (p[field] || '').trim();
+            const remoteVal = (existing[field] || '').trim();
+            if (localVal && (!remoteVal || remoteVal === '/' || remoteVal === '补充本周重点或下一步')) {
+              merged[field] = localVal;
+            }
+          });
+          // 合并进度记录
+          const existingLogs = Array.isArray(existing.progressLog) ? existing.progressLog : [];
+          const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
+          const logSet = new Set();
+          const mergedLogs = [];
+          [...existingLogs, ...localLogs].forEach(log => {
+            const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
+            if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
+          });
+          merged.progressLog = mergedLogs;
+          // 合并附件
+          const existingAttach = Array.isArray(existing.attachments) ? existing.attachments : [];
+          const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
+          const attachSet = new Set();
+          const mergedAttach = [];
+          [...existingAttach, ...localAttach].forEach(att => {
+            const sig = (att.name || '') + '|' + (att.size || 0);
+            if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
+          });
+          merged.attachments = mergedAttach;
+          projectMap.set(key, merged);
+        }
+      });
+
+      return {
+        tasks: Array.from(taskMap.values()),
+        projects: Array.from(projectMap.values()),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    let isSyncing = false;
+
+    async function manualSync() {
+      if (isSyncing) return;
+      // 获取最新的同步URL
+      apiStateUrl = getApiStateUrl();
+      let syncBaseUrl = apiStateUrl;
+      if (!syncBaseUrl) {
+        showToast('请先点⚙设置同步地址');
+        return;
+      }
+      isSyncing = true;
+      const syncBtn = document.getElementById('syncBtn');
+      const syncIcon = document.getElementById('syncIcon');
+      const syncText = document.getElementById('syncText');
+      if (syncBtn) syncBtn.style.opacity = '0.6';
+      if (syncIcon) syncIcon.textContent = '⏳';
+      if (syncText) syncText.textContent = '同步中...';
+
+      // 超时控制：5秒内连不上服务器就提示
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      try {
+        // 1. 获取远程数据
+        const response = await fetch(syncBaseUrl + '?t=' + Date.now(), {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error('服务器响应异常');
+        const remoteData = await response.json();
+        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) {
+          throw new Error('远程数据格式异常');
+        }
+
+        // 2. 合并本地与远程
+        const localData = normalizeState(state);
+        const merged = mergeStates(localData, remoteData);
+
+        // 3. 保存合并结果到本地
+        state = normalizeState(merged);
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        render();
+
+        // 4. 推送合并结果到服务器
+        await fetch(syncBaseUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        if (syncIcon) syncIcon.textContent = '✅';
+        if (syncText) syncText.textContent = '已同步';
+        showToast('同步成功');
+        setTimeout(() => {
+          if (syncIcon) syncIcon.textContent = '🔄';
+          if (syncText) syncText.textContent = '同步';
+          if (syncBtn) syncBtn.style.opacity = '1';
+        }, 2000);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.warn('同步失败:', error);
+        const msg = error.name === 'AbortError' ? '无法连接服务器，请确认在同一WiFi下' : '同步失败，请检查网络';
+        if (syncIcon) syncIcon.textContent = '⚠️';
+        if (syncText) syncText.textContent = '同步失败';
+        showToast(msg);
+        setTimeout(() => {
+          if (syncIcon) syncIcon.textContent = '🔄';
+          if (syncText) syncText.textContent = '同步';
+          if (syncBtn) syncBtn.style.opacity = '1';
+        }, 2500);
+      } finally {
+        isSyncing = false;
+      }
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function hasRisk(project) {
+      if (project.status === '暂停') return true;
+      if (project.status === '完结') return false;
+      if (!project.risk || project.risk === '/' || /按计划|正常推进|暂无/.test(project.risk)) return false;
+      return /风险|滞后|待确认|需确认|可行性|成本|时效|排期|承接|变化|降本|竞争力/.test(`${project.next} ${project.risk}`);
+    }
+
+    function progress(project) {
+      if (project.status === '完结') return 100;
+      if (project.status === '暂停') return 25;
+      if (/生产上市/.test(project.phase)) return 85;
+      if (/产品开发/.test(project.phase)) return 70;
+      if (/开发过程/.test(project.phase)) return 60;
+      return 45;
+    }
+
+    function priorityScore(project) {
+      return priorityOptions.indexOf(project.priority || '普通');
+    }
+
+    function sortProjectsByPriority(projects) {
+      return [...(projects || [])].map(normalizeProject).sort((a, b) => priorityScore(b) - priorityScore(a));
+    }
+
+    function optionHtml(options, selected) {
+      return options.map(opt => `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[s]));
+    }
+
+    const attachmentCategories = ['未分类', '文档', '图片', '表格', '报告', '其他'];
+
+    function dataUrlToBlob(dataUrl) {
+      const [meta, raw] = String(dataUrl || '').split(',');
+      const mime = (meta.match(/data:(.*?);/) || [])[1] || 'application/octet-stream';
+      const binary = atob(raw || '');
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+
+    function safeFileName(name) {
+      return String(name || '附件').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || '附件';
+    }
+
+    function getAttachmentOwnerName(ctx) {
+      if (!ctx) return '';
+      if (ctx.scope === 'task') return state.tasks[ctx.index]?.title || ctx.name || '事项';
+      return state.projects[ctx.index]?.name || ctx.name || '项目';
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function saveAttachmentFilesToWorkspace() {}
+    async function moveAttachmentFile() {}
+    async function getLocalFileUrl() { return ''; }
+    async function downloadLocalFile() {}
+
+    let attachModalContext = null;
+
+    function normalizeAttachments(attachments) {
+      return Array.isArray(attachments) ? attachments.filter(file => file && file.name && (file.path || file.dataUrl)).map(file => {
+        const o = {
+          name: String(file.name),
+          type: String(file.type || ''),
+          size: Number(file.size || 0),
+          path: String(file.path || ''),
+          uploadedAt: file.uploadedAt || '',
+          category: attachmentCategories.includes(file.category) ? file.category : '未分类'
+        };
+        if (file.dataUrl) o.dataUrl = String(file.dataUrl);
+        return o;
+      }) : [];
+    }
+
+    function formatFileSize(size) {
+      if (!size) return '';
+      if (size < 1024) return `${size}B`;
+      if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`;
+      return `${(size / 1024 / 1024).toFixed(1)}MB`;
+    }
+
+    async function copyFilesToWorkspace(ctx, rawFiles) {
+      if (!ctx || !rawFiles?.length) return [];
+      const results = [];
+      for (const file of Array.from(rawFiles)) {
+        const dataUrl = await fileToDataUrl(file);
+        results.push({
+          name: file.name,
+          type: file.type || '',
+          size: file.size || 0,
+          dataUrl,
+          uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+          category: '未分类'
+        });
+      }
+      return results;
+    }
+
+    function fileIconHtml(file) {
+      const t = (file.type || '').toLowerCase();
+      if (t.startsWith('image/')) return '🖼️';
+      if (t.includes('pdf')) return '📄';
+      if (t.includes('sheet') || t.includes('excel') || t.includes('csv')) return '📊';
+      if (t.includes('word') || t.includes('document')) return '📝';
+      if (t.includes('zip') || t.includes('rar') || t.includes('7z')) return '🗜️';
+      if (t.startsWith('video/')) return '🎬';
+      if (t.startsWith('audio/')) return '🎵';
+      return '📎';
+    }
+
+    function attachButton(scope, attachments, ownerName) {
+      const count = normalizeAttachments(attachments).length;
+      return `<button class="attach-btn" data-attach-open="${scope}" data-attach-name="${escapeHtml(ownerName || '')}">附件<span class="attach-badge ${count ? '' : 'empty'}">${count}</span></button>`;
+    }
+
+    function decodeTextAttachment(dataUrl) {
+      try {
+        const comma = String(dataUrl || '').indexOf(',');
+        const meta = String(dataUrl || '').slice(0, comma);
+        const raw = String(dataUrl || '').slice(comma + 1);
+        if (comma < 0) return '';
+        if (/;base64/i.test(meta)) {
+          const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+          return new TextDecoder('utf-8').decode(bytes);
+        }
+        return decodeURIComponent(raw);
+      } catch {
+        return '文本预览失败，可下载后查看。';
+      }
+    }
+
+    function renderAttachmentPreview(file) {
+      if (!file) return '';
+      const t = (file.type || '').toLowerCase();
+      const cachedUrl = file.dataUrl || '';
+      const url = escapeHtml(cachedUrl);
+      let body = '';
+      if (!cachedUrl) {
+        body = `<div class="attach-empty-hint">正在读取本地文件...</div>`;
+      } else if (t.startsWith('image/')) {
+        body = `<img src="${url}" alt="${escapeHtml(file.name)}">`;
+      } else if (t.startsWith('video/')) {
+        body = `<video src="${url}" controls preload="metadata"></video>`;
+      } else if (t.startsWith('audio/')) {
+        body = `<audio src="${url}" controls preload="metadata"></audio>`;
+      } else if (t.includes('pdf')) {
+        body = `
+          <object class="attach-preview-object" data="${url}" type="application/pdf">
+            <embed class="attach-preview-object" src="${url}" type="application/pdf">
+          </object>
+          <div class="attach-preview-fallback">如果这里仍为空白，说明当前手机浏览器不支持内嵌 PDF 预览，请使用"新窗口打开"或"下载"。</div>
+        `;
+      } else if (t.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(file.name || '')) {
+        body = `<pre class="attach-preview-text">${escapeHtml(decodeTextAttachment(cachedUrl))}</pre>`;
+      } else {
+        body = `<div class="attach-empty-hint">该类型暂不支持内嵌浏览，可下载后查看。</div>`;
+      }
+      return `
+        <div class="attach-preview">
+          <div class="attach-preview-head">
+            <span class="attach-preview-title">正在浏览：${escapeHtml(file.name)}</span>
+            <button class="attach-mini-btn" data-attach-preview-close>收起</button>
+          </div>
+          <div class="attach-preview-body">${body}<div class="attach-preview-fallback"><a class="attach-mini-btn primary" href="${url}" target="_blank">新窗口打开</a></div></div>
+        </div>`;
+    }
+    function getModalAttachments() {
+      if (!attachModalContext) return [];
+      const ctx = attachModalContext;
+      if (ctx.scope === 'task') return normalizeAttachments(state.tasks[ctx.index]?.attachments);
+      return normalizeAttachments(state.projects[ctx.index]?.attachments);
+    }
+
+    function setModalAttachments(files) {
+      if (!attachModalContext) return;
+      const ctx = attachModalContext;
+      const normalized = normalizeAttachments(files);
+      if (ctx.scope === 'task') {
+        if (state.tasks[ctx.index]) state.tasks[ctx.index].attachments = normalized;
+      } else {
+        if (state.projects[ctx.index]) state.projects[ctx.index].attachments = normalized;
+      }
+      saveState();
+      render();
+    }
+
+    function renderAttachModal() {
+      if (!attachModalContext) return;
+      const ctx = attachModalContext;
+      const files = getModalAttachments();
+      const titleScope = ctx.scope === 'project' ? '项目' : '事项';
+      const titleName = ctx.name ? ` · ${ctx.name}` : '';
+      document.querySelector('.attach-modal-title').textContent = `附件管理 - ${titleScope}${titleName}`;
+
+      const filter = ctx.filter || '全部';
+      const shown = filter === '全部' ? files : files.filter(f => (f.category || '未分类') === filter);
+      const usedCats = ['全部', ...new Set(files.map(f => f.category || '未分类'))];
+      const previewFile = files[ctx.previewIndex];
+      const previewHtml = previewFile ? renderAttachmentPreview(previewFile) : '';
+
+      const filterHtml = usedCats.length > 1 ? `
+        <div class="attach-filter-bar">
+          <span class="attach-filter-label">筛选:</span>
+          <select class="attach-filter-select" data-attach-filter>
+            ${usedCats.map(c => `<option value="${c}" ${c === filter ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>` : '';
+
+      const listHtml = shown.length ? `
+        <div class="attach-file-list">
+          ${shown.map(file => {
+            const realIndex = files.indexOf(file);
+            const renaming = ctx.renamingIndex === realIndex;
+            return `
+              <div class="attach-file-item">
+                <div class="attach-file-icon">${fileIconHtml(file)}</div>
+                <div class="attach-file-info">
+                  <div class="attach-file-name-row">
+                    ${renaming
+                      ? `<input class="attach-file-name-input" data-attach-rename-input="${realIndex}" value="${escapeHtml(file.name)}">`
+                      : (file.path && !file.dataUrl)
+                      ? `<span class="attach-file-download">${escapeHtml(file.name)}</span>`
+                      : `<a class="attach-file-download" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`}
+                  </div>
+                  <div class="attach-file-meta">${formatFileSize(file.size) || '未知大小'}${file.uploadedAt ? ` · ${escapeHtml(file.uploadedAt)}` : ''}</div>
+                  <div class="attach-file-controls">
+                    <select class="attach-cat-select" data-attach-cat="${realIndex}">
+                      ${attachmentCategories.map(c => `<option value="${c}" ${c === (file.category || '未分类') ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                    ${renaming
+                      ? `<button class="attach-mini-btn primary" data-attach-rename-save="${realIndex}">保存</button>`
+                      : `<button class="attach-mini-btn" data-attach-rename="${realIndex}">重命名</button>`}
+                    <button class="attach-mini-btn primary" data-attach-preview="${realIndex}">浏览</button>
+                    ${(file.path && !file.dataUrl)
+                      ? `<button class="attach-mini-btn primary" data-attach-download="${realIndex}" data-attach-path="${escapeHtml(file.path)}">下载</button>`
+                      : `<a class="attach-mini-btn primary" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">下载</a>`
+                    }
+                    <button class="attach-mini-btn danger" data-attach-delete="${realIndex}">删除</button>
+                  </div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>` : `<div class="attach-empty-hint">${files.length ? '该分类下暂无附件' : '暂无附件，点击上方区域上传'}</div>`;
+
+      document.querySelector('.attach-modal-body').innerHTML = `
+        <label class="attach-upload-zone">
+          <span class="attach-upload-icon">📤</span>
+          <span class="attach-upload-text"><strong>点击上传附件</strong>　支持多文件</span>
+          <input type="file" multiple data-attach-upload>
+        </label>
+        ${filterHtml}
+        ${previewHtml}
+        ${listHtml}`;
+    }
+
+    function openAttachModal(scope, index, name) {
+      attachModalContext = { scope, index, name: name || '', filter: '全部', renamingIndex: -1, previewIndex: -1 };
+      document.getElementById('attachOverlay').classList.add('show');
+      renderAttachModal();
+    }
+
+    function closeAttachModal() {
+      document.getElementById('attachOverlay').classList.remove('show');
+      attachModalContext = null;
+    }
+
+    function render() {
+      renderHeader();
+      renderHome();
+      renderTasks();
+      renderProjects();
+    }
+
+    function renderHeader() {
+      const d = new Date();
+      document.getElementById('todayText').textContent = `${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
+    function renderHome() {
+      const openTasks = state.tasks.filter(t => !t.done);
+      const scheduleTasks = state.tasks.filter(t => /日程|会议|今天|明天|下午|上午|[0-9]{1,2}:[0-9]{2}/.test(t.meta));
+      const activeProjects = state.projects.filter(p => p.status === '进行');
+      const risks = state.projects.filter(hasRisk);
+
+      document.getElementById('todoCount').textContent = openTasks.length;
+      document.getElementById('scheduleCount').textContent = scheduleTasks.length;
+      document.getElementById('activeProjectCount').textContent = activeProjects.length;
+      document.getElementById('riskCount').textContent = risks.length;
+
+      document.getElementById('recentList').innerHTML = state.tasks.slice(0, 4).map(task => `
+        <div class="item ${task.done ? 'done' : ''}">
+          <div class="check"></div>
+          <div>
+            <div class="title">${task.title}</div>
+            <div class="meta">${task.meta}</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('homeProjects').innerHTML = state.projects
+        .map((project, originalIndex) => ({ project, originalIndex }))
+        .filter(({ project }) => project.status !== '完结')
+        .sort((a, b) => priorityScore(b.project) - priorityScore(a.project) || Number(hasRisk(b.project)) - Number(hasRisk(a.project)))
+        .slice(0, 4)
+        .map(({ project, originalIndex }) => projectProgressHtml(project, originalIndex))
+        .join('');
+    }
+
+    function projectProgressHtml(project, index) {
+      const latest = getLatestProgress(project);
+      return `
+        <div class="item" data-home-project="${index}" style="display:block;cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;gap:10px;">
+            <div class="title" style="color:var(--primary);">${project.name}</div>
+            <div class="meta">${project.priority || '普通'} · ${project.phase}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${latest ? formatProgressDate(latest.date) + ' · ' + latest.progress : '暂无进度记录'}</div>
+        </div>
+      `;
+    }
+
+    function renderTasks() {
+      const done = state.tasks.filter(t => t.done).length;
+      document.getElementById('taskDoneText').textContent = `${done}/${state.tasks.length} 已完成`;
+      document.getElementById('taskList').innerHTML = state.tasks.map((task, index) => `
+        <div class="item ${task.done ? 'done' : ''}" data-task="${index}">
+          <div class="check" data-action="toggle-task"></div>
+          <div style="flex:1;">
+            <div class="title">${task.title}</div>
+            <div class="meta">${task.meta}<span class="tag ${task.kind === 'urgent' ? 'urgent' : 'normal'}">${task.kind === 'urgent' ? '重要' : '提醒'}</span></div>
+            ${attachButton('task', task.attachments, task.title)}
+          </div>
+          <button class="btn secondary" data-action="delete-task" style="padding:7px 9px;">删</button>
+        </div>
+      `).join('');
+    }
+
+    function renderProjects() {
+      state.projects = sortProjectsByPriority(state.projects);
+      document.getElementById('projectList').innerHTML = state.projects.map((project, index) => {
+        const risk = hasRisk(project);
+        const cls = project.status === '完结' ? 'complete' : project.status === '暂停' ? 'pause' : risk ? 'risk' : '';
+        return `
+          <article class="project-card ${cls}" data-project="${index}">
+            <div class="project-head">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div class="project-name" contenteditable="true" data-field="name">${project.name}</div>
+                  <button class="btn secondary" data-action="open-detail" style="padding:4px 10px;font-size:12px;flex-shrink:0;">详情</button>
+                </div>
+                <div class="meta">${project.priority || '普通'} · <span contenteditable="true" data-field="category">${project.category}</span></div>
+              </div>
+              <span class="tag ${project.status === '完结' ? 'done' : project.status === '暂停' ? 'warn' : 'normal'}">${project.status}</span>
+            </div>
+            <div class="project-selects">
+              <select class="field" data-field="priority">${optionHtml(priorityOptions, project.priority || '普通')}</select>
+              <select class="field" data-field="phase">${optionHtml(phaseOptions, project.phase)}</select>
+              <select class="field" data-field="status">${optionHtml(statusOptions, project.status)}</select>
+            </div>
+            <div class="meta">下一步</div>
+            <div class="field" contenteditable="true" data-field="next" style="min-height:44px;">${project.next}</div>
+            <div class="meta" style="margin-top:8px;">风险或备注</div>
+            <div class="field" contenteditable="true" data-field="risk" style="min-height:44px;">${project.risk}</div>
+            ${attachButton('project', project.attachments, project.name)}
+            <div class="progress-log-section" style="margin-top:10px;">
+              <div class="meta" style="font-weight:600;">进度记录</div>
+              <div class="progress-log-list" style="margin-top:6px;">
+                ${(project.progressLog || []).length ? (project.progressLog || []).map((entry, i) => `
+                  <div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <span style="font-size:13px;font-weight:600;">${formatProgressDate(entry.date)}</span>
+                      <button class="btn secondary" data-action="del-progress" data-progress-idx="${i}" style="padding:4px 8px;font-size:12px;">删</button>
+                    </div>
+                    <div style="font-size:13px;margin-top:2px;">${entry.progress}</div>
+                    ${entry.remark ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：' + entry.remark + '</div>' : ''}
+                  </div>
+                `).join('') : '<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:8px 0;">暂无进度记录</div>'}
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+                <input type="date" class="field" data-progress-input="date" value="${new Date().toISOString().slice(0,10)}" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+                <input type="text" class="field" data-progress-input="text" placeholder="最新进展" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+                <input type="text" class="field" data-progress-input="remark" placeholder="备注（选填）" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+                <button class="btn primary" data-action="add-progress" style="padding:8px;border-radius:8px;font-size:13px;">添加进度记录</button>
+              </div>
+            </div>
+            <div class="actions" style="margin:12px 0 0;">
+              <button class="btn secondary" data-action="delete-project">删除项目</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    let pdProjectIndex = -1;
+
+    function openProjectDetail(index) {
+      if (index < 0 || !state.projects[index]) return;
+      pdProjectIndex = index;
+      renderProjectDetail(state.projects[index]);
+      document.getElementById('projectDetailOverlay').classList.add('show');
+    }
+
+    function closeProjectDetail() {
+      document.getElementById('projectDetailOverlay').classList.remove('show');
+      pdProjectIndex = -1;
+      saveState();
+      render();
+    }
+
+    function renderProjectDetail(project) {
+      const phases = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
+      const currentPhaseIndex = Math.max(0, phases.indexOf(project.phase));
+      const status = project.status || '进行';
+      const statusColor = status === '完结' ? '#1DC981' : status === '暂停' ? '#EFAA17' : '#22A5F7';
+      const progressLog = project.progressLog || [];
+      const attachments = project.attachments || [];
+
+      document.getElementById('pdTitle').textContent = project.name || '项目详情';
+      document.getElementById('pdBody').innerHTML = `
+        <!-- 状态概览 -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span class="pd-badge" style="background:${statusColor}20;color:${statusColor};">${escapeHtml(status)}</span>
+          <span class="pd-badge" style="background:#F2F7FF;color:#4B3FE3;">${escapeHtml(project.priority || '普通')}</span>
+          <span class="pd-badge" style="background:rgba(0,0,0,.05);color:#52525B;">${escapeHtml(project.category || '未分类')}</span>
+        </div>
+
+        <!-- 阶段时间线 -->
+        <div class="pd-section">
+          <div class="pd-section-title">项目阶段</div>
+          <div class="pd-phase-row">
+            ${phases.map((ph, i) => {
+              const cls = i < currentPhaseIndex ? 'done' : i === currentPhaseIndex ? 'current' : '';
+              const icon = i < currentPhaseIndex ? '✓' : (i + 1);
+              return `<div class="pd-phase-step ${cls}"><div class="pd-phase-dot">${icon}</div><div class="pd-phase-label">${escapeHtml(ph)}</div></div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="pd-section">
+          <div class="pd-section-title">基本信息</div>
+          <div class="pd-info-grid">
+            <div class="pd-info-item">
+              <div class="pd-info-label">星级</div>
+              <select class="pd-select" data-pd-field="priority">${optionHtml(['普通','⭐','⭐⭐','⭐⭐⭐'], project.priority || '普通')}</select>
+            </div>
+            <div class="pd-info-item">
+              <div class="pd-info-label">分类</div>
+              <input class="pd-field" data-pd-field="category" value="${escapeHtml(project.category || '未分类')}" style="min-height:38px;">
+            </div>
+            <div class="pd-info-item">
+              <div class="pd-info-label">阶段</div>
+              <select class="pd-select" data-pd-field="phase">${optionHtml(phases, project.phase)}</select>
+            </div>
+            <div class="pd-info-item">
+              <div class="pd-info-label">状态</div>
+              <select class="pd-select" data-pd-field="status">${optionHtml(['进行','完结','暂停'], status)}</select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 项目背景 -->
+        <div class="pd-section">
+          <div class="pd-section-title">项目背景</div>
+          <textarea class="pd-field" data-pd-field="background" rows="3" placeholder="描述项目背景、目标、参与方等...">${escapeHtml(project.background || '')}</textarea>
+        </div>
+
+        <!-- 下一步 -->
+        <div class="pd-section">
+          <div class="pd-section-title">本周重点 / 下一步</div>
+          <textarea class="pd-field" data-pd-field="next" rows="2" placeholder="补充本周重点或下一步...">${escapeHtml(project.next || '')}</textarea>
+        </div>
+
+        <!-- 风险或备注 -->
+        <div class="pd-section">
+          <div class="pd-section-title">风险或备注</div>
+          <textarea class="pd-field" data-pd-field="risk" rows="2" placeholder="补充风险或备注信息...">${escapeHtml(project.risk || '/')}</textarea>
+        </div>
+
+        <!-- 进度记录 -->
+        <div class="pd-section">
+          <div class="pd-section-title">进度记录</div>
+          <div id="pdProgressList">
+            ${progressLog.length ? progressLog.map((entry, i) => `
+              <div class="pd-progress-entry">
+                <div class="pd-progress-date">${escapeHtml(formatProgressDate(entry.date))}</div>
+                <div class="pd-progress-content">
+                  ${escapeHtml(entry.progress)}
+                  ${entry.remark ? '<div class="pd-progress-remark">备注：' + escapeHtml(entry.remark) + '</div>' : ''}
+                  <button class="btn secondary" data-pd-del-progress="${i}" style="padding:4px 8px;font-size:11px;margin-top:4px;">删除</button>
+                </div>
+              </div>
+            `).join('') : '<div style="font-size:13px;color:#52525B;text-align:center;padding:12px 0;">暂无进度记录</div>'}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+            <input type="date" class="pd-field" id="pdProgressDate" value="${new Date().toISOString().slice(0,10)}" style="min-height:38px;">
+            <input type="text" class="pd-field" id="pdProgressText" placeholder="最新进展描述" style="min-height:38px;">
+            <input type="text" class="pd-field" id="pdProgressRemark" placeholder="备注（选填）" style="min-height:38px;">
+            <button class="btn primary" data-pd-add-progress style="padding:10px;border-radius:8px;font-size:13px;">添加进度记录</button>
+          </div>
+        </div>
+
+        <!-- 附件 -->
+        <div class="pd-section">
+          <div class="pd-section-title">附件（${attachments.length}）</div>
+          ${attachments.length ? attachments.map(file => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f6fa;border-radius:8px;font-size:13px;">
+              <span>${fileIconHtml(file)}</span>
+              <span style="flex:1;">${escapeHtml(file.name)}</span>
+              <span style="font-size:11px;color:#52525B;">${escapeHtml(file.category || '未分类')}</span>
+            </div>
+          `).join('') : '<div style="font-size:13px;color:#52525B;text-align:center;padding:12px 0;">暂无附件</div>'}
+          <button class="btn secondary" data-pd-open-attach style="padding:8px 14px;border-radius:8px;font-size:13px;margin-top:6px;">管理附件</button>
+        </div>
+      `;
+    }
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.screen').forEach(item => item.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.screen).classList.add('active');
+      });
+    });
+
+    document.getElementById('homeProjects').addEventListener('click', event => {
+      const item = event.target.closest('[data-home-project]');
+      if (!item) return;
+      const index = Number(item.dataset.homeProject);
+      if (!Number.isNaN(index) && state.projects[index]) {
+        openProjectDetail(index);
+      }
+    });
+
+    document.getElementById('addTaskBtn').addEventListener('click', () => {
+      const title = document.getElementById('taskTitle').value.trim();
+      const meta = document.getElementById('taskMeta').value.trim() || '工作台提醒';
+      if (!title) return showToast('请先填写事项名称');
+      state.tasks.unshift({ title, meta, done: false, kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal', attachments: [] });
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskMeta').value = '';
+      saveState();
+      render();
+      showToast('已加入工作台');
+    });
+
+    document.getElementById('taskList').addEventListener('click', event => {
+      const attachBtn = event.target.closest('[data-attach-open="task"]');
+      if (attachBtn) {
+        const item = attachBtn.closest('[data-task]');
+        const index = Number(item?.dataset.task);
+        if (!Number.isNaN(index) && state.tasks[index]) {
+          openAttachModal('task', index, state.tasks[index].title);
+        }
+        return;
+      }
+      const item = event.target.closest('[data-task]');
+      if (!item) return;
+      const index = Number(item.dataset.task);
+      if (event.target.dataset.action === 'toggle-task') {
+        state.tasks[index].done = !state.tasks[index].done;
+      } else if (event.target.dataset.action === 'delete-task') {
+        state.tasks.splice(index, 1);
+      } else {
+        return;
+      }
+      saveState();
+      render();
+    });
+
+    document.getElementById('addProjectBtn').addEventListener('click', () => {
+      const name = document.getElementById('projectName').value.trim();
+      const next = document.getElementById('projectNext').value.trim() || '补充本周重点或下一步';
+      if (!name) return showToast('请先填写项目名称');
+      state.projects.unshift({ name, priority: '普通', category: '未分类', phase: '方向确认', status: '进行', next, risk: '/', attachments: [], progressLog: [] });
+      document.getElementById('projectName').value = '';
+      document.getElementById('projectNext').value = '';
+      saveState();
+      render();
+      showToast('项目已新增');
+    });
+
+    document.getElementById('projectList').addEventListener('input', event => {
+      const card = event.target.closest('[data-project]');
+      const field = event.target.dataset.field;
+      if (!card || !field) return;
+      state.projects[Number(card.dataset.project)][field] = event.target.innerText.trim();
+      saveState();
+      renderHome();
+    });
+
+    document.getElementById('projectList').addEventListener('change', event => {
+      const card = event.target.closest('[data-project]');
+      const field = event.target.dataset.field;
+      if (!card || !field) return;
+      state.projects[Number(card.dataset.project)][field] = event.target.value;
+      saveState();
+      render();
+    });
+
+    document.getElementById('projectList').addEventListener('click', event => {
+      if (event.target.dataset.action === 'open-detail') {
+        const card = event.target.closest('[data-project]');
+        const index = Number(card?.dataset.project);
+        if (!Number.isNaN(index)) openProjectDetail(index);
+        return;
+      }
+      const attachBtn = event.target.closest('[data-attach-open="project"]');
+      if (attachBtn) {
+        const card = attachBtn.closest('[data-project]');
+        const index = Number(card?.dataset.project);
+        if (!Number.isNaN(index) && state.projects[index]) {
+          openAttachModal('project', index, state.projects[index].name);
+        }
+        return;
+      }
+      const card = event.target.closest('[data-project]');
+      if (!card) return;
+      const index = Number(card.dataset.project);
+      if (event.target.dataset.action === 'add-progress') {
+        if (Number.isNaN(index) || !state.projects[index]) return;
+        const dateInput = card.querySelector('[data-progress-input="date"]');
+        const textInput = card.querySelector('[data-progress-input="text"]');
+        const remarkInput = card.querySelector('[data-progress-input="remark"]');
+        const progress = textInput.value.trim();
+        if (!progress) { showToast('请输入进展描述'); return; }
+        if (!state.projects[index].progressLog) state.projects[index].progressLog = [];
+        state.projects[index].progressLog.push({
+          date: dateInput.value,
+          progress: progress,
+          remark: remarkInput.value.trim()
+        });
+        saveState();
+        render();
+        showToast('进度记录已添加');
+        return;
+      }
+      if (event.target.dataset.action === 'del-progress') {
+        const pIdx = Number(event.target.dataset.progressIdx);
+        if (Number.isNaN(index) || !state.projects[index]) return;
+        if (state.projects[index].progressLog) {
+          state.projects[index].progressLog.splice(pIdx, 1);
+          saveState();
+          render();
+          showToast('记录已删除');
+        }
+        return;
+      }
+      if (event.target.dataset.action !== 'delete-project') return;
+      state.projects.splice(index, 1);
+      saveState();
+      render();
+      showToast('项目已删除');
+    });
+
+    // 附件弹窗事件
+    const attachOverlay = document.getElementById('attachOverlay');
+    if (attachOverlay) {
+      attachOverlay.addEventListener('click', event => {
+        if (event.target === attachOverlay || event.target.matches('[data-attach-close]')) {
+          closeAttachModal();
+        }
+      });
+
+      attachOverlay.addEventListener('change', async event => {
+        if (event.target.matches('[data-attach-upload]')) {
+          const files = await copyFilesToWorkspace(attachModalContext, event.target.files);
+          const current = getModalAttachments();
+          setModalAttachments(current.concat(files));
+          event.target.value = '';
+          renderAttachModal();
+          showToast('附件已上传');
+          return;
+        }
+        if (event.target.matches('[data-attach-filter]')) {
+          if (attachModalContext) {
+            attachModalContext.filter = event.target.value;
+            renderAttachModal();
+          }
+          return;
+        }
+        if (event.target.matches('[data-attach-cat]')) {
+          const idx = Number(event.target.dataset.attachCat);
+          const current = getModalAttachments();
+          if (current[idx]) {
+            const oldPath = current[idx].path;
+            current[idx].category = event.target.value;
+            if (oldPath) {
+              const parts = oldPath.split('/');
+              const newPath = parts.slice(0, -2).concat(event.target.value, parts[parts.length - 1]).join('/');
+              moveAttachmentFile(oldPath, newPath).then(() => {
+                current[idx].path = newPath;
+                setModalAttachments(current);
+              });
+            } else {
+              setModalAttachments(current);
+            }
+            renderAttachModal();
+          }
+          return;
+        }
+      });
+
+      attachOverlay.addEventListener('click', async event => {
+        if (event.target.matches('[data-attach-preview]')) {
+          const idx = Number(event.target.dataset.attachPreview);
+          if (attachModalContext) {
+            const files = getModalAttachments();
+            const file = files[idx];
+            if (file?.path && !file?.dataUrl) {
+              const url = await getLocalFileUrl(file.path);
+              if (!url) { alert('无法读取本地文件，请检查工作台地址是否可用。'); return; }
+            }
+            attachModalContext.previewIndex = idx;
+            attachModalContext.renamingIndex = -1;
+            renderAttachModal();
+          }
+          return;
+        }
+        if (event.target.matches('[data-attach-preview-close]')) {
+          if (attachModalContext) {
+            attachModalContext.previewIndex = -1;
+            renderAttachModal();
+          }
+          return;
+        }
+        if (event.target.matches('[data-attach-rename]')) {
+          const idx = Number(event.target.dataset.attachRename);
+          if (attachModalContext) {
+            attachModalContext.renamingIndex = idx;
+            renderAttachModal();
+            const input = attachOverlay.querySelector(`[data-attach-rename-input="${idx}"]`);
+            if (input) { input.focus(); input.select(); }
+          }
+          return;
+        }
+        if (event.target.matches('[data-attach-rename-save]')) {
+          const idx = Number(event.target.dataset.attachRenameSave);
+          const input = attachOverlay.querySelector(`[data-attach-rename-input="${idx}"]`);
+          if (input && attachModalContext) {
+            const newName = input.value.trim();
+            if (newName) {
+              const current = getModalAttachments();
+              if (current[idx]) {
+                current[idx].name = newName;
+                setModalAttachments(current);
+              }
+            }
+            attachModalContext.renamingIndex = -1;
+            renderAttachModal();
+          }
+          return;
+        }
+        if (event.target.matches('[data-attach-download]')) {
+          const idx = Number(event.target.dataset.attachDownload);
+          const path = event.target.dataset.attachPath;
+          const files = getModalAttachments();
+          const file = files[idx];
+          if (file) downloadLocalFile(path || file.path, file.name);
+          return;
+        }
+        if (event.target.matches('[data-attach-delete]')) {
+          const idx = Number(event.target.dataset.attachDelete);
+          const current = getModalAttachments();
+          if (current[idx]) {
+            current.splice(idx, 1);
+            setModalAttachments(current);
+            if (attachModalContext) {
+              attachModalContext.renamingIndex = -1;
+              attachModalContext.previewIndex = -1;
+            }
+            renderAttachModal();
+          }
+          return;
+        }
+      });
+
+      attachOverlay.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && event.target.matches('.attach-file-name-input')) {
+          event.preventDefault();
+          const idx = Number(event.target.dataset.attachRenameInput);
+          const saveBtn = attachOverlay.querySelector(`[data-attach-rename-save="${idx}"]`);
+          saveBtn?.click();
+        }
+        if (event.key === 'Escape') closeAttachModal();
+      });
+    }
+
+    // Service Worker 仅在http/https下注册（file://模式不支持）
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+
+    // PWA安装引导
+    (function setupPWAInstall() {
+      let deferredPrompt = null;
+      const banner = document.getElementById('pwaInstallBanner');
+      const installBtn = document.getElementById('pwaInstallBtn');
+      const closeBtn = document.getElementById('pwaDismissBtn');
+      if (!banner) return;
+
+      // 检查是否已安装（standalone模式）
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                           window.navigator.standalone === true;
+      if (isStandalone) return;
+
+      // 检查是否已关闭过安装提示
+      const dismissed = localStorage.getItem('pwa_install_dismissed');
+      if (dismissed === '1') return;
+
+      // 监听 beforeinstallprompt 事件（Android/Chrome）
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        banner.style.display = 'flex';
+      });
+
+      // 点击安装按钮
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          banner.style.display = 'none';
+          if (outcome === 'accepted') {
+            localStorage.setItem('pwa_install_dismissed', '1');
+          }
+        } else {
+          // iOS Safari 不支持 beforeinstallprompt，显示操作指引
+          showIOSInstallGuide();
+        }
+      });
+
+      // 关闭按钮
+      closeBtn.addEventListener('click', () => {
+        banner.style.display = 'none';
+        localStorage.setItem('pwa_install_dismissed', '1');
+      });
+
+      // iOS设备在没有beforeinstallprompt时，延迟显示引导
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        setTimeout(() => {
+          if (!deferredPrompt && localStorage.getItem('pwa_install_dismissed') !== '1') {
+            banner.style.display = 'flex';
+          }
+        }, 3000);
+      }
+
+      function showIOSInstallGuide() {
+        const guide = document.createElement('div');
+        guide.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
+        guide.innerHTML = `
+          <div style="background:#fff;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;">📲</div>
+            <div style="font-size:17px;font-weight:600;margin-bottom:8px;color:#171717;">添加到主屏幕</div>
+            <div style="font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:16px;">
+              点击 Safari 底部的分享按钮<br>
+              <span style="font-size:20px;vertical-align:middle;">⬆️</span><br>
+              选择「添加到主屏幕」<br>
+              <span style="font-size:20px;vertical-align:middle;">➕</span><br>
+              即可将工作台安装为App
+            </div>
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#4B3FE3;color:#fff;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">知道了</button>
+          </div>
+        `;
+        document.body.appendChild(guide);
+      }
+    })();
+
+    render();
+    setupVoiceInput();
+
+    // 手动同步按钮
+    document.getElementById('syncBtn')?.addEventListener('click', manualSync);
+
+    // 同步设置弹窗
+    (function setupSyncSetting() {
+      const overlay = document.getElementById('syncSettingOverlay');
+      const settingBtn = document.getElementById('syncSettingBtn');
+      const closeBtn = document.getElementById('syncSettingClose');
+      const saveBtn = document.getElementById('syncUrlSave');
+      const input = document.getElementById('syncUrlInput');
+      if (!overlay || !settingBtn) return;
+
+      settingBtn.addEventListener('click', () => {
+        input.value = localStorage.getItem('workbench_sync_url') || '';
+        overlay.style.display = 'flex';
+      });
+      closeBtn.addEventListener('click', () => overlay.style.display = 'none');
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.style.display = 'none';
+      });
+      saveBtn.addEventListener('click', () => {
+        let url = input.value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+        localStorage.setItem('workbench_sync_url', url);
+        apiStateUrl = getApiStateUrl();
+        overlay.style.display = 'none';
+        showToast(url ? '同步地址已保存' : '已清除同步地址');
+      });
+    })();
+
+    let voiceRecognition = null;
+    let voiceTargetId = null;
+
+    function setupVoiceInput() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        document.querySelectorAll('.voice-btn').forEach(btn => {
+          btn.style.display = 'none';
+        });
+        return;
+      }
+
+      document.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-voice]');
+        if (!btn) return;
+
+        const targetId = btn.dataset.voice;
+        if (voiceRecognition && voiceTargetId) {
+          voiceRecognition.stop();
+          if (voiceTargetId === targetId) return;
+        }
+
+        const recognition = new SR();
+        recognition.lang = 'zh-CN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        const input = document.getElementById(targetId);
+        const hintId = targetId.startsWith('task') ? 'voiceHint' : 'voiceHintProject';
+        const hint = document.getElementById(hintId);
+
+        const baseText = input.value || '';
+        let finalText = baseText;
+
+        recognition.onstart = () => {
+          btn.classList.add('recording');
+          voiceTargetId = targetId;
+          if (hint) { hint.textContent = '正在聆听... 再次点击结束'; hint.classList.add('active'); }
+        };
+
+        recognition.onresult = (event) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalText += (finalText && !finalText.endsWith(' ') ? '' : '') + transcript;
+            } else {
+              interim += transcript;
+            }
+          }
+          input.value = (finalText + interim).trim();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        recognition.onerror = (event) => {
+          if (event.error === 'not-allowed') {
+            showToast('请允许麦克风权限以使用语音输入');
+          } else if (event.error === 'no-speech') {
+            showToast('未检测到语音，请重试');
+          }
+        };
+
+        recognition.onend = () => {
+          btn.classList.remove('recording');
+          voiceTargetId = null;
+          if (hint) { hint.textContent = ''; hint.classList.remove('active'); }
+        };
+
+        recognition.start();
+        voiceRecognition = recognition;
+      });
+    }
+  </script>
+
+<div class="pd-overlay" id="projectDetailOverlay">
+  <div class="pd-page">
+    <div class="pd-header">
+      <button class="pd-back" type="button" data-pd-back>&larr;</button>
+      <div class="pd-header-title" id="pdTitle">项目详情</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="pd-body" id="pdBody"></div>
+    <div class="pd-back-bottom">
+      <button type="button" data-pd-back>&larr; 返回项目列表</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('projectDetailOverlay').addEventListener('click', event => {
+    if (event.target.matches('[data-pd-back]')) {
+      closeProjectDetail();
+      return;
+    }
+    if (event.target.matches('[data-pd-add-progress]')) {
+      if (pdProjectIndex < 0 || !state.projects[pdProjectIndex]) return;
+      const date = document.getElementById('pdProgressDate').value;
+      const progress = document.getElementById('pdProgressText').value.trim();
+      const remark = document.getElementById('pdProgressRemark').value.trim();
+      if (!progress) { showToast('请输入进展描述'); return; }
+      if (!state.projects[pdProjectIndex].progressLog) state.projects[pdProjectIndex].progressLog = [];
+      state.projects[pdProjectIndex].progressLog.push({ date, progress, remark });
+      saveState();
+      renderProjectDetail(state.projects[pdProjectIndex]);
+      return;
+    }
+    const delBtn = event.target.closest('[data-pd-del-progress]');
+    if (delBtn && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+      const idx = Number(delBtn.dataset.pdDelProgress);
+      if (state.projects[pdProjectIndex].progressLog) {
+        state.projects[pdProjectIndex].progressLog.splice(idx, 1);
+        saveState();
+        renderProjectDetail(state.projects[pdProjectIndex]);
+      }
+      return;
+    }
+    if (event.target.matches('[data-pd-open-attach]')) {
+      if (pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+        openAttachModal('project', pdProjectIndex, state.projects[pdProjectIndex].name);
+      }
+      return;
+    }
+  });
+
+  document.getElementById('projectDetailOverlay').addEventListener('change', event => {
+    if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+      state.projects[pdProjectIndex][event.target.dataset.pdField] = event.target.value;
+      saveState();
+    }
+  });
+
+  document.getElementById('projectDetailOverlay').addEventListener('blur', event => {
+    if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+      const field = event.target.dataset.pdField;
+      state.projects[pdProjectIndex][field] = event.target.tagName === 'SELECT' ? event.target.value : event.target.value.trim();
+      saveState();
+    }
+  }, true);
+</script>
+</body>
+</html>
