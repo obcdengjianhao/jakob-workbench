@@ -765,42 +765,6 @@
       transform: translate(-50%, -6px);
     }
 
-    .voice-btn {
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      border: 1px solid rgba(75, 63, 227, .22);
-      border-radius: 12px;
-      background: var(--card);
-      color: var(--primary);
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all .2s;
-    }
-
-    .voice-btn.recording {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .6; }
-    }
-
-    .input-with-voice {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .input-with-voice .field { flex: 1; }
-
     .ios-notice {
       padding: 10px 12px;
       border-radius: 10px;
@@ -811,16 +775,76 @@
       margin-top: 8px;
     }
 
-    .voice-hint {
-      font-size: 11px;
-      color: var(--muted);
-      padding: 4px 0;
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 600;
     }
 
-    .voice-hint.active {
-      color: var(--danger);
-      font-weight: 700;
+    .card-add-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
+
+    .add-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .add-modal {
+      background: var(--card);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px 16px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .add-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .add-modal-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .add-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .add-modal-body { display: flex; flex-direction: column; gap: 12px; }
+    .add-modal-body .field { width: 100%; box-sizing: border-box; }
+    .add-modal-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .add-modal-actions button { flex: 1; }
   </style>
 </head>
 <body>
@@ -877,12 +901,18 @@
 
 
       <div class="card">
-        <div class="card-title">事项动态 <span class="muted">最近</span></div>
+        <div class="card-title-row">
+          <span>事项动态 <span class="muted">最近</span></span>
+          <button class="card-add-btn" data-add="task" type="button">+</button>
+        </div>
         <div id="recentList"></div>
       </div>
 
       <div class="card">
-        <div class="card-title">项目进度概览 <span class="muted">Top 4</span></div>
+        <div class="card-title-row">
+          <span>项目进度概览 <span class="muted">Top 4</span></span>
+          <button class="card-add-btn" data-add="project" type="button">+</button>
+        </div>
         <div id="homeProjects"></div>
       </div>
 
@@ -890,41 +920,19 @@
 
     <section class="screen" id="tasks">
       <div class="card">
-        <div class="card-title">新增日程 / 待办</div>
-        <div class="input-row">
-          <div class="input-with-voice">
-            <input class="field" id="taskTitle" placeholder="例如：明天跟进成本测算">
-            <button class="voice-btn" type="button" data-voice="taskTitle" title="语音输入">🎤</button>
-          </div>
-          <div class="input-with-voice">
-            <input class="field" id="taskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
-            <button class="voice-btn" type="button" data-voice="taskMeta" title="语音输入">🎤</button>
-          </div>
-          <div class="voice-hint" id="voiceHint"></div>
-          <button class="btn" id="addTaskBtn">加入工作台</button>
+        <div class="card-title-row">
+          <span>事项管理 <span class="muted" id="taskDoneText"></span></span>
+          <button class="card-add-btn" data-add="task" type="button">+</button>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">待办清单 <span class="muted" id="taskDoneText"></span></div>
         <div id="taskList"></div>
       </div>
     </section>
 
     <section class="screen" id="projects">
       <div class="card">
-        <div class="card-title">新增项目</div>
-        <div class="input-row">
-          <div class="input-with-voice">
-            <input class="field" id="projectName" placeholder="项目名称">
-            <button class="voice-btn" type="button" data-voice="projectName" title="语音输入">🎤</button>
-          </div>
-          <div class="input-with-voice">
-            <input class="field" id="projectNext" placeholder="本周重点 / 下一步">
-            <button class="voice-btn" type="button" data-voice="projectNext" title="语音输入">🎤</button>
-          </div>
-          <div class="voice-hint" id="voiceHintProject"></div>
-          <button class="btn" id="addProjectBtn">新增项目</button>
+        <div class="card-title-row">
+          <span>项目管理 <span class="muted">全部</span></span>
+          <button class="card-add-btn" data-add="project" type="button">+</button>
         </div>
       </div>
       <div id="projectList"></div>
@@ -980,6 +988,16 @@
         <button class="attach-modal-close" data-attach-close>&times;</button>
       </div>
       <div class="attach-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="add-overlay" id="addOverlay" style="display:none;">
+    <div class="add-modal">
+      <div class="add-modal-header">
+        <span class="add-modal-title" id="addModalTitle">新增</span>
+        <button class="add-modal-close" data-add-close type="button">&times;</button>
+      </div>
+      <div class="add-modal-body" id="addModalBody"></div>
     </div>
   </div>
 
@@ -1568,9 +1586,9 @@
       document.getElementById('activeProjectCount').textContent = activeProjects.length;
       document.getElementById('riskCount').textContent = risks.length;
 
-      document.getElementById('recentList').innerHTML = state.tasks.slice(0, 4).map(task => `
-        <div class="item ${task.done ? 'done' : ''}">
-          <div class="check"></div>
+      document.getElementById('recentList').innerHTML = state.tasks.slice(0, 4).map((task, index) => `
+        <div class="item ${task.done ? 'done' : ''}" data-home-task="${index}" style="cursor:pointer;">
+          <div class="check" data-home-toggle="${index}"></div>
           <div>
             <div class="title">${task.title}</div>
             <div class="meta">${task.meta}</div>
@@ -1601,19 +1619,32 @@
     }
 
     function renderTasks() {
-      const done = state.tasks.filter(t => t.done).length;
-      document.getElementById('taskDoneText').textContent = `${done}/${state.tasks.length} 已完成`;
-      document.getElementById('taskList').innerHTML = state.tasks.map((task, index) => `
-        <div class="item ${task.done ? 'done' : ''}" data-task="${index}">
+      const doneCount = state.tasks.filter(t => t.done).length;
+      document.getElementById('taskDoneText').textContent = `${doneCount}/${state.tasks.length} 已完成`;
+      const undone = state.tasks.map((t, i) => ({ t, i })).filter(x => !x.t.done);
+      const done = state.tasks.map((t, i) => ({ t, i })).filter(x => x.t.done);
+      const itemHtml = ({ t, i }) => `
+        <div class="item ${t.done ? 'done' : ''}" data-task="${i}">
           <div class="check" data-action="toggle-task"></div>
-          <div style="flex:1;">
-            <div class="title">${task.title}</div>
-            <div class="meta">${task.meta}<span class="tag ${task.kind === 'urgent' ? 'urgent' : 'normal'}">${task.kind === 'urgent' ? '重要' : '提醒'}</span></div>
-            ${attachButton('task', task.attachments, task.title)}
+          <div style="flex:1;cursor:pointer;" data-task-detail="${i}">
+            <div class="title">${t.title}</div>
+            <div class="meta">${t.meta}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
+            ${attachButton('task', t.attachments, t.title)}
           </div>
           <button class="btn secondary" data-action="delete-task" style="padding:7px 9px;">删</button>
         </div>
-      `).join('');
+      `;
+      let html = '';
+      if (undone.length) {
+        html += `<div class="meta" style="font-weight:600;padding-top:0;">未完成</div>`;
+        html += undone.map(itemHtml).join('');
+      }
+      if (done.length) {
+        html += `<div class="meta" style="font-weight:600;padding-top:12px;">已完成</div>`;
+        html += done.map(itemHtml).join('');
+      }
+      if (!state.tasks.length) html = '<div class="empty">暂无事项，点击右上角 + 新增</div>';
+      document.getElementById('taskList').innerHTML = html;
     }
 
     function renderProjects() {
@@ -1624,14 +1655,13 @@
         return `
           <article class="project-card ${cls}" data-project="${index}">
             <div class="project-head">
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                   <div class="project-name" contenteditable="true" data-field="name">${project.name}</div>
-                  <button class="btn secondary" data-action="open-detail" style="padding:4px 10px;font-size:12px;flex-shrink:0;">详情</button>
+                  <span class="tag ${project.status === '完结' ? 'done' : project.status === '暂停' ? 'warn' : 'normal'}">${project.status}</span>
                 </div>
-                <div class="meta">${project.priority || '普通'} · <span contenteditable="true" data-field="category">${project.category}</span></div>
+                <div class="meta">${project.priority || '普通'} · <span contenteditable="true" data-field="category">${project.category}</span> · ${project.phase}</div>
               </div>
-              <span class="tag ${project.status === '完结' ? 'done' : project.status === '暂停' ? 'warn' : 'normal'}">${project.status}</span>
             </div>
             <div class="project-selects">
               <select class="field" data-field="priority">${optionHtml(priorityOptions, project.priority || '普通')}</select>
@@ -1643,33 +1673,13 @@
             <div class="meta" style="margin-top:8px;">风险或备注</div>
             <div class="field" contenteditable="true" data-field="risk" style="min-height:44px;">${project.risk}</div>
             ${attachButton('project', project.attachments, project.name)}
-            <div class="progress-log-section" style="margin-top:10px;">
-              <div class="meta" style="font-weight:600;">进度记录</div>
-              <div class="progress-log-list" style="margin-top:6px;">
-                ${(project.progressLog || []).length ? (project.progressLog || []).map((entry, i) => `
-                  <div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <span style="font-size:13px;font-weight:600;">${formatProgressDate(entry.date)}</span>
-                      <button class="btn secondary" data-action="del-progress" data-progress-idx="${i}" style="padding:4px 8px;font-size:12px;">删</button>
-                    </div>
-                    <div style="font-size:13px;margin-top:2px;">${entry.progress}</div>
-                    ${entry.remark ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：' + entry.remark + '</div>' : ''}
-                  </div>
-                `).join('') : '<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:8px 0;">暂无进度记录</div>'}
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
-                <input type="date" class="field" data-progress-input="date" value="${new Date().toISOString().slice(0,10)}" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <input type="text" class="field" data-progress-input="text" placeholder="最新进展" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <input type="text" class="field" data-progress-input="remark" placeholder="备注（选填）" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <button class="btn primary" data-action="add-progress" style="padding:8px;border-radius:8px;font-size:13px;">添加进度记录</button>
-              </div>
-            </div>
             <div class="actions" style="margin:12px 0 0;">
-              <button class="btn secondary" data-action="delete-project">删除项目</button>
+              <button class="btn secondary" data-action="open-detail" style="padding:7px 10px;font-size:13px;">详情</button>
+              <button class="btn secondary" data-action="delete-project" style="padding:7px 10px;font-size:13px;">删除</button>
             </div>
           </article>
         `;
-      }).join('');
+      }).join('') || '<div class="empty">暂无项目，点击右上角 + 新增</div>';
     }
 
     let pdProjectIndex = -1;
@@ -1814,16 +1824,25 @@
       }
     });
 
-    document.getElementById('addTaskBtn').addEventListener('click', () => {
-      const title = document.getElementById('taskTitle').value.trim();
-      const meta = document.getElementById('taskMeta').value.trim() || '工作台提醒';
-      if (!title) return showToast('请先填写事项名称');
-      state.tasks.unshift({ title, meta, done: false, kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal', attachments: [] });
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskMeta').value = '';
-      saveState();
-      render();
-      showToast('已加入工作台');
+    document.getElementById('recentList').addEventListener('click', event => {
+      const toggleEl = event.target.closest('[data-home-toggle]');
+      if (toggleEl) {
+        const index = Number(toggleEl.dataset.homeToggle);
+        if (!Number.isNaN(index) && state.tasks[index]) {
+          state.tasks[index].done = !state.tasks[index].done;
+          saveState();
+          render();
+        }
+        return;
+      }
+      const taskEl = event.target.closest('[data-home-task]');
+      if (taskEl) {
+        const index = Number(taskEl.dataset.homeTask);
+        if (!Number.isNaN(index) && state.tasks[index]) {
+          openTaskDetail(index);
+        }
+        return;
+      }
     });
 
     document.getElementById('taskList').addEventListener('click', event => {
@@ -1841,25 +1860,20 @@
       const index = Number(item.dataset.task);
       if (event.target.dataset.action === 'toggle-task') {
         state.tasks[index].done = !state.tasks[index].done;
-      } else if (event.target.dataset.action === 'delete-task') {
-        state.tasks.splice(index, 1);
-      } else {
+        saveState();
+        render();
         return;
       }
-      saveState();
-      render();
-    });
-
-    document.getElementById('addProjectBtn').addEventListener('click', () => {
-      const name = document.getElementById('projectName').value.trim();
-      const next = document.getElementById('projectNext').value.trim() || '补充本周重点或下一步';
-      if (!name) return showToast('请先填写项目名称');
-      state.projects.unshift({ name, priority: '普通', category: '未分类', phase: '方向确认', status: '进行', next, risk: '/', attachments: [], progressLog: [] });
-      document.getElementById('projectName').value = '';
-      document.getElementById('projectNext').value = '';
-      saveState();
-      render();
-      showToast('项目已新增');
+      if (event.target.dataset.action === 'delete-task') {
+        state.tasks.splice(index, 1);
+        saveState();
+        render();
+        return;
+      }
+      const detailEl = event.target.closest('[data-task-detail]');
+      if (detailEl) {
+        openTaskDetail(index);
+      }
     });
 
     document.getElementById('projectList').addEventListener('input', event => {
@@ -1896,43 +1910,15 @@
         }
         return;
       }
-      const card = event.target.closest('[data-project]');
-      if (!card) return;
-      const index = Number(card.dataset.project);
-      if (event.target.dataset.action === 'add-progress') {
-        if (Number.isNaN(index) || !state.projects[index]) return;
-        const dateInput = card.querySelector('[data-progress-input="date"]');
-        const textInput = card.querySelector('[data-progress-input="text"]');
-        const remarkInput = card.querySelector('[data-progress-input="remark"]');
-        const progress = textInput.value.trim();
-        if (!progress) { showToast('请输入进展描述'); return; }
-        if (!state.projects[index].progressLog) state.projects[index].progressLog = [];
-        state.projects[index].progressLog.push({
-          date: dateInput.value,
-          progress: progress,
-          remark: remarkInput.value.trim()
-        });
+      if (event.target.dataset.action === 'delete-project') {
+        const card = event.target.closest('[data-project]');
+        const index = Number(card?.dataset.project);
+        state.projects.splice(index, 1);
         saveState();
         render();
-        showToast('进度记录已添加');
+        showToast('项目已删除');
         return;
       }
-      if (event.target.dataset.action === 'del-progress') {
-        const pIdx = Number(event.target.dataset.progressIdx);
-        if (Number.isNaN(index) || !state.projects[index]) return;
-        if (state.projects[index].progressLog) {
-          state.projects[index].progressLog.splice(pIdx, 1);
-          saveState();
-          render();
-          showToast('记录已删除');
-        }
-        return;
-      }
-      if (event.target.dataset.action !== 'delete-project') return;
-      state.projects.splice(index, 1);
-      saveState();
-      render();
-      showToast('项目已删除');
     });
 
     // 附件弹窗事件
@@ -2151,7 +2137,6 @@
     })();
 
     render();
-    setupVoiceInput();
 
     // 手动同步按钮
     document.getElementById('syncBtn')?.addEventListener('click', manualSync);
@@ -2182,79 +2167,164 @@
       });
     })();
 
-    let voiceRecognition = null;
-    let voiceTargetId = null;
+    // === 事项详情弹窗 ===
+    let tdTaskIndex = -1;
 
-    function setupVoiceInput() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        document.querySelectorAll('.voice-btn').forEach(btn => {
-          btn.style.display = 'none';
-        });
+    function openTaskDetail(index) {
+      if (index < 0 || !state.tasks[index]) return;
+      tdTaskIndex = index;
+      renderTaskDetail(state.tasks[index]);
+      document.getElementById('taskDetailOverlay').classList.add('show');
+    }
+
+    function closeTaskDetail() {
+      document.getElementById('taskDetailOverlay').classList.remove('show');
+      tdTaskIndex = -1;
+      saveState();
+      render();
+    }
+
+    function renderTaskDetail(task) {
+      document.getElementById('tdTitle').textContent = task.title || '事项详情';
+      document.getElementById('tdBody').innerHTML = `
+        <div class="pd-section">
+          <div class="pd-section-title">事项标题</div>
+          <input class="pd-field" data-td-field="title" value="${escapeHtml(task.title || '')}" style="min-height:38px;">
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">时间 / 备注</div>
+          <textarea class="pd-field" data-td-field="meta" rows="2" placeholder="时间或备注...">${escapeHtml(task.meta || '')}</textarea>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">类型</div>
+          <select class="pd-select" data-td-field="kind">
+            <option value="normal" ${task.kind === 'normal' ? 'selected' : ''}>提醒</option>
+            <option value="urgent" ${task.kind === 'urgent' ? 'selected' : ''}>重要</option>
+          </select>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">状态</div>
+          <button class="btn ${task.done ? 'secondary' : ''}" data-td-toggle-done style="padding:10px 14px;">${task.done ? '已完成（点击恢复未完成）' : '未完成（点击标记完成）'}</button>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">附件（${normalizeAttachments(task.attachments).length}）</div>
+          <button class="btn secondary" data-td-open-attach style="padding:8px 14px;border-radius:8px;font-size:13px;">管理附件</button>
+        </div>
+        <div class="pd-section">
+          <button class="btn secondary" data-td-delete style="padding:10px 14px;color:var(--danger);">删除事项</button>
+        </div>
+      `;
+    }
+
+    // === 新增弹窗 ===
+    let addModalType = null;
+
+    function openAddModal(type) {
+      addModalType = type;
+      const overlay = document.getElementById('addOverlay');
+      const title = document.getElementById('addModalTitle');
+      const body = document.getElementById('addModalBody');
+      if (type === 'task') {
+        title.textContent = '新增事项';
+        body.innerHTML = `
+          <input class="field" id="addTaskTitle" placeholder="事项名称，例如：明天跟进成本测算">
+          <input class="field" id="addTaskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
+          <select class="field" id="addTaskKind">
+            <option value="normal">提醒</option>
+            <option value="urgent">重要</option>
+          </select>
+          <div class="add-modal-actions">
+            <button class="btn secondary" data-add-cancel type="button">取消</button>
+            <button class="btn" data-add-save="task" type="button">保存</button>
+          </div>
+        `;
+      } else if (type === 'project') {
+        title.textContent = '新增项目';
+        body.innerHTML = `
+          <input class="field" id="addProjectName" placeholder="项目名称">
+          <select class="field" id="addProjectPriority">${optionHtml(priorityOptions, '普通')}</select>
+          <input class="field" id="addProjectCategory" placeholder="分类" value="未分类">
+          <select class="field" id="addProjectPhase">${optionHtml(phaseOptions, '方向确认')}</select>
+          <select class="field" id="addProjectStatus">${optionHtml(statusOptions, '进行')}</select>
+          <input class="field" id="addProjectNext" placeholder="本周重点 / 下一步">
+          <input class="field" id="addProjectRisk" placeholder="风险或备注" value="/">
+          <div class="add-modal-actions">
+            <button class="btn secondary" data-add-cancel type="button">取消</button>
+            <button class="btn" data-add-save="project" type="button">保存</button>
+          </div>
+        `;
+      }
+      overlay.style.display = 'flex';
+    }
+
+    function closeAddModal() {
+      document.getElementById('addOverlay').style.display = 'none';
+      addModalType = null;
+    }
+
+    // 统一 [data-add] 点击处理器
+    document.addEventListener('click', event => {
+      const addBtn = event.target.closest('[data-add]');
+      if (addBtn && addBtn.dataset.add) {
+        openAddModal(addBtn.dataset.add);
+      }
+    });
+
+    // 新增弹窗事件处理
+    document.getElementById('addOverlay').addEventListener('click', event => {
+      if (event.target === document.getElementById('addOverlay') || event.target.matches('[data-add-close]') || event.target.matches('[data-add-cancel]')) {
+        closeAddModal();
         return;
       }
-
-      document.addEventListener('click', (event) => {
-        const btn = event.target.closest('[data-voice]');
-        if (!btn) return;
-
-        const targetId = btn.dataset.voice;
-        if (voiceRecognition && voiceTargetId) {
-          voiceRecognition.stop();
-          if (voiceTargetId === targetId) return;
+      if (event.target.matches('[data-add-save]')) {
+        const type = event.target.dataset.addSave;
+        if (type === 'task') {
+          const title = document.getElementById('addTaskTitle').value.trim();
+          const meta = document.getElementById('addTaskMeta').value.trim() || '工作台提醒';
+          const kind = document.getElementById('addTaskKind').value;
+          if (!title) { showToast('请先填写事项名称'); return; }
+          state.tasks.unshift({ title, meta, done: false, kind, attachments: [] });
+          saveState();
+          render();
+          showToast('已加入工作台');
+          closeAddModal();
+        } else if (type === 'project') {
+          const name = document.getElementById('addProjectName').value.trim();
+          if (!name) { showToast('请先填写项目名称'); return; }
+          state.projects.unshift({
+            name,
+            priority: document.getElementById('addProjectPriority').value,
+            category: document.getElementById('addProjectCategory').value.trim() || '未分类',
+            phase: document.getElementById('addProjectPhase').value,
+            status: document.getElementById('addProjectStatus').value,
+            next: document.getElementById('addProjectNext').value.trim() || '补充本周重点或下一步',
+            risk: document.getElementById('addProjectRisk').value.trim() || '/',
+            attachments: [],
+            progressLog: []
+          });
+          saveState();
+          render();
+          showToast('项目已新增');
+          closeAddModal();
         }
-
-        const recognition = new SR();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = true;
-
-        const input = document.getElementById(targetId);
-        const hintId = targetId.startsWith('task') ? 'voiceHint' : 'voiceHintProject';
-        const hint = document.getElementById(hintId);
-
-        const baseText = input.value || '';
-        let finalText = baseText;
-
-        recognition.onstart = () => {
-          btn.classList.add('recording');
-          voiceTargetId = targetId;
-          if (hint) { hint.textContent = '正在聆听... 再次点击结束'; hint.classList.add('active'); }
-        };
-
-        recognition.onresult = (event) => {
-          let interim = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalText += (finalText && !finalText.endsWith(' ') ? '' : '') + transcript;
-            } else {
-              interim += transcript;
-            }
-          }
-          input.value = (finalText + interim).trim();
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        };
-
-        recognition.onerror = (event) => {
-          if (event.error === 'not-allowed') {
-            showToast('请允许麦克风权限以使用语音输入');
-          } else if (event.error === 'no-speech') {
-            showToast('未检测到语音，请重试');
-          }
-        };
-
-        recognition.onend = () => {
-          btn.classList.remove('recording');
-          voiceTargetId = null;
-          if (hint) { hint.textContent = ''; hint.classList.remove('active'); }
-        };
-
-        recognition.start();
-        voiceRecognition = recognition;
-      });
-    }
+        return;
+      }
+    });
   </script>
+
+<div class="pd-overlay" id="taskDetailOverlay">
+  <div class="pd-page">
+    <div class="pd-header">
+      <button class="pd-back" type="button" data-td-back>&larr;</button>
+      <div class="pd-header-title" id="tdTitle">事项详情</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="pd-body" id="tdBody"></div>
+    <div class="pd-back-bottom">
+      <button type="button" data-td-back>&larr; 返回</button>
+    </div>
+  </div>
+</div>
 
 <div class="pd-overlay" id="projectDetailOverlay">
   <div class="pd-page">
@@ -2271,6 +2341,57 @@
 </div>
 
 <script>
+  // 事项详情弹窗事件处理
+  document.getElementById('taskDetailOverlay').addEventListener('click', event => {
+    if (event.target.matches('[data-td-back]')) {
+      closeTaskDetail();
+      return;
+    }
+    if (event.target.matches('[data-td-toggle-done]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        state.tasks[tdTaskIndex].done = !state.tasks[tdTaskIndex].done;
+        saveState();
+        renderTaskDetail(state.tasks[tdTaskIndex]);
+        render();
+      }
+      return;
+    }
+    if (event.target.matches('[data-td-open-attach]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        openAttachModal('task', tdTaskIndex, state.tasks[tdTaskIndex].title);
+      }
+      return;
+    }
+    if (event.target.matches('[data-td-delete]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        state.tasks.splice(tdTaskIndex, 1);
+        saveState();
+        closeTaskDetail();
+        showToast('事项已删除');
+      }
+      return;
+    }
+  });
+
+  document.getElementById('taskDetailOverlay').addEventListener('change', event => {
+    if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+      state.tasks[tdTaskIndex][event.target.dataset.tdField] = event.target.value;
+      saveState();
+    }
+  });
+
+  document.getElementById('taskDetailOverlay').addEventListener('blur', event => {
+    if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+      const field = event.target.dataset.tdField;
+      state.tasks[tdTaskIndex][field] = event.target.value.trim();
+      saveState();
+      if (field === 'title') {
+        document.getElementById('tdTitle').textContent = state.tasks[tdTaskIndex].title || '事项详情';
+      }
+    }
+  }, true);
+
+  // 项目详情弹窗事件处理
   document.getElementById('projectDetailOverlay').addEventListener('click', event => {
     if (event.target.matches('[data-pd-back]')) {
       closeProjectDetail();
