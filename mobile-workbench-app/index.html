@@ -800,6 +800,39 @@
       flex-shrink: 0;
     }
 
+    .sort-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sort-label {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .sort-chip {
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+
+    .sort-chip.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
     .add-overlay {
       position: fixed;
       inset: 0;
@@ -905,6 +938,12 @@
           <span>事项动态 <span class="muted">最近</span></span>
           <button class="card-add-btn" data-add="task" type="button">+</button>
         </div>
+        <div class="sort-row" id="homeTaskSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-home-task-sort="recent">最新</span>
+          <span class="sort-chip" data-home-task-sort="deadline">截止日</span>
+          <span class="sort-chip" data-home-task-sort="important">重要</span>
+        </div>
         <div id="recentList"></div>
       </div>
 
@@ -912,6 +951,12 @@
         <div class="card-title-row">
           <span>项目进度概览 <span class="muted">Top 4</span></span>
           <button class="card-add-btn" data-add="project" type="button">+</button>
+        </div>
+        <div class="sort-row" id="homeProjectSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-home-project-sort="priority">重要程度</span>
+          <span class="sort-chip" data-home-project-sort="recent">新增时间</span>
+          <span class="sort-chip" data-home-project-sort="progress">最新进度</span>
         </div>
         <div id="homeProjects"></div>
       </div>
@@ -924,6 +969,12 @@
           <span>事项管理 <span class="muted" id="taskDoneText"></span></span>
           <button class="card-add-btn" data-add="task" type="button">+</button>
         </div>
+        <div class="sort-row" id="taskSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-task-sort="recent">添加时间</span>
+          <span class="sort-chip" data-task-sort="deadline">截止日期</span>
+          <span class="sort-chip" data-task-sort="important">重要优先</span>
+        </div>
         <div id="taskList"></div>
       </div>
     </section>
@@ -933,6 +984,13 @@
         <div class="card-title-row">
           <span>项目管理 <span class="muted">全部</span></span>
           <button class="card-add-btn" data-add="project" type="button">+</button>
+        </div>
+        <div class="sort-row" id="projectSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-project-sort="priority">重要程度</span>
+          <span class="sort-chip" data-project-sort="recent">新增时间</span>
+          <span class="sort-chip" data-project-sort="progress">最新进度</span>
+          <span class="sort-chip" data-project-sort="status">状态</span>
         </div>
       </div>
       <div id="projectList"></div>
@@ -1005,6 +1063,60 @@
     const phaseOptions = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
     const statusOptions = ['进行', '完结', '暂停'];
     const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
+
+    // 排序状态
+    let homeProjectSortMode = 'priority';
+    let homeTaskSortMode = 'recent';
+    let projectSortMode = 'priority';
+    let taskSortMode = 'recent';
+
+    // 项目排序函数
+    function sortProjects(projects, mode) {
+      const arr = [...(projects || [])];
+      switch (mode) {
+        case 'recent':
+          return arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        case 'progress': {
+          return arr.sort((a, b) => {
+            const la = getLatestProgress(a), lb = getLatestProgress(b);
+            const da = la ? new Date(la.date).getTime() || 0 : 0;
+            const db = lb ? new Date(lb.date).getTime() || 0 : 0;
+            return db - da;
+          });
+        }
+        case 'status':
+          return arr.sort((a, b) => {
+            const order = { '进行': 0, '暂停': 1, '完结': 2 };
+            return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+          });
+        case 'priority':
+        default:
+          return arr.sort((a, b) => priorityScore(b) - priorityScore(a));
+      }
+    }
+
+    // 事项排序函数
+    function sortTasks(tasks, mode) {
+      const arr = [...(tasks || [])];
+      switch (mode) {
+        case 'deadline':
+          return arr.sort((a, b) => {
+            if (!a.deadline && !b.deadline) return 0;
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return new Date(a.deadline) - new Date(b.deadline);
+          });
+        case 'important':
+          return arr.sort((a, b) => {
+            if (a.kind === 'urgent' && b.kind !== 'urgent') return -1;
+            if (a.kind !== 'urgent' && b.kind === 'urgent') return 1;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        case 'recent':
+        default:
+          return arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      }
+    }
     const storageKey = 'formulaWorkbenchSharedData';
     const oldMobileStorageKey = 'formulaWorkbenchMobileApp';
 
@@ -1061,6 +1173,7 @@
         next: normalized.next || '补充本周重点或下一步',
         risk: normalized.risk || '/',
         background: normalized.background || '',
+        createdAt: normalized.createdAt || Date.now(),
         attachments: normalizeAttachments(normalized.attachments),
         progressLog: Array.isArray(normalized.progressLog) ? normalized.progressLog.map(e => ({
           date: String(e.date || ''),
@@ -1088,6 +1201,8 @@
         meta: task?.meta || '工作台提醒',
         done: Boolean(task?.done),
         kind: task?.kind || 'normal',
+        deadline: task?.deadline || '',
+        createdAt: task?.createdAt || Date.now(),
         attachments: normalizeAttachments(task?.attachments)
       };
     }
@@ -1095,7 +1210,7 @@
     function normalizeState(data) {
       return {
         tasks: Array.isArray(data?.tasks) ? data.tasks.map(normalizeTask) : [],
-        projects: sortProjectsByPriority(Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : [])
+        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : []
       };
     }
 
@@ -1586,9 +1701,12 @@
       document.getElementById('activeProjectCount').textContent = activeProjects.length;
       document.getElementById('riskCount').textContent = risks.length;
 
-      document.getElementById('recentList').innerHTML = state.tasks.slice(0, 4).map((task, index) => `
-        <div class="item ${task.done ? 'done' : ''}" data-home-task="${index}" style="cursor:pointer;">
-          <div class="check" data-home-toggle="${index}"></div>
+      const sortedHomeTasks = sortTasks(state.tasks, homeTaskSortMode)
+        .map((task, i) => ({ task, originalIndex: state.tasks.indexOf(task) }))
+        .slice(0, 4);
+      document.getElementById('recentList').innerHTML = sortedHomeTasks.map(({ task, originalIndex }) => `
+        <div class="item ${task.done ? 'done' : ''}" data-home-task="${originalIndex}" style="cursor:pointer;">
+          <div class="check" data-home-toggle="${originalIndex}"></div>
           <div>
             <div class="title">${task.title}</div>
             <div class="meta">${task.meta}</div>
@@ -1596,10 +1714,14 @@
         </div>
       `).join('');
 
-      document.getElementById('homeProjects').innerHTML = state.projects
+      const sortedHomeProjects = state.projects
         .map((project, originalIndex) => ({ project, originalIndex }))
-        .filter(({ project }) => project.status !== '完结')
-        .sort((a, b) => priorityScore(b.project) - priorityScore(a.project) || Number(hasRisk(b.project)) - Number(hasRisk(a.project)))
+        .filter(({ project }) => project.status !== '完结');
+      sortedHomeProjects.sort((a, b) => {
+        const arr = sortProjects([a.project, b.project], homeProjectSortMode);
+        return arr[0] === b.project ? 1 : -1;
+      });
+      document.getElementById('homeProjects').innerHTML = sortedHomeProjects
         .slice(0, 4)
         .map(({ project, originalIndex }) => projectProgressHtml(project, originalIndex))
         .join('');
@@ -1621,39 +1743,48 @@
     function renderTasks() {
       const doneCount = state.tasks.filter(t => t.done).length;
       document.getElementById('taskDoneText').textContent = `${doneCount}/${state.tasks.length} 已完成`;
-      const undone = state.tasks.map((t, i) => ({ t, i })).filter(x => !x.t.done);
-      const done = state.tasks.map((t, i) => ({ t, i })).filter(x => x.t.done);
+      const allWithIndex = state.tasks.map((t, i) => ({ t, i }));
+      const undone = allWithIndex.filter(x => !x.t.done);
+      const done = allWithIndex.filter(x => x.t.done);
+      // 分别排序未完成和已完成
+      const sortedUndone = sortTasks(undone.map(x => x.t), taskSortMode)
+        .map(t => undone.find(x => x.t === t))
+        .filter(Boolean);
+      const sortedDone = sortTasks(done.map(x => x.t), taskSortMode)
+        .map(t => done.find(x => x.t === t))
+        .filter(Boolean);
       const itemHtml = ({ t, i }) => `
         <div class="item ${t.done ? 'done' : ''}" data-task="${i}">
           <div class="check" data-action="toggle-task"></div>
           <div style="flex:1;cursor:pointer;" data-task-detail="${i}">
             <div class="title">${t.title}</div>
-            <div class="meta">${t.meta}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
+            <div class="meta">${t.meta}${t.deadline ? ' · 截止 ' + t.deadline : ''}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
             ${attachButton('task', t.attachments, t.title)}
           </div>
           <button class="btn secondary" data-action="delete-task" style="padding:7px 9px;">删</button>
         </div>
       `;
       let html = '';
-      if (undone.length) {
+      if (sortedUndone.length) {
         html += `<div class="meta" style="font-weight:600;padding-top:0;">未完成</div>`;
-        html += undone.map(itemHtml).join('');
+        html += sortedUndone.map(itemHtml).join('');
       }
-      if (done.length) {
+      if (sortedDone.length) {
         html += `<div class="meta" style="font-weight:600;padding-top:12px;">已完成</div>`;
-        html += done.map(itemHtml).join('');
+        html += sortedDone.map(itemHtml).join('');
       }
       if (!state.tasks.length) html = '<div class="empty">暂无事项，点击右上角 + 新增</div>';
       document.getElementById('taskList').innerHTML = html;
     }
 
     function renderProjects() {
-      state.projects = sortProjectsByPriority(state.projects);
-      document.getElementById('projectList').innerHTML = state.projects.map((project, index) => {
+      const sorted = sortProjects(state.projects, projectSortMode);
+      document.getElementById('projectList').innerHTML = sorted.map((project, index) => {
+        const originalIndex = state.projects.indexOf(project);
         const risk = hasRisk(project);
         const cls = project.status === '完结' ? 'complete' : project.status === '暂停' ? 'pause' : risk ? 'risk' : '';
         return `
-          <article class="project-card ${cls}" data-project="${index}">
+          <article class="project-card ${cls}" data-project="${originalIndex}">
             <div class="project-head">
               <div style="flex:1;">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
@@ -2196,6 +2327,10 @@
           <textarea class="pd-field" data-td-field="meta" rows="2" placeholder="时间或备注...">${escapeHtml(task.meta || '')}</textarea>
         </div>
         <div class="pd-section">
+          <div class="pd-section-title">截止日期</div>
+          <input class="pd-field" data-td-field="deadline" type="date" value="${task.deadline || ''}" style="min-height:38px;color:var(--muted);">
+        </div>
+        <div class="pd-section">
           <div class="pd-section-title">类型</div>
           <select class="pd-select" data-td-field="kind">
             <option value="normal" ${task.kind === 'normal' ? 'selected' : ''}>提醒</option>
@@ -2229,6 +2364,7 @@
         body.innerHTML = `
           <input class="field" id="addTaskTitle" placeholder="事项名称，例如：明天跟进成本测算">
           <input class="field" id="addTaskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
+          <input class="field" id="addTaskDeadline" type="date" style="color:var(--muted);">
           <select class="field" id="addTaskKind">
             <option value="normal">提醒</option>
             <option value="urgent">重要</option>
@@ -2262,6 +2398,46 @@
       addModalType = null;
     }
 
+    // 排序选项事件处理
+    document.addEventListener('click', event => {
+      // 首页事项排序
+      const homeTaskChip = event.target.closest('[data-home-task-sort]');
+      if (homeTaskChip) {
+        homeTaskSortMode = homeTaskChip.dataset.homeTaskSort;
+        document.querySelectorAll('#homeTaskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        homeTaskChip.classList.add('active');
+        renderHome();
+        return;
+      }
+      // 首页项目排序
+      const homeProjectChip = event.target.closest('[data-home-project-sort]');
+      if (homeProjectChip) {
+        homeProjectSortMode = homeProjectChip.dataset.homeProjectSort;
+        document.querySelectorAll('#homeProjectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        homeProjectChip.classList.add('active');
+        renderHome();
+        return;
+      }
+      // 事项管理页排序
+      const taskChip = event.target.closest('[data-task-sort]');
+      if (taskChip) {
+        taskSortMode = taskChip.dataset.taskSort;
+        document.querySelectorAll('#taskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        taskChip.classList.add('active');
+        renderTasks();
+        return;
+      }
+      // 项目管理页排序
+      const projectChip = event.target.closest('[data-project-sort]');
+      if (projectChip) {
+        projectSortMode = projectChip.dataset.projectSort;
+        document.querySelectorAll('#projectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        projectChip.classList.add('active');
+        renderProjects();
+        return;
+      }
+    });
+
     // 统一 [data-add] 点击处理器
     document.addEventListener('click', event => {
       const addBtn = event.target.closest('[data-add]');
@@ -2282,8 +2458,9 @@
           const title = document.getElementById('addTaskTitle').value.trim();
           const meta = document.getElementById('addTaskMeta').value.trim() || '工作台提醒';
           const kind = document.getElementById('addTaskKind').value;
+          const deadline = document.getElementById('addTaskDeadline').value || '';
           if (!title) { showToast('请先填写事项名称'); return; }
-          state.tasks.unshift({ title, meta, done: false, kind, attachments: [] });
+          state.tasks.unshift({ title, meta, done: false, kind, deadline, createdAt: Date.now(), attachments: [] });
           saveState();
           render();
           showToast('已加入工作台');
@@ -2299,6 +2476,7 @@
             status: document.getElementById('addProjectStatus').value,
             next: document.getElementById('addProjectNext').value.trim() || '补充本周重点或下一步',
             risk: document.getElementById('addProjectRisk').value.trim() || '/',
+            createdAt: Date.now(),
             attachments: [],
             progressLog: []
           });
