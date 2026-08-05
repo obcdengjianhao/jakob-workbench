@@ -1194,6 +1194,33 @@
       return (d.getMonth() + 1) + '月' + d.getDate() + '日';
     }
 
+    function formatDeadline(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const m = d.getMonth() + 1, day = d.getDate();
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      // 如果有时间部分（非 00:00 或 datetime-local 格式），显示时间
+      if (dateStr.includes('T') && (h !== '00' || min !== '00')) {
+        return m + '月' + day + '日 ' + h + ':' + min;
+      }
+      return m + '月' + day + '日';
+    }
+
+    // 将任意日期字符串转为 datetime-local 输入框所需的 YYYY-MM-DDTHH:MM 格式
+    function toDatetimeLocalValue(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${day}T${h}:${min}`;
+    }
+
     function normalizeTask(task) {
       return {
         ...task,
@@ -1758,7 +1785,7 @@
           <div class="check" data-action="toggle-task"></div>
           <div style="flex:1;cursor:pointer;" data-task-detail="${i}">
             <div class="title">${t.title}</div>
-            <div class="meta">${t.meta}${t.deadline ? ' · 截止 ' + t.deadline : ''}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
+            <div class="meta">${t.meta}${t.deadline ? ' · 截止 ' + formatDeadline(t.deadline) : ''}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
             ${attachButton('task', t.attachments, t.title)}
           </div>
           <button class="btn secondary" data-action="delete-task" style="padding:7px 9px;">删</button>
@@ -2328,7 +2355,7 @@
         </div>
         <div class="pd-section">
           <div class="pd-section-title">截止日期</div>
-          <input class="pd-field" data-td-field="deadline" type="date" value="${task.deadline || ''}" style="min-height:38px;color:var(--muted);">
+          <input class="pd-field" data-td-field="deadline" type="datetime-local" value="${toDatetimeLocalValue(task.deadline)}" style="min-height:38px;color:var(--muted);">
         </div>
         <div class="pd-section">
           <div class="pd-section-title">类型</div>
@@ -2364,7 +2391,7 @@
         body.innerHTML = `
           <input class="field" id="addTaskTitle" placeholder="事项名称，例如：明天跟进成本测算">
           <input class="field" id="addTaskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
-          <input class="field" id="addTaskDeadline" type="date" style="color:var(--muted);">
+          <input class="field" id="addTaskDeadline" type="datetime-local" style="color:var(--muted);">
           <select class="field" id="addTaskKind">
             <option value="normal">提醒</option>
             <option value="urgent">重要</option>
