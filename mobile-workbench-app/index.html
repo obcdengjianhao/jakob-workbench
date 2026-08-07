@@ -900,32 +900,28 @@
         <h1>Jakob的工作台</h1>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <button id="syncBtn" type="button" style="background:var(--primary);color:#fff;border:none;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
-          <span id="syncIcon">🔄</span><span id="syncText">同步</span>
-        </button>
-        <button id="syncSettingBtn" type="button" style="background:var(--card);color:var(--text);border:1px solid var(--border);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⚙</button>
         <div class="date-pill" id="todayText"></div>
       </div>
     </header>
 
     <section class="screen active" id="home">
       <div class="grid">
-        <div class="metric">
+        <div class="metric" data-metric-link="tasks" style="cursor:pointer;">
           <div class="label">待办事项</div>
           <div class="value" id="todoCount">0</div>
           <div class="note">未完成事项</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="tasks" style="cursor:pointer;">
           <div class="label">日程提醒</div>
           <div class="value" id="scheduleCount">0</div>
           <div class="note">今天/明天重点</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="projects" style="cursor:pointer;">
           <div class="label">进行中项目</div>
           <div class="value" id="activeProjectCount">0</div>
           <div class="note">需持续跟进</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="projects" style="cursor:pointer;">
           <div class="label">风险提醒</div>
           <div class="value" id="riskCount">0</div>
           <div class="note">含暂停/待确认</div>
@@ -1025,20 +1021,6 @@
   </nav>
   <div class="toast" id="toast"></div>
 
-  <!-- 同步设置弹窗 -->
-  <div id="syncSettingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;">
-    <div style="background:var(--card);border-radius:16px;padding:24px;max-width:360px;width:100%;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <span style="font-size:17px;font-weight:600;">同步设置</span>
-        <button id="syncSettingClose" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);">&times;</button>
-      </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">输入电脑端服务器地址（含端口号），例如：<br>192.168.1.214:3000</div>
-      <input id="syncUrlInput" type="text" placeholder="192.168.1.214:3000" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:12px;box-sizing:border-box;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">保存后，在同一个WiFi下点击「同步」按钮即可与电脑端同步数据。平时不用同步时，工作台完全离线可用。</div>
-      <button id="syncUrlSave" style="width:100%;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">保存</button>
-    </div>
-  </div>
-
   <div class="attach-overlay" id="attachOverlay">
     <div class="attach-modal">
       <div class="attach-modal-header">
@@ -1118,22 +1100,6 @@
       }
     }
     const storageKey = 'formulaWorkbenchSharedData';
-    const oldMobileStorageKey = 'formulaWorkbenchMobileApp';
-
-    // 同步服务器地址：优先使用用户在⚙中设置的地址，否则云端模式用默认/api/state
-    function getApiStateUrl() {
-      const savedUrl = localStorage.getItem('workbench_sync_url') || '';
-      if (savedUrl) {
-        // 用户手动设置了同步地址（如电脑端IP:端口），直接使用
-        return 'http://' + savedUrl + '/api/state';
-      }
-      if (window.location.protocol === 'file:') {
-        return '';
-      }
-      // 云端模式（如GitHub Pages），默认尝试同源 /api/state
-      return '/api/state';
-    }
-    let apiStateUrl = getApiStateUrl();
 
     const seed = {
       tasks: [
@@ -1246,8 +1212,7 @@
     function loadState() {
       try {
         const shared = localStorage.getItem(storageKey);
-        const oldMobile = localStorage.getItem(oldMobileStorageKey);
-        return normalizeState(JSON.parse(shared || oldMobile) || structuredClone(seed));
+        return normalizeState(JSON.parse(shared) || structuredClone(seed));
       } catch {
         return normalizeState(JSON.parse(JSON.stringify(seed)));
       }
@@ -1256,164 +1221,6 @@
     function saveState() {
       state = normalizeState(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
-      // 仅保存到本地，不自动推送
-    }
-
-    // 智能合并本地与远程数据
-    function mergeStates(localState, remoteState) {
-      const localTasks = localState.tasks || [];
-      const remoteTasks = remoteState.tasks || [];
-      const taskMap = new Map();
-
-      // 先放入远程数据
-      remoteTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (key) taskMap.set(key, { ...t });
-      });
-      // 再放入本地数据，同标题以完成状态优先
-      localTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (!key) return;
-        const existing = taskMap.get(key);
-        if (!existing) {
-          taskMap.set(key, { ...t });
-        } else if (t.done && !existing.done) {
-          taskMap.set(key, { ...t });
-        }
-      });
-
-      // 合并项目，按名称去重
-      const localProjects = localState.projects || [];
-      const remoteProjects = remoteState.projects || [];
-      const projectMap = new Map();
-
-      remoteProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (key) projectMap.set(key, { ...p });
-      });
-      localProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (!key) return;
-        const existing = projectMap.get(key);
-        if (!existing) {
-          projectMap.set(key, { ...p });
-        } else {
-          // 合并字段：取非空且更有信息量的值
-          const merged = { ...existing };
-          ['category', 'phase', 'status', 'priority', 'next', 'risk', 'background'].forEach(field => {
-            const localVal = (p[field] || '').trim();
-            const remoteVal = (existing[field] || '').trim();
-            if (localVal && (!remoteVal || remoteVal === '/' || remoteVal === '补充本周重点或下一步')) {
-              merged[field] = localVal;
-            }
-          });
-          // 合并进度记录
-          const existingLogs = Array.isArray(existing.progressLog) ? existing.progressLog : [];
-          const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
-          const logSet = new Set();
-          const mergedLogs = [];
-          [...existingLogs, ...localLogs].forEach(log => {
-            const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
-            if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
-          });
-          merged.progressLog = mergedLogs;
-          // 合并附件
-          const existingAttach = Array.isArray(existing.attachments) ? existing.attachments : [];
-          const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
-          const attachSet = new Set();
-          const mergedAttach = [];
-          [...existingAttach, ...localAttach].forEach(att => {
-            const sig = (att.name || '') + '|' + (att.size || 0);
-            if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
-          });
-          merged.attachments = mergedAttach;
-          projectMap.set(key, merged);
-        }
-      });
-
-      return {
-        tasks: Array.from(taskMap.values()),
-        projects: Array.from(projectMap.values()),
-        updatedAt: new Date().toISOString()
-      };
-    }
-
-    let isSyncing = false;
-
-    async function manualSync() {
-      if (isSyncing) return;
-      // 获取最新的同步URL
-      apiStateUrl = getApiStateUrl();
-      let syncBaseUrl = apiStateUrl;
-      if (!syncBaseUrl) {
-        showToast('请先点⚙设置同步地址');
-        return;
-      }
-      isSyncing = true;
-      const syncBtn = document.getElementById('syncBtn');
-      const syncIcon = document.getElementById('syncIcon');
-      const syncText = document.getElementById('syncText');
-      if (syncBtn) syncBtn.style.opacity = '0.6';
-      if (syncIcon) syncIcon.textContent = '⏳';
-      if (syncText) syncText.textContent = '同步中...';
-
-      // 超时控制：5秒内连不上服务器就提示
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      try {
-        // 1. 获取远程数据
-        const response = await fetch(syncBaseUrl + '?t=' + Date.now(), {
-          cache: 'no-store',
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error('服务器响应异常');
-        const remoteData = await response.json();
-        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) {
-          throw new Error('远程数据格式异常');
-        }
-
-        // 2. 合并本地与远程
-        const localData = normalizeState(state);
-        const merged = mergeStates(localData, remoteData);
-
-        // 3. 保存合并结果到本地
-        state = normalizeState(merged);
-        localStorage.setItem(storageKey, JSON.stringify(state));
-        render();
-
-        // 4. 推送合并结果到服务器
-        await fetch(syncBaseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        if (syncIcon) syncIcon.textContent = '✅';
-        if (syncText) syncText.textContent = '已同步';
-        showToast('同步成功');
-        setTimeout(() => {
-          if (syncIcon) syncIcon.textContent = '🔄';
-          if (syncText) syncText.textContent = '同步';
-          if (syncBtn) syncBtn.style.opacity = '1';
-        }, 2000);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.warn('同步失败:', error);
-        const msg = error.name === 'AbortError' ? '无法连接服务器，请确认在同一WiFi下' : '同步失败，请检查网络';
-        if (syncIcon) syncIcon.textContent = '⚠️';
-        if (syncText) syncText.textContent = '同步失败';
-        showToast(msg);
-        setTimeout(() => {
-          if (syncIcon) syncIcon.textContent = '🔄';
-          if (syncText) syncText.textContent = '同步';
-          if (syncBtn) syncBtn.style.opacity = '1';
-        }, 2500);
-      } finally {
-        isSyncing = false;
-      }
     }
 
     function showToast(text) {
@@ -1973,6 +1780,17 @@
       });
     });
 
+    // 首页指标卡片点击跳转
+    document.querySelectorAll('[data-metric-link]').forEach(card => {
+      card.addEventListener('click', () => {
+        const screen = card.dataset.metricLink;
+        document.querySelectorAll('.nav-btn').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.screen').forEach(item => item.classList.remove('active'));
+        document.querySelector(`.nav-btn[data-screen="${screen}"]`)?.classList.add('active');
+        document.getElementById(screen).classList.add('active');
+      });
+    });
+
     document.getElementById('homeProjects').addEventListener('click', event => {
       const item = event.target.closest('[data-home-project]');
       if (!item) return;
@@ -2295,35 +2113,6 @@
     })();
 
     render();
-
-    // 手动同步按钮
-    document.getElementById('syncBtn')?.addEventListener('click', manualSync);
-
-    // 同步设置弹窗
-    (function setupSyncSetting() {
-      const overlay = document.getElementById('syncSettingOverlay');
-      const settingBtn = document.getElementById('syncSettingBtn');
-      const closeBtn = document.getElementById('syncSettingClose');
-      const saveBtn = document.getElementById('syncUrlSave');
-      const input = document.getElementById('syncUrlInput');
-      if (!overlay || !settingBtn) return;
-
-      settingBtn.addEventListener('click', () => {
-        input.value = localStorage.getItem('workbench_sync_url') || '';
-        overlay.style.display = 'flex';
-      });
-      closeBtn.addEventListener('click', () => overlay.style.display = 'none');
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.style.display = 'none';
-      });
-      saveBtn.addEventListener('click', () => {
-        let url = input.value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-        localStorage.setItem('workbench_sync_url', url);
-        apiStateUrl = getApiStateUrl();
-        overlay.style.display = 'none';
-        showToast(url ? '同步地址已保存' : '已清除同步地址');
-      });
-    })();
 
     // === 事项详情弹窗 ===
     let tdTaskIndex = -1;

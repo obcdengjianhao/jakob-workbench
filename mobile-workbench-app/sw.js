@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jakob-workbench-mobile-v12';
+const CACHE_NAME = 'jakob-workbench-mobile-v13';
 const APP_SHELL = [
   './',
   './index.html',
@@ -42,17 +42,6 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-
-  // API请求 - 仅在手动同步时触发，直接走网络，失败由调用方处理
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      Promise.race([
-        fetch(event.request),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
-      ])
-    );
-    return;
-  }
 
   // 导航请求 - 缓存优先，秒开页面，后台静默更新
   if (event.request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
