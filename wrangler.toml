@@ -1,7 +1,11 @@
 name = "jakob-workbench"
-pages_build_output_dir = "public"
+main = "worker.js"
 compatibility_date = "2024-09-23"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
 
 [[kv_namespaces]]
 binding = "WORKBENCH_STATE"
-id = "PLACEHOLDER_KV_ID"
+id = "28f30f164d384f62a49bf1263ec8eb0f"

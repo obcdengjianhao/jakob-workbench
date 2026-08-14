@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#4B3FE3">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -488,93 +488,6 @@
     }
 
 
-    .workspace-card {
-      background: linear-gradient(135deg, #fff 0%, #f8f8ff 100%);
-      border: 1px solid rgba(75, 63, 227, .12);
-    }
-
-    .workspace-head {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .workspace-title {
-      font-size: 16px;
-      font-weight: 750;
-      color: var(--text);
-    }
-
-    .workspace-desc {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .workspace-status {
-      display: inline-flex;
-      width: fit-content;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: rgba(75, 63, 227, .08);
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .workspace-actions,
-    .workspace-folders {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .workspace-btn,
-    .workspace-folder-btn {
-      border: 1px solid rgba(75, 63, 227, .22);
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #fff;
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 750;
-      text-align: left;
-    }
-
-    .workspace-btn.primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .workspace-folder-btn strong {
-      display: block;
-      color: var(--text);
-      font-size: 13px;
-      margin-bottom: 3px;
-    }
-
-    .workspace-folder-btn span {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .workspace-folder-list {
-      display: none;
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-    }
-
-    .workspace-folder-list.show { display: block; }
-    .workspace-folder-list-title { font-size: 13px; font-weight: 750; margin-bottom: 8px; }
-    .workspace-file-row { padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-    .workspace-file-row:last-child { border-bottom: none; }
-    .workspace-file-row a { color: var(--primary); text-decoration: none; word-break: break-all; }
-
-
     .actions {
       display: flex;
       gap: 8px;
@@ -652,17 +565,33 @@
       position: sticky; top: 0; z-index: 10;
       background: #fff;
       display: flex; justify-content: space-between; align-items: center;
-      padding: 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid rgba(0,0,0,.08);
+      padding-top: max(12px, env(safe-area-inset-top));
     }
     .pd-header-title {
       font-size: 17px; font-weight: 700;
       flex: 1; text-align: center;
     }
     .pd-back {
-      background: none; border: none; font-size: 22px;
-      color: #52525B; cursor: pointer; padding: 4px 8px;
+      background: rgba(75, 63, 227, .08); border: none; font-size: 20px;
+      color: #4B3FE3; cursor: pointer;
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
+    .pd-back:active { background: rgba(75, 63, 227, .18); }
+    .pd-back-bottom {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      padding: 20px 16px; padding-bottom: max(20px, env(safe-area-inset-bottom));
+      background: #fff; border-top: 1px solid rgba(0,0,0,.06);
+    }
+    .pd-back-bottom button {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: #4B3FE3; color: #fff; font-size: 16px; font-weight: 600;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .pd-back-bottom button:active { background: #3a32b8; }
     .pd-body {
       padding: 16px;
       display: flex; flex-direction: column; gap: 20px;
@@ -743,31 +672,6 @@
       margin: 10px 0;
     }
 
-    .progress {
-      display: grid;
-      grid-template-columns: 1fr 38px;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .bar {
-      height: 8px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: #e9ecf4;
-    }
-
-    .fill {
-      height: 100%;
-      background: var(--primary);
-      border-radius: inherit;
-    }
-
-    .danger-text { color: var(--danger); }
-    .warn-text { color: var(--warning); }
-    .success-text { color: var(--success); }
-
     .formula-card {
       padding: 16px;
       margin-bottom: 12px;
@@ -836,62 +740,148 @@
       transform: translate(-50%, -6px);
     }
 
-    .voice-btn {
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      border: 1px solid rgba(75, 63, 227, .22);
-      border-radius: 12px;
-      background: var(--card);
-      color: var(--primary);
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card-add-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
       font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: all .2s;
+      flex-shrink: 0;
     }
 
-    .voice-btn.recording {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .6; }
-    }
-
-    .input-with-voice {
+    .sort-row {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
     }
 
-    .input-with-voice .field { flex: 1; }
-
-    .ios-notice {
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: rgba(217, 138, 0, .08);
-      color: var(--warning);
-      font-size: 12px;
-      line-height: 1.6;
-      margin-top: 8px;
-    }
-
-    .voice-hint {
+    .sort-label {
       font-size: 11px;
       color: var(--muted);
-      padding: 4px 0;
+      flex-shrink: 0;
     }
 
-    .voice-hint.active {
-      color: var(--danger);
-      font-weight: 700;
+    .search-input {
+      width: 100%;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      -webkit-appearance: none;
     }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .data-mgmt-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .data-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .data-btn:active {
+      background: var(--primary-soft);
+    }
+
+    .sort-chip {
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+
+    .sort-chip.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .add-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .add-modal {
+      background: var(--card);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px 16px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .add-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .add-modal-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .add-modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .add-modal-body { display: flex; flex-direction: column; gap: 12px; }
+    .add-modal-body .field { width: 100%; box-sizing: border-box; }
+    .add-modal-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .add-modal-actions button { flex: 1; }
   </style>
 </head>
 <body>
@@ -914,32 +904,28 @@
         <h1>Jakob的工作台</h1>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <button id="syncBtn" type="button" style="background:var(--primary);color:#fff;border:none;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
-          <span id="syncIcon">🔄</span><span id="syncText">同步</span>
-        </button>
-        <button id="syncSettingBtn" type="button" style="background:var(--card);color:var(--text);border:1px solid var(--border);width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⚙</button>
         <div class="date-pill" id="todayText"></div>
       </div>
     </header>
 
     <section class="screen active" id="home">
       <div class="grid">
-        <div class="metric">
+        <div class="metric" data-metric-link="tasks" style="cursor:pointer;">
           <div class="label">待办事项</div>
           <div class="value" id="todoCount">0</div>
           <div class="note">未完成事项</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="tasks" style="cursor:pointer;">
           <div class="label">日程提醒</div>
           <div class="value" id="scheduleCount">0</div>
           <div class="note">今天/明天重点</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="projects" style="cursor:pointer;">
           <div class="label">进行中项目</div>
           <div class="value" id="activeProjectCount">0</div>
           <div class="note">需持续跟进</div>
         </div>
-        <div class="metric">
+        <div class="metric" data-metric-link="projects" style="cursor:pointer;">
           <div class="label">风险提醒</div>
           <div class="value" id="riskCount">0</div>
           <div class="note">含暂停/待确认</div>
@@ -948,77 +934,77 @@
 
 
       <div class="card">
-        <div class="card-title">事项动态 <span class="muted">最近</span></div>
+        <div class="card-title-row">
+          <span>事项动态 <span class="muted">最近</span></span>
+          <button class="card-add-btn" data-add="task" type="button" aria-label="新增事项">+</button>
+        </div>
+        <div class="sort-row" id="homeTaskSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-home-task-sort="recent">最新</span>
+          <span class="sort-chip" data-home-task-sort="deadline">截止日</span>
+          <span class="sort-chip" data-home-task-sort="important">重要</span>
+        </div>
         <div id="recentList"></div>
       </div>
 
       <div class="card">
-        <div class="card-title">项目进度概览 <span class="muted">Top 4</span></div>
+        <div class="card-title-row">
+          <span>项目进度概览 <span class="muted">Top 4</span></span>
+          <button class="card-add-btn" data-add="project" type="button" aria-label="新增项目">+</button>
+        </div>
+        <div class="sort-row" id="homeProjectSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-home-project-sort="priority">重要程度</span>
+          <span class="sort-chip" data-home-project-sort="recent">新增时间</span>
+          <span class="sort-chip" data-home-project-sort="progress">最新进度</span>
+        </div>
         <div id="homeProjects"></div>
       </div>
 
-  <div class="card workspace-card">
-    <div class="workspace-head">
-      <div>
-        <div class="workspace-title">工作台地址</div>
-        <div class="workspace-desc">选择一个本机文件夹后，系统会在该地址下创建并更新 Jakob的工作台 文件夹，附件按“零碎事项管理 / 项目 / 配方”和分类自动存放。</div>
+      <div class="card">
+        <div class="card-title-row">
+          <span>数据管理</span>
+        </div>
+        <div class="data-mgmt-row">
+          <button class="data-btn" id="exportBtn" type="button">导出数据</button>
+          <button class="data-btn" id="importBtn" type="button">导入数据</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;">
+        </div>
       </div>
-      <div class="workspace-status" id="workspaceStatus">未选择地址</div>
-    </div>
-    <div class="workspace-actions" id="workspaceActions">
-      <button class="workspace-btn primary" type="button" data-workspace-pick>选择工作台地址</button>
-      <button class="workspace-btn" type="button" data-workspace-sync>同步现有附件</button>
-    </div>
-    <div id="iosNotice" style="display:none;" class="ios-notice">
-      当前为手机端，附件存储功能需要在电脑端 Chrome 或 Edge 浏览器中选择工作台地址。手机端可正常使用事项和项目管理功能。
-    </div>
-    <div class="workspace-folders">
-      <button class="workspace-folder-btn" type="button" data-workspace-open="task"><strong>零碎事项管理附件</strong><span>按分类查看事项附件</span></button>
-      <button class="workspace-folder-btn" type="button" data-workspace-open="project"><strong>项目附件</strong><span>按分类查看项目附件</span></button>
-      <button class="workspace-folder-btn" type="button" data-workspace-open="formula"><strong>配方附件</strong><span>预留配方附件目录</span></button>
-    </div>
-    <div class="workspace-folder-list" id="workspaceFolderList"></div>
-  </div>
+
     </section>
 
     <section class="screen" id="tasks">
       <div class="card">
-        <div class="card-title">新增日程 / 待办</div>
-        <div class="input-row">
-          <div class="input-with-voice">
-            <input class="field" id="taskTitle" placeholder="例如：明天跟进成本测算">
-            <button class="voice-btn" type="button" data-voice="taskTitle" title="语音输入">🎤</button>
-          </div>
-          <div class="input-with-voice">
-            <input class="field" id="taskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
-            <button class="voice-btn" type="button" data-voice="taskMeta" title="语音输入">🎤</button>
-          </div>
-          <div class="voice-hint" id="voiceHint"></div>
-          <button class="btn" id="addTaskBtn">加入工作台</button>
+        <div class="card-title-row">
+          <span>事项管理 <span class="muted" id="taskDoneText"></span></span>
+          <button class="card-add-btn" data-add="task" type="button" aria-label="新增事项">+</button>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">待办清单 <span class="muted" id="taskDoneText"></span></div>
+        <div class="sort-row" id="taskSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-task-sort="recent">添加时间</span>
+          <span class="sort-chip" data-task-sort="deadline">截止日期</span>
+          <span class="sort-chip" data-task-sort="important">重要优先</span>
+        </div>
+        <input type="search" class="search-input" id="taskSearch" placeholder="搜索事项..." autocomplete="off">
         <div id="taskList"></div>
       </div>
     </section>
 
     <section class="screen" id="projects">
       <div class="card">
-        <div class="card-title">新增项目</div>
-        <div class="input-row">
-          <div class="input-with-voice">
-            <input class="field" id="projectName" placeholder="项目名称">
-            <button class="voice-btn" type="button" data-voice="projectName" title="语音输入">🎤</button>
-          </div>
-          <div class="input-with-voice">
-            <input class="field" id="projectNext" placeholder="本周重点 / 下一步">
-            <button class="voice-btn" type="button" data-voice="projectNext" title="语音输入">🎤</button>
-          </div>
-          <div class="voice-hint" id="voiceHintProject"></div>
-          <button class="btn" id="addProjectBtn">新增项目</button>
+        <div class="card-title-row">
+          <span>项目管理 <span class="muted">全部</span></span>
+          <button class="card-add-btn" data-add="project" type="button" aria-label="新增项目">+</button>
         </div>
+        <div class="sort-row" id="projectSortRow">
+          <span class="sort-label">排序</span>
+          <span class="sort-chip active" data-project-sort="priority">重要程度</span>
+          <span class="sort-chip" data-project-sort="recent">新增时间</span>
+          <span class="sort-chip" data-project-sort="progress">最新进度</span>
+          <span class="sort-chip" data-project-sort="status">状态</span>
+        </div>
+        <input type="search" class="search-input" id="projectSearch" placeholder="搜索项目..." autocomplete="off">
       </div>
       <div id="projectList"></div>
     </section>
@@ -1052,27 +1038,23 @@
   </nav>
   <div class="toast" id="toast"></div>
 
-  <!-- 同步设置弹窗 -->
-  <div id="syncSettingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;">
-    <div style="background:var(--card);border-radius:16px;padding:24px;max-width:360px;width:100%;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <span style="font-size:17px;font-weight:600;">同步设置</span>
-        <button id="syncSettingClose" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);">&times;</button>
-      </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">输入电脑端服务器地址（含端口号），例如：<br>192.168.1.214:3000</div>
-      <input id="syncUrlInput" type="text" placeholder="192.168.1.214:3000" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:12px;box-sizing:border-box;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">保存后，在同一个WiFi下点击「同步」按钮即可与电脑端同步数据。平时不用同步时，工作台完全离线可用。</div>
-      <button id="syncUrlSave" style="width:100%;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">保存</button>
-    </div>
-  </div>
-
   <div class="attach-overlay" id="attachOverlay">
     <div class="attach-modal">
       <div class="attach-modal-header">
         <span class="attach-modal-title">附件管理</span>
-        <button class="attach-modal-close" data-attach-close>&times;</button>
+        <button class="attach-modal-close" data-attach-close aria-label="关闭">&times;</button>
       </div>
       <div class="attach-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="add-overlay" id="addOverlay" style="display:none;">
+    <div class="add-modal">
+      <div class="add-modal-header">
+        <span class="add-modal-title" id="addModalTitle">新增</span>
+        <button class="add-modal-close" data-add-close type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="add-modal-body" id="addModalBody"></div>
     </div>
   </div>
 
@@ -1080,17 +1062,43 @@
     const phaseOptions = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
     const statusOptions = ['进行', '完结', '暂停'];
     const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
-    const storageKey = 'formulaWorkbenchSharedData';
-    const oldMobileStorageKey = 'formulaWorkbenchMobileApp';
 
-    // 同步服务器地址：云端模式自动检测，离线模式(file://)从localStorage读取用户配置
-    function getApiStateUrl() {
-      if (window.location.protocol === 'file:') {
-        return localStorage.getItem('workbench_sync_url') || '';
+    // 排序状态
+    let homeProjectSortMode = 'priority';
+    let homeTaskSortMode = 'recent';
+    let projectSortMode = 'priority';
+    let taskSortMode = 'recent';
+
+    // 搜索状态
+    let taskSearchQuery = '';
+    let projectSearchQuery = '';
+
+    // 项目排序函数
+    function sortProjects(projects, mode) {
+      const arr = [...(projects || [])];
+      switch (mode) {
+        case 'recent':
+          return arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        case 'progress': {
+          return arr.sort((a, b) => {
+            const la = getLatestProgress(a), lb = getLatestProgress(b);
+            const da = la ? new Date(la.date).getTime() || 0 : 0;
+            const db = lb ? new Date(lb.date).getTime() || 0 : 0;
+            return db - da;
+          });
+        }
+        case 'status':
+          return arr.sort((a, b) => {
+            const order = { '进行': 0, '暂停': 1, '完结': 2 };
+            return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+          });
+        case 'priority':
+        default:
+          return arr.sort((a, b) => priorityScore(b) - priorityScore(a));
       }
-      return '/api/state';
     }
-    let apiStateUrl = getApiStateUrl();
+
+    const storageKey = 'formulaWorkbenchSharedData';
 
     const seed = {
       tasks: [
@@ -1130,6 +1138,7 @@
         next: normalized.next || '补充本周重点或下一步',
         risk: normalized.risk || '/',
         background: normalized.background || '',
+        createdAt: normalized.createdAt || Date.now(),
         attachments: normalizeAttachments(normalized.attachments),
         progressLog: Array.isArray(normalized.progressLog) ? normalized.progressLog.map(e => ({
           date: String(e.date || ''),
@@ -1150,6 +1159,33 @@
       return (d.getMonth() + 1) + '月' + d.getDate() + '日';
     }
 
+    function formatDeadline(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      const m = d.getMonth() + 1, day = d.getDate();
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      // 如果有时间部分（非 00:00 或 datetime-local 格式），显示时间
+      if (dateStr.includes('T') && (h !== '00' || min !== '00')) {
+        return m + '月' + day + '日 ' + h + ':' + min;
+      }
+      return m + '月' + day + '日';
+    }
+
+    // 将任意日期字符串转为 datetime-local 输入框所需的 YYYY-MM-DDTHH:MM 格式
+    function toDatetimeLocalValue(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${day}T${h}:${min}`;
+    }
+
     function normalizeTask(task) {
       return {
         ...task,
@@ -1157,6 +1193,8 @@
         meta: task?.meta || '工作台提醒',
         done: Boolean(task?.done),
         kind: task?.kind || 'normal',
+        deadline: task?.deadline || '',
+        createdAt: task?.createdAt || Date.now(),
         attachments: normalizeAttachments(task?.attachments)
       };
     }
@@ -1164,7 +1202,7 @@
     function normalizeState(data) {
       return {
         tasks: Array.isArray(data?.tasks) ? data.tasks.map(normalizeTask) : [],
-        projects: sortProjectsByPriority(Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : [])
+        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : []
       };
     }
 
@@ -1173,8 +1211,7 @@
     function loadState() {
       try {
         const shared = localStorage.getItem(storageKey);
-        const oldMobile = localStorage.getItem(oldMobileStorageKey);
-        return normalizeState(JSON.parse(shared || oldMobile) || structuredClone(seed));
+        return normalizeState(JSON.parse(shared) || structuredClone(seed));
       } catch {
         return normalizeState(JSON.parse(JSON.stringify(seed)));
       }
@@ -1182,172 +1219,52 @@
 
     function saveState() {
       state = normalizeState(state);
-      localStorage.setItem(storageKey, JSON.stringify(state));
-      // 仅保存到本地，不自动推送
-    }
-
-    // 智能合并本地与远程数据
-    function mergeStates(localState, remoteState) {
-      const localTasks = localState.tasks || [];
-      const remoteTasks = remoteState.tasks || [];
-      const taskMap = new Map();
-
-      // 先放入远程数据
-      remoteTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (key) taskMap.set(key, { ...t });
-      });
-      // 再放入本地数据，同标题以完成状态优先
-      localTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (!key) return;
-        const existing = taskMap.get(key);
-        if (!existing) {
-          taskMap.set(key, { ...t });
-        } else if (t.done && !existing.done) {
-          taskMap.set(key, { ...t });
-        }
-      });
-
-      // 合并项目，按名称去重
-      const localProjects = localState.projects || [];
-      const remoteProjects = remoteState.projects || [];
-      const projectMap = new Map();
-
-      remoteProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (key) projectMap.set(key, { ...p });
-      });
-      localProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (!key) return;
-        const existing = projectMap.get(key);
-        if (!existing) {
-          projectMap.set(key, { ...p });
-        } else {
-          // 合并字段：取非空且更有信息量的值
-          const merged = { ...existing };
-          ['category', 'phase', 'status', 'priority', 'next', 'risk', 'background'].forEach(field => {
-            const localVal = (p[field] || '').trim();
-            const remoteVal = (existing[field] || '').trim();
-            if (localVal && (!remoteVal || remoteVal === '/' || remoteVal === '补充本周重点或下一步')) {
-              merged[field] = localVal;
-            }
-          });
-          // 合并进度记录
-          const existingLogs = Array.isArray(existing.progressLog) ? existing.progressLog : [];
-          const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
-          const logSet = new Set();
-          const mergedLogs = [];
-          [...existingLogs, ...localLogs].forEach(log => {
-            const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
-            if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
-          });
-          merged.progressLog = mergedLogs;
-          // 合并附件
-          const existingAttach = Array.isArray(existing.attachments) ? existing.attachments : [];
-          const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
-          const attachSet = new Set();
-          const mergedAttach = [];
-          [...existingAttach, ...localAttach].forEach(att => {
-            const sig = (att.name || '') + '|' + (att.size || 0);
-            if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
-          });
-          merged.attachments = mergedAttach;
-          projectMap.set(key, merged);
-        }
-      });
-
-      return {
-        tasks: Array.from(taskMap.values()),
-        projects: Array.from(projectMap.values()),
-        updatedAt: new Date().toISOString()
-      };
-    }
-
-    let isSyncing = false;
-
-    async function manualSync() {
-      if (isSyncing) return;
-      // 构建完整同步URL
-      let syncBaseUrl = apiStateUrl;
-      if (window.location.protocol === 'file:') {
-        const savedUrl = localStorage.getItem('workbench_sync_url') || '';
-        if (!savedUrl) {
-          showToast('请先点⚙设置同步地址');
-          return;
-        }
-        syncBaseUrl = 'http://' + savedUrl + '/api/state';
-      }
-      if (!syncBaseUrl) {
-        showToast('当前为离线模式，无法同步');
-        return;
-      }
-      isSyncing = true;
-      const syncBtn = document.getElementById('syncBtn');
-      const syncIcon = document.getElementById('syncIcon');
-      const syncText = document.getElementById('syncText');
-      if (syncBtn) syncBtn.style.opacity = '0.6';
-      if (syncIcon) syncIcon.textContent = '⏳';
-      if (syncText) syncText.textContent = '同步中...';
-
-      // 超时控制：5秒内连不上服务器就提示
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       try {
-        // 1. 获取远程数据
-        const response = await fetch(syncBaseUrl + '?t=' + Date.now(), {
-          cache: 'no-store',
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error('服务器响应异常');
-        const remoteData = await response.json();
-        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) {
-          throw new Error('远程数据格式异常');
-        }
-
-        // 2. 合并本地与远程
-        const localData = normalizeState(state);
-        const merged = mergeStates(localData, remoteData);
-
-        // 3. 保存合并结果到本地
-        state = normalizeState(merged);
         localStorage.setItem(storageKey, JSON.stringify(state));
-        render();
-
-        // 4. 推送合并结果到服务器
-        await fetch(syncBaseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        if (syncIcon) syncIcon.textContent = '✅';
-        if (syncText) syncText.textContent = '已同步';
-        showToast('同步成功');
-        setTimeout(() => {
-          if (syncIcon) syncIcon.textContent = '🔄';
-          if (syncText) syncText.textContent = '同步';
-          if (syncBtn) syncBtn.style.opacity = '1';
-        }, 2000);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.warn('同步失败:', error);
-        const msg = error.name === 'AbortError' ? '无法连接服务器，请确认在同一WiFi下' : '同步失败，请检查网络';
-        if (syncIcon) syncIcon.textContent = '⚠️';
-        if (syncText) syncText.textContent = '同步失败';
-        showToast(msg);
-        setTimeout(() => {
-          if (syncIcon) syncIcon.textContent = '🔄';
-          if (syncText) syncText.textContent = '同步';
-          if (syncBtn) syncBtn.style.opacity = '1';
-        }, 2500);
-      } finally {
-        isSyncing = false;
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          showToast('存储空间不足，附件过多时请删除部分附件');
+        } else {
+          throw e;
+        }
       }
+    }
+
+    let _debounceTimer = null;
+    function debouncedSaveState() {
+      clearTimeout(_debounceTimer);
+      _debounceTimer = setTimeout(() => saveState(), 500);
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workbench-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('数据已导出');
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          state = normalizeState(data);
+          saveState();
+          renderHome();
+          renderTasks();
+          renderProjects();
+          showToast('数据导入成功');
+        } catch {
+          showToast('导入失败：文件格式不正确');
+        }
+      };
+      reader.readAsText(file);
     }
 
     function showToast(text) {
@@ -1360,29 +1277,19 @@
     function hasRisk(project) {
       if (project.status === '暂停') return true;
       if (project.status === '完结') return false;
-      if (!project.risk || project.risk === '/' || /按计划|正常推进|暂无/.test(project.risk)) return false;
+      if (!project.risk || project.risk === '/' || /无风险|按计划|正常推进|暂无/.test(project.risk)) return false;
       return /风险|滞后|待确认|需确认|可行性|成本|时效|排期|承接|变化|降本|竞争力/.test(`${project.next} ${project.risk}`);
-    }
-
-    function progress(project) {
-      if (project.status === '完结') return 100;
-      if (project.status === '暂停') return 25;
-      if (/生产上市/.test(project.phase)) return 85;
-      if (/产品开发/.test(project.phase)) return 70;
-      if (/开发过程/.test(project.phase)) return 60;
-      return 45;
     }
 
     function priorityScore(project) {
       return priorityOptions.indexOf(project.priority || '普通');
     }
 
-    function sortProjectsByPriority(projects) {
-      return [...(projects || [])].map(normalizeProject).sort((a, b) => priorityScore(b) - priorityScore(a));
-    }
-
     function optionHtml(options, selected) {
-      return options.map(opt => `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`).join('');
+      return options.map(opt => {
+        const esc = escapeHtml(opt);
+        return `<option value="${esc}" ${opt === selected ? 'selected' : ''}>${esc}</option>`;
+      }).join('');
     }
 
     function escapeHtml(value) {
@@ -1397,290 +1304,33 @@
 
     const attachmentCategories = ['未分类', '文档', '图片', '表格', '报告', '其他'];
 
-    const workspaceDbName = 'jacobWorkbenchFolderDb';
-    const workspaceStoreName = 'handles';
-    const workspaceFolderName = 'Jakob的工作台';
-    const workspaceScopeNames = { task: '零碎事项管理', project: '项目', formula: '配方' };
-
-    function isWorkspaceApiSupported() {
-      return 'showDirectoryPicker' in window && 'indexedDB' in window;
-    }
-
-    function openWorkspaceDb() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(workspaceDbName, 1);
-        request.onupgradeneeded = () => request.result.createObjectStore(workspaceStoreName);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    }
-
-    async function saveWorkspaceRootHandle(handle) {
-      const db = await openWorkspaceDb();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(workspaceStoreName, 'readwrite');
-        tx.objectStore(workspaceStoreName).put(handle, 'root');
-        tx.oncomplete = resolve;
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
-    async function getWorkspaceRootHandle() {
-      if (!isWorkspaceApiSupported()) return null;
-      const db = await openWorkspaceDb();
-      return new Promise((resolve) => {
-        const tx = db.transaction(workspaceStoreName, 'readonly');
-        const request = tx.objectStore(workspaceStoreName).get('root');
-        request.onsuccess = () => resolve(request.result || null);
-        request.onerror = () => resolve(null);
-      });
-    }
-
-    async function verifyWorkspacePermission(handle, write = true) {
-      if (!handle) return false;
-      const options = { mode: write ? 'readwrite' : 'read' };
-      if ((await handle.queryPermission(options)) === 'granted') return true;
-      return (await handle.requestPermission(options)) === 'granted';
-    }
-
-    async function getWorkspaceBaseHandle(create = true) {
-      const root = await getWorkspaceRootHandle();
-      if (!root) return null;
-      const ok = await verifyWorkspacePermission(root, true);
-      if (!ok) return null;
-      return root.getDirectoryHandle(workspaceFolderName, { create });
-    }
-
-    async function ensureWorkspaceFolders() {
-      const base = await getWorkspaceBaseHandle(true);
-      if (!base) return null;
-      for (const scopeName of Object.values(workspaceScopeNames)) {
-        await base.getDirectoryHandle(scopeName, { create: true });
-      }
-      return base;
-    }
-
-    function dataUrlToBlob(dataUrl) {
-      const [meta, raw] = String(dataUrl || '').split(',');
-      const mime = (meta.match(/data:(.*?);/) || [])[1] || 'application/octet-stream';
-      const binary = atob(raw || '');
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return new Blob([bytes], { type: mime });
-    }
-
-    function safeFileName(name) {
-      return String(name || '附件').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || '附件';
-    }
-
-    async function copyFileToWorkspace(scope, ownerName, fileObj, category) {
-      const base = await ensureWorkspaceFolders();
-      if (!base || !fileObj) return null;
-      const scopeName = workspaceScopeNames[scope] || workspaceScopeNames.project;
-      const cat = attachmentCategories.includes(category) ? category : '未分类';
-      const scopeDir = await base.getDirectoryHandle(scopeName, { create: true });
-      const ownerDir = await scopeDir.getDirectoryHandle(safeFileName(ownerName || '未命名'), { create: true });
-      const categoryDir = await ownerDir.getDirectoryHandle(cat, { create: true });
-      const finalName = safeFileName(fileObj.name);
-      const fileHandle = await categoryDir.getFileHandle(finalName, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(fileObj);
-      await writable.close();
-      return {
-        name: fileObj.name,
-        type: fileObj.type || '',
-        size: fileObj.size || 0,
-        path: `${scopeName}/${safeFileName(ownerName || '未命名')}/${cat}/${finalName}`,
-        uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
-        category: cat
-      };
-    }
-
-    async function moveAttachmentFile(oldPath, newPath) {
-      if (!oldPath || !newPath || oldPath === newPath) return;
-      try {
-        const file = await readLocalFile(oldPath);
-        if (!file) return;
-        const parts = newPath.split('/');
-        const base = await getWorkspaceBaseHandle(true);
-        let dir = base;
-        for (let i = 0; i < parts.length - 1; i++) {
-          dir = await dir.getDirectoryHandle(parts[i], { create: true });
-        }
-        const newHandle = await dir.getFileHandle(parts[parts.length - 1], { create: true });
-        const writable = await newHandle.createWritable();
-        await writable.write(file);
-        await writable.close();
-        const oldParts = oldPath.split('/');
-        let oldDir = base;
-        for (let i = 0; i < oldParts.length - 1; i++) {
-          oldDir = await oldDir.getDirectoryHandle(oldParts[i]);
-        }
-        await oldDir.removeEntry(oldParts[oldParts.length - 1]);
-      } catch (e) {
-        console.error('移动附件失败', e);
-      }
-    }
-
     function getAttachmentOwnerName(ctx) {
       if (!ctx) return '';
       if (ctx.scope === 'task') return state.tasks[ctx.index]?.title || ctx.name || '事项';
       return state.projects[ctx.index]?.name || ctx.name || '项目';
     }
 
-    async function saveAttachmentFilesToWorkspace(ctx, files) {
-      if (!ctx || !files?.length) return;
-      const root = await getWorkspaceRootHandle();
-      if (!root) return;
-      const ownerName = getAttachmentOwnerName(ctx);
-      for (const file of normalizeAttachments(files)) {
-        if (file.dataUrl && !file.path) {
-          const blob = dataUrlToBlob(file.dataUrl);
-          const fileObj = new File([blob], file.name, { type: file.type });
-          const meta = await copyFileToWorkspace(ctx.scope, ownerName, fileObj, file.category);
-          if (meta) { file.path = meta.path; delete file.dataUrl; }
-        }
-      }
-      updateWorkspaceStatus();
-    }
-
-    async function syncAllAttachmentsToWorkspace() {
-      const root = await getWorkspaceRootHandle();
-      if (!root) {
-        alert('请先选择工作台地址。');
-        return;
-      }
-      await ensureWorkspaceFolders();
-      for (const task of state.tasks) {
-        for (const file of task.attachments || []) {
-          if (file.dataUrl && !file.path) {
-            const blob = dataUrlToBlob(file.dataUrl);
-            const fileObj = new File([blob], file.name, { type: file.type });
-            const meta = await copyFileToWorkspace('task', task.title, fileObj, file.category || '未分类');
-            if (meta) { file.path = meta.path; delete file.dataUrl; }
-          }
-        }
-      }
-      for (const project of state.projects) {
-        for (const file of project.attachments || []) {
-          if (file.dataUrl && !file.path) {
-            const blob = dataUrlToBlob(file.dataUrl);
-            const fileObj = new File([blob], file.name, { type: file.type });
-            const meta = await copyFileToWorkspace('project', project.name, fileObj, file.category || '未分类');
-            if (meta) { file.path = meta.path; delete file.dataUrl; }
-          }
-        }
-      }
-      saveState();
-      updateWorkspaceStatus('已同步现有附件');
-    }
-
-    async function chooseWorkspaceRoot() {
-      if (!isWorkspaceApiSupported()) {
-        alert('当前浏览器不支持直接选择并写入本机文件夹。请使用最新版 Chrome 或 Edge 打开工作台。');
-        return;
-      }
-      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      await saveWorkspaceRootHandle(handle);
-      await ensureWorkspaceFolders();
-      updateWorkspaceStatus(`已选择：${handle.name}`);
-    }
-
-    async function updateWorkspaceStatus(text) {
-      const el = document.getElementById('workspaceStatus');
-      if (!el) return;
-      if (text) {
-        el.textContent = text;
-        return;
-      }
-      const handle = await getWorkspaceRootHandle();
-      el.textContent = handle ? `已选择：${handle.name}` : '未选择地址';
-    }
-
-    async function listWorkspaceFolder(scope) {
-      const box = document.getElementById('workspaceFolderList');
-      if (!box) return;
-      const base = await getWorkspaceBaseHandle(false);
-      if (!base) {
-        box.classList.add('show');
-        box.innerHTML = '<div class="workspace-folder-list-title">请先选择工作台地址</div>';
-        return;
-      }
-      const scopeName = workspaceScopeNames[scope] || workspaceScopeNames.project;
-      const scopeDir = await base.getDirectoryHandle(scopeName, { create: true });
-      const rows = [];
-      for await (const [ownerName, ownerHandle] of scopeDir.entries()) {
-        if (ownerHandle.kind !== 'directory') continue;
-        let ownerHasFile = false;
-        for await (const [catName, catHandle] of ownerHandle.entries()) {
-          if (catHandle.kind !== 'directory') continue;
-          let catHasFile = false;
-          for await (const [fileName, fileHandle] of catHandle.entries()) {
-            if (fileHandle.kind !== 'file') continue;
-            ownerHasFile = true;
-            catHasFile = true;
-            const file = await fileHandle.getFile();
-            const url = URL.createObjectURL(file);
-            rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / ${escapeHtml(catName)} / <a href="${url}" target="_blank">${escapeHtml(fileName)}</a></span><span>${formatFileSize(file.size) || ''}</span></div>`);
-          }
-          if (!catHasFile) rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / ${escapeHtml(catName)} / 暂无文件</span><span></span></div>`);
-        }
-        if (!ownerHasFile) rows.push(`<div class="workspace-file-row"><span>${escapeHtml(ownerName)} / 暂无文件</span><span></span></div>`);
-      }
-      box.classList.add('show');
-      box.innerHTML = `<div class="workspace-folder-list-title">${escapeHtml(scopeName)} 文件夹</div>${rows.join('') || '<div class="workspace-file-row"><span>暂无文件</span><span></span></div>'}`;
-    }
-
-    function setupWorkspaceFolderModule() {
-      updateWorkspaceStatus();
-      document.addEventListener('click', event => {
-        if (event.target.matches('[data-workspace-pick]')) chooseWorkspaceRoot();
-        if (event.target.matches('[data-workspace-sync]')) syncAllAttachmentsToWorkspace();
-        if (event.target.matches('[data-workspace-open]')) listWorkspaceFolder(event.target.dataset.workspaceOpen);
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
     }
 
+    function downloadAttachment(file) {
+      if (file.dataUrl) {
+        const a = document.createElement('a');
+        a.href = file.dataUrl;
+        a.download = file.name || '附件';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+    }
+
     let attachModalContext = null;
-
-    const attachmentBlobCache = new Map();
-
-    async function readLocalFile(path) {
-      if (!path) return null;
-      const parts = path.split('/');
-      if (parts.length < 2) return null;
-      const base = await getWorkspaceBaseHandle(false);
-      if (!base) return null;
-      let dir = base;
-      for (let i = 0; i < parts.length - 1; i++) {
-        dir = await dir.getDirectoryHandle(parts[i], { create: false });
-      }
-      const fileHandle = await dir.getFileHandle(parts[parts.length - 1]);
-      return await fileHandle.getFile();
-    }
-
-    async function getLocalFileUrl(path) {
-      if (!path) return '';
-      if (attachmentBlobCache.has(path)) return attachmentBlobCache.get(path);
-      try {
-        const file = await readLocalFile(path);
-        if (!file) return '';
-        const url = URL.createObjectURL(file);
-        attachmentBlobCache.set(path, url);
-        return url;
-      } catch {
-        return '';
-      }
-    }
-
-    async function downloadLocalFile(path, name) {
-      const url = await getLocalFileUrl(path);
-      if (!url) return;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name || '附件';
-      a.target = '_blank';
-      a.click();
-    }
 
     function normalizeAttachments(attachments) {
       return Array.isArray(attachments) ? attachments.filter(file => file && file.name && (file.path || file.dataUrl)).map(file => {
@@ -1706,15 +1356,18 @@
 
     async function copyFilesToWorkspace(ctx, rawFiles) {
       if (!ctx || !rawFiles?.length) return [];
-      const root = await getWorkspaceRootHandle();
-      if (!root) { alert('请先选择工作台地址。'); return []; }
-      const ownerName = getAttachmentOwnerName(ctx);
       const results = [];
       for (const file of Array.from(rawFiles)) {
-        const meta = await copyFileToWorkspace(ctx.scope, ownerName, file, '未分类');
-        if (meta) results.push(meta);
+        const dataUrl = await fileToDataUrl(file);
+        results.push({
+          name: file.name,
+          type: file.type || '',
+          size: file.size || 0,
+          dataUrl,
+          uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+          category: '未分类'
+        });
       }
-      updateWorkspaceStatus();
       return results;
     }
 
@@ -1731,7 +1384,7 @@
     }
 
     function attachButton(scope, attachments, ownerName) {
-      const count = normalizeAttachments(attachments).length;
+      const count = Array.isArray(attachments) ? attachments.filter(f => f && f.name && (f.path || f.dataUrl)).length : 0;
       return `<button class="attach-btn" data-attach-open="${scope}" data-attach-name="${escapeHtml(ownerName || '')}">附件<span class="attach-badge ${count ? '' : 'empty'}">${count}</span></button>`;
     }
 
@@ -1754,11 +1407,11 @@
     function renderAttachmentPreview(file) {
       if (!file) return '';
       const t = (file.type || '').toLowerCase();
-      const cachedUrl = file.dataUrl || attachmentBlobCache.get(file.path) || '';
+      const cachedUrl = file.dataUrl || '';
       const url = escapeHtml(cachedUrl);
       let body = '';
       if (!cachedUrl) {
-        body = `<div class="attach-empty-hint">正在读取本地文件...</div>`;
+        body = `<div class="attach-empty-hint">该附件无法预览</div>`;
       } else if (t.startsWith('image/')) {
         body = `<img src="${url}" alt="${escapeHtml(file.name)}">`;
       } else if (t.startsWith('video/')) {
@@ -1803,7 +1456,8 @@
         if (state.projects[ctx.index]) state.projects[ctx.index].attachments = normalized;
       }
       saveState();
-      render();
+      renderHome();
+      if (ctx.scope === 'task') renderTasks(); else renderProjects();
     }
 
     function renderAttachModal() {
@@ -1840,9 +1494,7 @@
                   <div class="attach-file-name-row">
                     ${renaming
                       ? `<input class="attach-file-name-input" data-attach-rename-input="${realIndex}" value="${escapeHtml(file.name)}">`
-                      : (file.path && !file.dataUrl)
-                      ? `<span class="attach-file-download">${escapeHtml(file.name)}</span>`
-                      : `<a class="attach-file-download" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`}
+                      : `<a class="attach-file-download" href="${escapeHtml(file.dataUrl || '#')}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`}
                   </div>
                   <div class="attach-file-meta">${formatFileSize(file.size) || '未知大小'}${file.uploadedAt ? ` · ${escapeHtml(file.uploadedAt)}` : ''}</div>
                   <div class="attach-file-controls">
@@ -1853,10 +1505,7 @@
                       ? `<button class="attach-mini-btn primary" data-attach-rename-save="${realIndex}">保存</button>`
                       : `<button class="attach-mini-btn" data-attach-rename="${realIndex}">重命名</button>`}
                     <button class="attach-mini-btn primary" data-attach-preview="${realIndex}">浏览</button>
-                    ${(file.path && !file.dataUrl)
-                      ? `<button class="attach-mini-btn primary" data-attach-download="${realIndex}" data-attach-path="${escapeHtml(file.path)}">下载</button>`
-                      : `<a class="attach-mini-btn primary" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">下载</a>`
-                    }
+                    <button class="attach-mini-btn primary" data-attach-download="${realIndex}">下载</button>
                     <button class="attach-mini-btn danger" data-attach-delete="${realIndex}">删除</button>
                   </div>
                 </div>
@@ -1909,22 +1558,45 @@
       document.getElementById('activeProjectCount').textContent = activeProjects.length;
       document.getElementById('riskCount').textContent = risks.length;
 
-      document.getElementById('recentList').innerHTML = state.tasks.slice(0, 4).map(task => `
-        <div class="item ${task.done ? 'done' : ''}">
-          <div class="check"></div>
+      // 排序后保留原始索引，避免 O(n²) 查找
+      const sortedHomeTasks = state.tasks
+        .map((task, originalIndex) => ({ task, originalIndex }))
+        .filter(({ task }) => !task.done)
+        .sort((a, b) => {
+          if (homeTaskSortMode === 'deadline') {
+            if (!a.task.deadline && !b.task.deadline) return 0;
+            if (!a.task.deadline) return 1;
+            if (!b.task.deadline) return -1;
+            return new Date(a.task.deadline) - new Date(b.task.deadline);
+          }
+          if (homeTaskSortMode === 'important') {
+            if (a.task.kind === 'urgent' && b.task.kind !== 'urgent') return -1;
+            if (a.task.kind !== 'urgent' && b.task.kind === 'urgent') return 1;
+          }
+          return (b.task.createdAt || 0) - (a.task.createdAt || 0);
+        })
+        .slice(0, 4);
+      document.getElementById('recentList').innerHTML = sortedHomeTasks.map(({ task, originalIndex }) => `
+        <div class="item ${task.done ? 'done' : ''}" data-home-task="${originalIndex}" style="cursor:pointer;">
+          <div class="check" data-home-toggle="${originalIndex}"></div>
           <div>
-            <div class="title">${task.title}</div>
-            <div class="meta">${task.meta}</div>
+            <div class="title">${escapeHtml(task.title)}</div>
+            <div class="meta">${escapeHtml(task.meta)}</div>
           </div>
         </div>
       `).join('');
 
-      document.getElementById('homeProjects').innerHTML = state.projects
-        .map((project, originalIndex) => ({ project, originalIndex }))
-        .filter(({ project }) => project.status !== '完结')
-        .sort((a, b) => priorityScore(b.project) - priorityScore(a.project) || Number(hasRisk(b.project)) - Number(hasRisk(a.project)))
+      // 一次性排序，避免在比较函数内反复调用 sortProjects
+      const sortedHomeProjects = sortProjects(
+        state.projects.map((project, originalIndex) => ({ project, originalIndex }))
+          .filter(({ project }) => project.status !== '完结')
+          .map(x => x.project),
+        homeProjectSortMode
+      );
+      const projectIndexMap = new Map(state.projects.map((p, i) => [p, i]));
+      document.getElementById('homeProjects').innerHTML = sortedHomeProjects
         .slice(0, 4)
-        .map(({ project, originalIndex }) => projectProgressHtml(project, originalIndex))
+        .map(project => projectProgressHtml(project, projectIndexMap.get(project)))
         .join('');
     }
 
@@ -1933,46 +1605,107 @@
       return `
         <div class="item" data-home-project="${index}" style="display:block;cursor:pointer;">
           <div style="display:flex;justify-content:space-between;gap:10px;">
-            <div class="title" style="color:var(--primary);">${project.name}</div>
-            <div class="meta">${project.priority || '普通'} · ${project.phase}</div>
+            <div class="title" style="color:var(--primary);">${escapeHtml(project.name)}</div>
+            <div class="meta">${escapeHtml(project.priority || '普通')} · ${escapeHtml(project.phase)}</div>
           </div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${latest ? formatProgressDate(latest.date) + ' · ' + latest.progress : '暂无进度记录'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">${latest ? formatProgressDate(latest.date) + ' · ' + escapeHtml(latest.progress) : '暂无进度记录'}</div>
         </div>
       `;
     }
 
     function renderTasks() {
-      const done = state.tasks.filter(t => t.done).length;
-      document.getElementById('taskDoneText').textContent = `${done}/${state.tasks.length} 已完成`;
-      document.getElementById('taskList').innerHTML = state.tasks.map((task, index) => `
-        <div class="item ${task.done ? 'done' : ''}" data-task="${index}">
+      const doneCount = state.tasks.filter(t => t.done).length;
+      document.getElementById('taskDoneText').textContent = `${doneCount}/${state.tasks.length} 已完成`;
+      let allWithIndex = state.tasks.map((t, i) => ({ t, i }));
+      if (taskSearchQuery) {
+        const q = taskSearchQuery.toLowerCase();
+        allWithIndex = allWithIndex.filter(x =>
+          (x.t.title || '').toLowerCase().includes(q) ||
+          (x.t.meta || '').toLowerCase().includes(q)
+        );
+      }
+      const undone = allWithIndex.filter(x => !x.t.done);
+      const done = allWithIndex.filter(x => x.t.done);
+      // 排序时携带索引，避免 O(n²) find 反查
+      const sortWithIndex = (arr) => {
+        const copy = [...arr];
+        copy.sort((a, b) => {
+          if (taskSortMode === 'deadline') {
+            if (!a.t.deadline && !b.t.deadline) return 0;
+            if (!a.t.deadline) return 1;
+            if (!b.t.deadline) return -1;
+            return new Date(a.t.deadline) - new Date(b.t.deadline);
+          }
+          if (taskSortMode === 'important') {
+            if (a.t.kind === 'urgent' && b.t.kind !== 'urgent') return -1;
+            if (a.t.kind !== 'urgent' && b.t.kind === 'urgent') return 1;
+          }
+          return (b.t.createdAt || 0) - (a.t.createdAt || 0);
+        });
+        return copy;
+      };
+      const sortedUndone = sortWithIndex(undone);
+      const sortedDone = sortWithIndex(done);
+      const itemHtml = ({ t, i }) => `
+        <div class="item ${t.done ? 'done' : ''}" data-task="${i}">
           <div class="check" data-action="toggle-task"></div>
-          <div style="flex:1;">
-            <div class="title">${task.title}</div>
-            <div class="meta">${task.meta}<span class="tag ${task.kind === 'urgent' ? 'urgent' : 'normal'}">${task.kind === 'urgent' ? '重要' : '提醒'}</span></div>
-            ${attachButton('task', task.attachments, task.title)}
+          <div style="flex:1;cursor:pointer;" data-task-detail="${i}">
+            <div class="title">${escapeHtml(t.title)}</div>
+            <div class="meta">${escapeHtml(t.meta)}${t.deadline ? ' · 截止 ' + formatDeadline(t.deadline) : ''}<span class="tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span></div>
+            ${attachButton('task', t.attachments, t.title)}
           </div>
           <button class="btn secondary" data-action="delete-task" style="padding:7px 9px;">删</button>
         </div>
-      `).join('');
+      `;
+      let html = '';
+      if (sortedUndone.length) {
+        html += `<div class="meta" style="font-weight:600;padding-top:0;">未完成</div>`;
+        html += sortedUndone.map(itemHtml).join('');
+      }
+      if (sortedDone.length) {
+        html += `<div class="meta" style="font-weight:600;padding-top:12px;">已完成</div>`;
+        html += sortedDone.map(itemHtml).join('');
+      }
+      if (!state.tasks.length) html = '<div class="empty">暂无事项，点击右上角 + 新增</div>';
+      else if (taskSearchQuery && !sortedUndone.length && !sortedDone.length) html = '<div class="empty">未找到匹配的事项</div>';
+      document.getElementById('taskList').innerHTML = html;
     }
 
     function renderProjects() {
-      state.projects = sortProjectsByPriority(state.projects);
-      document.getElementById('projectList').innerHTML = state.projects.map((project, index) => {
+      let filtered = state.projects;
+      if (projectSearchQuery) {
+        const q = projectSearchQuery.toLowerCase();
+        filtered = state.projects.filter(p =>
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q) ||
+          (p.next || '').toLowerCase().includes(q) ||
+          (p.risk || '').toLowerCase().includes(q) ||
+          (p.phase || '').toLowerCase().includes(q) ||
+          (p.status || '').toLowerCase().includes(q)
+        );
+      }
+      const sorted = sortProjects(filtered, projectSortMode);
+      if (!sorted.length) {
+        document.getElementById('projectList').innerHTML = projectSearchQuery
+          ? '<div class="empty">未找到匹配的项目</div>'
+          : '<div class="empty">暂无项目，点击右上角 + 新增</div>';
+        return;
+      }
+      const projectIndexMap = new Map(state.projects.map((p, i) => [p, i]));
+      document.getElementById('projectList').innerHTML = sorted.map(project => {
+        const originalIndex = projectIndexMap.get(project);
         const risk = hasRisk(project);
         const cls = project.status === '完结' ? 'complete' : project.status === '暂停' ? 'pause' : risk ? 'risk' : '';
         return `
-          <article class="project-card ${cls}" data-project="${index}">
+          <article class="project-card ${cls}" data-project="${originalIndex}">
             <div class="project-head">
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <div class="project-name" contenteditable="true" data-field="name">${project.name}</div>
-                  <button class="btn secondary" data-action="open-detail" style="padding:4px 10px;font-size:12px;flex-shrink:0;">详情</button>
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                  <div class="project-name" contenteditable="true" data-field="name">${escapeHtml(project.name)}</div>
+                  <span class="tag ${project.status === '完结' ? 'done' : project.status === '暂停' ? 'warn' : 'normal'}">${escapeHtml(project.status)}</span>
                 </div>
-                <div class="meta">${project.priority || '普通'} · <span contenteditable="true" data-field="category">${project.category}</span></div>
+                <div class="meta">${escapeHtml(project.priority || '普通')} · <span contenteditable="true" data-field="category">${escapeHtml(project.category)}</span> · ${escapeHtml(project.phase)}</div>
               </div>
-              <span class="tag ${project.status === '完结' ? 'done' : project.status === '暂停' ? 'warn' : 'normal'}">${project.status}</span>
             </div>
             <div class="project-selects">
               <select class="field" data-field="priority">${optionHtml(priorityOptions, project.priority || '普通')}</select>
@@ -1980,33 +1713,13 @@
               <select class="field" data-field="status">${optionHtml(statusOptions, project.status)}</select>
             </div>
             <div class="meta">下一步</div>
-            <div class="field" contenteditable="true" data-field="next" style="min-height:44px;">${project.next}</div>
+            <div class="field" contenteditable="true" data-field="next" style="min-height:44px;">${escapeHtml(project.next)}</div>
             <div class="meta" style="margin-top:8px;">风险或备注</div>
-            <div class="field" contenteditable="true" data-field="risk" style="min-height:44px;">${project.risk}</div>
+            <div class="field" contenteditable="true" data-field="risk" style="min-height:44px;">${escapeHtml(project.risk)}</div>
             ${attachButton('project', project.attachments, project.name)}
-            <div class="progress-log-section" style="margin-top:10px;">
-              <div class="meta" style="font-weight:600;">进度记录</div>
-              <div class="progress-log-list" style="margin-top:6px;">
-                ${(project.progressLog || []).length ? (project.progressLog || []).map((entry, i) => `
-                  <div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.06);">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <span style="font-size:13px;font-weight:600;">${formatProgressDate(entry.date)}</span>
-                      <button class="btn secondary" data-action="del-progress" data-progress-idx="${i}" style="padding:4px 8px;font-size:12px;">删</button>
-                    </div>
-                    <div style="font-size:13px;margin-top:2px;">${entry.progress}</div>
-                    ${entry.remark ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：' + entry.remark + '</div>' : ''}
-                  </div>
-                `).join('') : '<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:8px 0;">暂无进度记录</div>'}
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
-                <input type="date" class="field" data-progress-input="date" value="${new Date().toISOString().slice(0,10)}" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <input type="text" class="field" data-progress-input="text" placeholder="最新进展" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <input type="text" class="field" data-progress-input="remark" placeholder="备注（选填）" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
-                <button class="btn primary" data-action="add-progress" style="padding:8px;border-radius:8px;font-size:13px;">添加进度记录</button>
-              </div>
-            </div>
             <div class="actions" style="margin:12px 0 0;">
-              <button class="btn secondary" data-action="delete-project">删除项目</button>
+              <button class="btn secondary" data-action="open-detail" style="padding:7px 10px;font-size:13px;">详情</button>
+              <button class="btn secondary" data-action="delete-project" style="padding:7px 10px;font-size:13px;">删除</button>
             </div>
           </article>
         `;
@@ -2026,12 +1739,12 @@
       document.getElementById('projectDetailOverlay').classList.remove('show');
       pdProjectIndex = -1;
       saveState();
-      render();
+      renderHome();
+      renderProjects();
     }
 
     function renderProjectDetail(project) {
-      const phases = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
-      const currentPhaseIndex = Math.max(0, phases.indexOf(project.phase));
+      const currentPhaseIndex = Math.max(0, phaseOptions.indexOf(project.phase));
       const status = project.status || '进行';
       const statusColor = status === '完结' ? '#1DC981' : status === '暂停' ? '#EFAA17' : '#22A5F7';
       const progressLog = project.progressLog || [];
@@ -2050,7 +1763,7 @@
         <div class="pd-section">
           <div class="pd-section-title">项目阶段</div>
           <div class="pd-phase-row">
-            ${phases.map((ph, i) => {
+            ${phaseOptions.map((ph, i) => {
               const cls = i < currentPhaseIndex ? 'done' : i === currentPhaseIndex ? 'current' : '';
               const icon = i < currentPhaseIndex ? '✓' : (i + 1);
               return `<div class="pd-phase-step ${cls}"><div class="pd-phase-dot">${icon}</div><div class="pd-phase-label">${escapeHtml(ph)}</div></div>`;
@@ -2064,7 +1777,7 @@
           <div class="pd-info-grid">
             <div class="pd-info-item">
               <div class="pd-info-label">星级</div>
-              <select class="pd-select" data-pd-field="priority">${optionHtml(['普通','⭐','⭐⭐','⭐⭐⭐'], project.priority || '普通')}</select>
+              <select class="pd-select" data-pd-field="priority">${optionHtml(priorityOptions, project.priority || '普通')}</select>
             </div>
             <div class="pd-info-item">
               <div class="pd-info-label">分类</div>
@@ -2072,11 +1785,11 @@
             </div>
             <div class="pd-info-item">
               <div class="pd-info-label">阶段</div>
-              <select class="pd-select" data-pd-field="phase">${optionHtml(phases, project.phase)}</select>
+              <select class="pd-select" data-pd-field="phase">${optionHtml(phaseOptions, project.phase)}</select>
             </div>
             <div class="pd-info-item">
               <div class="pd-info-label">状态</div>
-              <select class="pd-select" data-pd-field="status">${optionHtml(['进行','完结','暂停'], status)}</select>
+              <select class="pd-select" data-pd-field="status">${optionHtml(statusOptions, status)}</select>
             </div>
           </div>
         </div>
@@ -2146,6 +1859,48 @@
       });
     });
 
+    // 首页指标卡片点击跳转
+    document.querySelectorAll('[data-metric-link]').forEach(card => {
+      card.addEventListener('click', () => {
+        const screen = card.dataset.metricLink;
+        document.querySelectorAll('.nav-btn').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.screen').forEach(item => item.classList.remove('active'));
+        document.querySelector(`.nav-btn[data-screen="${screen}"]`)?.classList.add('active');
+        document.getElementById(screen).classList.add('active');
+      });
+    });
+
+    // 数据导出/导入
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (file) {
+        if (!confirm('导入将覆盖当前数据，确认继续？')) return;
+        importData(file);
+      }
+      event.target.value = '';
+    });
+
+    // 搜索（防抖）
+    let _searchTimer = null;
+    document.getElementById('taskSearch').addEventListener('input', event => {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(() => {
+        taskSearchQuery = event.target.value.trim();
+        renderTasks();
+      }, 200);
+    });
+    document.getElementById('projectSearch').addEventListener('input', event => {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(() => {
+        projectSearchQuery = event.target.value.trim();
+        renderProjects();
+      }, 200);
+    });
+
     document.getElementById('homeProjects').addEventListener('click', event => {
       const item = event.target.closest('[data-home-project]');
       if (!item) return;
@@ -2155,16 +1910,26 @@
       }
     });
 
-    document.getElementById('addTaskBtn').addEventListener('click', () => {
-      const title = document.getElementById('taskTitle').value.trim();
-      const meta = document.getElementById('taskMeta').value.trim() || '工作台提醒';
-      if (!title) return showToast('请先填写事项名称');
-      state.tasks.unshift({ title, meta, done: false, kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal', attachments: [] });
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskMeta').value = '';
-      saveState();
-      render();
-      showToast('已加入工作台');
+    document.getElementById('recentList').addEventListener('click', event => {
+      const toggleEl = event.target.closest('[data-home-toggle]');
+      if (toggleEl) {
+        const index = Number(toggleEl.dataset.homeToggle);
+        if (!Number.isNaN(index) && state.tasks[index]) {
+          state.tasks[index].done = !state.tasks[index].done;
+          saveState();
+          renderHome();
+          renderTasks();
+        }
+        return;
+      }
+      const taskEl = event.target.closest('[data-home-task]');
+      if (taskEl) {
+        const index = Number(taskEl.dataset.homeTask);
+        if (!Number.isNaN(index) && state.tasks[index]) {
+          openTaskDetail(index);
+        }
+        return;
+      }
     });
 
     document.getElementById('taskList').addEventListener('click', event => {
@@ -2182,25 +1947,24 @@
       const index = Number(item.dataset.task);
       if (event.target.dataset.action === 'toggle-task') {
         state.tasks[index].done = !state.tasks[index].done;
-      } else if (event.target.dataset.action === 'delete-task') {
-        state.tasks.splice(index, 1);
-      } else {
+        saveState();
+        renderHome();
+        renderTasks();
         return;
       }
-      saveState();
-      render();
-    });
-
-    document.getElementById('addProjectBtn').addEventListener('click', () => {
-      const name = document.getElementById('projectName').value.trim();
-      const next = document.getElementById('projectNext').value.trim() || '补充本周重点或下一步';
-      if (!name) return showToast('请先填写项目名称');
-      state.projects.unshift({ name, priority: '普通', category: '未分类', phase: '方向确认', status: '进行', next, risk: '/', attachments: [], progressLog: [] });
-      document.getElementById('projectName').value = '';
-      document.getElementById('projectNext').value = '';
-      saveState();
-      render();
-      showToast('项目已新增');
+      if (event.target.dataset.action === 'delete-task') {
+        if (!confirm('确认删除该事项？')) return;
+        state.tasks.splice(index, 1);
+        saveState();
+        renderHome();
+        renderTasks();
+        showToast('事项已删除');
+        return;
+      }
+      const detailEl = event.target.closest('[data-task-detail]');
+      if (detailEl) {
+        openTaskDetail(index);
+      }
     });
 
     document.getElementById('projectList').addEventListener('input', event => {
@@ -2208,9 +1972,14 @@
       const field = event.target.dataset.field;
       if (!card || !field) return;
       state.projects[Number(card.dataset.project)][field] = event.target.innerText.trim();
-      saveState();
-      renderHome();
+      debouncedSaveState();
     });
+    document.getElementById('projectList').addEventListener('blur', event => {
+      const card = event.target.closest('[data-project]');
+      const field = event.target.dataset.field;
+      if (!card || !field) return;
+      renderHome();
+    }, true);
 
     document.getElementById('projectList').addEventListener('change', event => {
       const card = event.target.closest('[data-project]');
@@ -2218,7 +1987,8 @@
       if (!card || !field) return;
       state.projects[Number(card.dataset.project)][field] = event.target.value;
       saveState();
-      render();
+      renderHome();
+      renderProjects();
     });
 
     document.getElementById('projectList').addEventListener('click', event => {
@@ -2237,43 +2007,17 @@
         }
         return;
       }
-      const card = event.target.closest('[data-project]');
-      if (!card) return;
-      const index = Number(card.dataset.project);
-      if (event.target.dataset.action === 'add-progress') {
-        if (Number.isNaN(index) || !state.projects[index]) return;
-        const dateInput = card.querySelector('[data-progress-input="date"]');
-        const textInput = card.querySelector('[data-progress-input="text"]');
-        const remarkInput = card.querySelector('[data-progress-input="remark"]');
-        const progress = textInput.value.trim();
-        if (!progress) { showToast('请输入进展描述'); return; }
-        if (!state.projects[index].progressLog) state.projects[index].progressLog = [];
-        state.projects[index].progressLog.push({
-          date: dateInput.value,
-          progress: progress,
-          remark: remarkInput.value.trim()
-        });
+      if (event.target.dataset.action === 'delete-project') {
+        const card = event.target.closest('[data-project]');
+        const index = Number(card?.dataset.project);
+        if (!confirm('确认删除该项目？删除后无法恢复。')) return;
+        state.projects.splice(index, 1);
         saveState();
-        render();
-        showToast('进度记录已添加');
+        renderHome();
+        renderProjects();
+        showToast('项目已删除');
         return;
       }
-      if (event.target.dataset.action === 'del-progress') {
-        const pIdx = Number(event.target.dataset.progressIdx);
-        if (Number.isNaN(index) || !state.projects[index]) return;
-        if (state.projects[index].progressLog) {
-          state.projects[index].progressLog.splice(pIdx, 1);
-          saveState();
-          render();
-          showToast('记录已删除');
-        }
-        return;
-      }
-      if (event.target.dataset.action !== 'delete-project') return;
-      state.projects.splice(index, 1);
-      saveState();
-      render();
-      showToast('项目已删除');
     });
 
     // 附件弹窗事件
@@ -2306,33 +2050,23 @@
           const idx = Number(event.target.dataset.attachCat);
           const current = getModalAttachments();
           if (current[idx]) {
-            const oldPath = current[idx].path;
             current[idx].category = event.target.value;
-            if (oldPath) {
-              const parts = oldPath.split('/');
-              const newPath = parts.slice(0, -2).concat(event.target.value, parts[parts.length - 1]).join('/');
-              moveAttachmentFile(oldPath, newPath).then(() => {
-                current[idx].path = newPath;
-                setModalAttachments(current);
-              });
-            } else {
-              setModalAttachments(current);
-            }
+            setModalAttachments(current);
             renderAttachModal();
           }
           return;
         }
       });
 
-      attachOverlay.addEventListener('click', async event => {
+      attachOverlay.addEventListener('click', event => {
         if (event.target.matches('[data-attach-preview]')) {
           const idx = Number(event.target.dataset.attachPreview);
           if (attachModalContext) {
             const files = getModalAttachments();
             const file = files[idx];
-            if (file?.path && !file?.dataUrl) {
-              const url = await getLocalFileUrl(file.path);
-              if (!url) { alert('无法读取本地文件，请检查工作台地址是否可用。'); return; }
+            if (!file?.dataUrl) {
+              showToast('该附件无法预览');
+              return;
             }
             attachModalContext.previewIndex = idx;
             attachModalContext.renamingIndex = -1;
@@ -2376,10 +2110,9 @@
         }
         if (event.target.matches('[data-attach-download]')) {
           const idx = Number(event.target.dataset.attachDownload);
-          const path = event.target.dataset.attachPath;
           const files = getModalAttachments();
           const file = files[idx];
-          if (file) downloadLocalFile(path || file.path, file.name);
+          if (file) downloadAttachment(file);
           return;
         }
         if (event.target.matches('[data-attach-delete]')) {
@@ -2492,136 +2225,284 @@
     })();
 
     render();
-    setupWorkspaceFolderModule();
-    setupVoiceInput();
-    setupIOSNotice();
 
-    // 手动同步按钮
-    document.getElementById('syncBtn')?.addEventListener('click', manualSync);
+    // === 事项详情弹窗 ===
+    let tdTaskIndex = -1;
 
-    // 同步设置弹窗
-    (function setupSyncSetting() {
-      const overlay = document.getElementById('syncSettingOverlay');
-      const settingBtn = document.getElementById('syncSettingBtn');
-      const closeBtn = document.getElementById('syncSettingClose');
-      const saveBtn = document.getElementById('syncUrlSave');
-      const input = document.getElementById('syncUrlInput');
-      if (!overlay || !settingBtn) return;
-
-      settingBtn.addEventListener('click', () => {
-        input.value = localStorage.getItem('workbench_sync_url') || '';
-        overlay.style.display = 'flex';
-      });
-      closeBtn.addEventListener('click', () => overlay.style.display = 'none');
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.style.display = 'none';
-      });
-      saveBtn.addEventListener('click', () => {
-        let url = input.value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-        localStorage.setItem('workbench_sync_url', url);
-        apiStateUrl = getApiStateUrl();
-        overlay.style.display = 'none';
-        showToast(url ? '同步地址已保存' : '已清除同步地址');
-      });
-    })();
-
-    function setupIOSNotice() {
-      if (!isWorkspaceApiSupported()) {
-        const notice = document.getElementById('iosNotice');
-        const actions = document.getElementById('workspaceActions');
-        const status = document.getElementById('workspaceStatus');
-        if (notice) notice.style.display = 'block';
-        if (actions) actions.style.display = 'none';
-        if (status) status.textContent = '手机端暂不支持本地附件存储';
-      }
+    function openTaskDetail(index) {
+      if (index < 0 || !state.tasks[index]) return;
+      tdTaskIndex = index;
+      renderTaskDetail(state.tasks[index]);
+      document.getElementById('taskDetailOverlay').classList.add('show');
     }
 
-    let voiceRecognition = null;
-    let voiceTargetId = null;
+    function closeTaskDetail() {
+      document.getElementById('taskDetailOverlay').classList.remove('show');
+      tdTaskIndex = -1;
+      saveState();
+      renderHome();
+      renderTasks();
+    }
 
-    function setupVoiceInput() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        document.querySelectorAll('.voice-btn').forEach(btn => {
-          btn.style.display = 'none';
-        });
+    function renderTaskDetail(task) {
+      document.getElementById('tdTitle').textContent = task.title || '事项详情';
+      document.getElementById('tdBody').innerHTML = `
+        <div class="pd-section">
+          <div class="pd-section-title">事项标题</div>
+          <input class="pd-field" data-td-field="title" value="${escapeHtml(task.title || '')}" style="min-height:38px;">
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">时间 / 备注</div>
+          <textarea class="pd-field" data-td-field="meta" rows="2" placeholder="时间或备注...">${escapeHtml(task.meta || '')}</textarea>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">截止日期</div>
+          <input class="pd-field" data-td-field="deadline" type="datetime-local" value="${toDatetimeLocalValue(task.deadline)}" style="min-height:38px;color:var(--muted);">
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">类型</div>
+          <select class="pd-select" data-td-field="kind">
+            <option value="normal" ${task.kind === 'normal' ? 'selected' : ''}>提醒</option>
+            <option value="urgent" ${task.kind === 'urgent' ? 'selected' : ''}>重要</option>
+          </select>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">状态</div>
+          <button class="btn ${task.done ? 'secondary' : ''}" data-td-toggle-done style="padding:10px 14px;">${task.done ? '已完成（点击恢复未完成）' : '未完成（点击标记完成）'}</button>
+        </div>
+        <div class="pd-section">
+          <div class="pd-section-title">附件（${normalizeAttachments(task.attachments).length}）</div>
+          <button class="btn secondary" data-td-open-attach style="padding:8px 14px;border-radius:8px;font-size:13px;">管理附件</button>
+        </div>
+        <div class="pd-section">
+          <button class="btn secondary" data-td-delete style="padding:10px 14px;color:var(--danger);">删除事项</button>
+        </div>
+      `;
+    }
+
+    // === 新增弹窗 ===
+    let addModalType = null;
+
+    function openAddModal(type) {
+      addModalType = type;
+      const overlay = document.getElementById('addOverlay');
+      const title = document.getElementById('addModalTitle');
+      const body = document.getElementById('addModalBody');
+      if (type === 'task') {
+        title.textContent = '新增事项';
+        body.innerHTML = `
+          <input class="field" id="addTaskTitle" placeholder="事项名称，例如：明天跟进成本测算">
+          <input class="field" id="addTaskMeta" placeholder="时间或备注，例如：明天 · 工作台日程提醒">
+          <input class="field" id="addTaskDeadline" type="datetime-local" style="color:var(--muted);">
+          <select class="field" id="addTaskKind">
+            <option value="normal">提醒</option>
+            <option value="urgent">重要</option>
+          </select>
+          <div class="add-modal-actions">
+            <button class="btn secondary" data-add-cancel type="button">取消</button>
+            <button class="btn" data-add-save="task" type="button">保存</button>
+          </div>
+        `;
+      } else if (type === 'project') {
+        title.textContent = '新增项目';
+        body.innerHTML = `
+          <input class="field" id="addProjectName" placeholder="项目名称">
+          <select class="field" id="addProjectPriority">${optionHtml(priorityOptions, '普通')}</select>
+          <input class="field" id="addProjectCategory" placeholder="分类" value="未分类">
+          <select class="field" id="addProjectPhase">${optionHtml(phaseOptions, '方向确认')}</select>
+          <select class="field" id="addProjectStatus">${optionHtml(statusOptions, '进行')}</select>
+          <input class="field" id="addProjectNext" placeholder="本周重点 / 下一步">
+          <input class="field" id="addProjectRisk" placeholder="风险或备注" value="/">
+          <div class="add-modal-actions">
+            <button class="btn secondary" data-add-cancel type="button">取消</button>
+            <button class="btn" data-add-save="project" type="button">保存</button>
+          </div>
+        `;
+      }
+      overlay.style.display = 'flex';
+    }
+
+    function closeAddModal() {
+      document.getElementById('addOverlay').style.display = 'none';
+      addModalType = null;
+    }
+
+    // 排序选项事件处理
+    document.addEventListener('click', event => {
+      // 首页事项排序
+      const homeTaskChip = event.target.closest('[data-home-task-sort]');
+      if (homeTaskChip) {
+        homeTaskSortMode = homeTaskChip.dataset.homeTaskSort;
+        document.querySelectorAll('#homeTaskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        homeTaskChip.classList.add('active');
+        renderHome();
         return;
       }
+      // 首页项目排序
+      const homeProjectChip = event.target.closest('[data-home-project-sort]');
+      if (homeProjectChip) {
+        homeProjectSortMode = homeProjectChip.dataset.homeProjectSort;
+        document.querySelectorAll('#homeProjectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        homeProjectChip.classList.add('active');
+        renderHome();
+        return;
+      }
+      // 事项管理页排序
+      const taskChip = event.target.closest('[data-task-sort]');
+      if (taskChip) {
+        taskSortMode = taskChip.dataset.taskSort;
+        document.querySelectorAll('#taskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        taskChip.classList.add('active');
+        renderTasks();
+        return;
+      }
+      // 项目管理页排序
+      const projectChip = event.target.closest('[data-project-sort]');
+      if (projectChip) {
+        projectSortMode = projectChip.dataset.projectSort;
+        document.querySelectorAll('#projectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        projectChip.classList.add('active');
+        renderProjects();
+        return;
+      }
+    });
 
-      document.addEventListener('click', (event) => {
-        const btn = event.target.closest('[data-voice]');
-        if (!btn) return;
+    // 统一 [data-add] 点击处理器
+    document.addEventListener('click', event => {
+      const addBtn = event.target.closest('[data-add]');
+      if (addBtn && addBtn.dataset.add) {
+        openAddModal(addBtn.dataset.add);
+      }
+    });
 
-        const targetId = btn.dataset.voice;
-        if (voiceRecognition && voiceTargetId) {
-          voiceRecognition.stop();
-          if (voiceTargetId === targetId) return;
+    // 新增弹窗事件处理
+    document.getElementById('addOverlay').addEventListener('click', event => {
+      if (event.target === document.getElementById('addOverlay') || event.target.matches('[data-add-close]') || event.target.matches('[data-add-cancel]')) {
+        closeAddModal();
+        return;
+      }
+      if (event.target.matches('[data-add-save]')) {
+        const type = event.target.dataset.addSave;
+        if (type === 'task') {
+          const title = document.getElementById('addTaskTitle').value.trim();
+          const meta = document.getElementById('addTaskMeta').value.trim() || '工作台提醒';
+          const kind = document.getElementById('addTaskKind').value;
+          const deadline = document.getElementById('addTaskDeadline').value || '';
+          if (!title) { showToast('请先填写事项名称'); return; }
+          state.tasks.unshift({ title, meta, done: false, kind, deadline, createdAt: Date.now(), attachments: [] });
+          saveState();
+          renderHome();
+          renderTasks();
+          showToast('已加入工作台');
+          closeAddModal();
+        } else if (type === 'project') {
+          const name = document.getElementById('addProjectName').value.trim();
+          if (!name) { showToast('请先填写项目名称'); return; }
+          state.projects.unshift({
+            name,
+            priority: document.getElementById('addProjectPriority').value,
+            category: document.getElementById('addProjectCategory').value.trim() || '未分类',
+            phase: document.getElementById('addProjectPhase').value,
+            status: document.getElementById('addProjectStatus').value,
+            next: document.getElementById('addProjectNext').value.trim() || '补充本周重点或下一步',
+            risk: document.getElementById('addProjectRisk').value.trim() || '/',
+            createdAt: Date.now(),
+            attachments: [],
+            progressLog: []
+          });
+          saveState();
+          renderHome();
+          renderProjects();
+          showToast('项目已新增');
+          closeAddModal();
         }
-
-        const recognition = new SR();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = true;
-
-        const input = document.getElementById(targetId);
-        const hintId = targetId.startsWith('task') ? 'voiceHint' : 'voiceHintProject';
-        const hint = document.getElementById(hintId);
-
-        const baseText = input.value || '';
-        let finalText = baseText;
-
-        recognition.onstart = () => {
-          btn.classList.add('recording');
-          voiceTargetId = targetId;
-          if (hint) { hint.textContent = '正在聆听... 再次点击结束'; hint.classList.add('active'); }
-        };
-
-        recognition.onresult = (event) => {
-          let interim = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalText += (finalText && !finalText.endsWith(' ') ? '' : '') + transcript;
-            } else {
-              interim += transcript;
-            }
-          }
-          input.value = (finalText + interim).trim();
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        };
-
-        recognition.onerror = (event) => {
-          if (event.error === 'not-allowed') {
-            showToast('请允许麦克风权限以使用语音输入');
-          } else if (event.error === 'no-speech') {
-            showToast('未检测到语音，请重试');
-          }
-        };
-
-        recognition.onend = () => {
-          btn.classList.remove('recording');
-          voiceTargetId = null;
-          if (hint) { hint.textContent = ''; hint.classList.remove('active'); }
-        };
-
-        recognition.start();
-        voiceRecognition = recognition;
-      });
-    }
+        return;
+      }
+    });
   </script>
+
+<div class="pd-overlay" id="taskDetailOverlay">
+  <div class="pd-page">
+    <div class="pd-header">
+      <button class="pd-back" type="button" data-td-back aria-label="返回">&larr;</button>
+      <div class="pd-header-title" id="tdTitle">事项详情</div>
+      <div style="width:38px;"></div>
+    </div>
+    <div class="pd-body" id="tdBody"></div>
+    <div class="pd-back-bottom">
+      <button type="button" data-td-back>&larr; 返回</button>
+    </div>
+  </div>
+</div>
 
 <div class="pd-overlay" id="projectDetailOverlay">
   <div class="pd-page">
     <div class="pd-header">
-      <button class="pd-back" type="button" data-pd-back>&larr;</button>
+      <button class="pd-back" type="button" data-pd-back aria-label="返回">&larr;</button>
       <div class="pd-header-title" id="pdTitle">项目详情</div>
       <div style="width:38px;"></div>
     </div>
     <div class="pd-body" id="pdBody"></div>
+    <div class="pd-back-bottom">
+      <button type="button" data-pd-back>&larr; 返回项目列表</button>
+    </div>
   </div>
 </div>
 
 <script>
+  // 事项详情弹窗事件处理
+  document.getElementById('taskDetailOverlay').addEventListener('click', event => {
+    if (event.target.matches('[data-td-back]')) {
+      closeTaskDetail();
+      return;
+    }
+    if (event.target.matches('[data-td-toggle-done]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        state.tasks[tdTaskIndex].done = !state.tasks[tdTaskIndex].done;
+        saveState();
+        renderTaskDetail(state.tasks[tdTaskIndex]);
+        renderHome();
+        renderTasks();
+      }
+      return;
+    }
+    if (event.target.matches('[data-td-open-attach]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        openAttachModal('task', tdTaskIndex, state.tasks[tdTaskIndex].title);
+      }
+      return;
+    }
+    if (event.target.matches('[data-td-delete]')) {
+      if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+        if (!confirm('确认删除该事项？')) return;
+        state.tasks.splice(tdTaskIndex, 1);
+        saveState();
+        closeTaskDetail();
+        showToast('事项已删除');
+      }
+      return;
+    }
+  });
+
+  document.getElementById('taskDetailOverlay').addEventListener('change', event => {
+    if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+      state.tasks[tdTaskIndex][event.target.dataset.tdField] = event.target.value;
+      saveState();
+    }
+  });
+
+  document.getElementById('taskDetailOverlay').addEventListener('blur', event => {
+    if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
+      const field = event.target.dataset.tdField;
+      state.tasks[tdTaskIndex][field] = event.target.value.trim();
+      saveState();
+      if (field === 'title') {
+        document.getElementById('tdTitle').textContent = state.tasks[tdTaskIndex].title || '事项详情';
+      }
+    }
+  }, true);
+
+  // 项目详情弹窗事件处理
   document.getElementById('projectDetailOverlay').addEventListener('click', event => {
     if (event.target.matches('[data-pd-back]')) {
       closeProjectDetail();
