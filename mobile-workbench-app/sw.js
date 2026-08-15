@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jakob-workbench-mobile-v17';
+const CACHE_NAME = 'jakob-workbench-mobile-v18';
 const APP_SHELL = [
   './',
   './index.html',
