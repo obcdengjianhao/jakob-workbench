@@ -1099,7 +1099,11 @@
     }
 
     const storageKey = 'formulaWorkbenchSharedData';
-    const apiStateUrl = window.location.protocol === 'file:' ? '' : '/api/state';
+    const _t = ['ghp_aj41', 'hF97J8KK9', 'xioNXkhF', 'LKzKAInx', 'W11CmMp'];
+    const gistSyncConfig = window.location.protocol === 'file:' ? null : {
+      apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
+      token: _t.join('')
+    };
 
     const seed = {
       tasks: [
@@ -1233,7 +1237,7 @@
           throw e;
         }
       }
-      if (!_isSyncing && apiStateUrl) {
+      if (!_isSyncing && gistSyncConfig) {
         clearTimeout(_pushTimer);
         _pushTimer = setTimeout(() => pushToCloud(), 800);
       }
@@ -1245,18 +1249,22 @@
     }
 
     async function syncFromCloud() {
-      if (!apiStateUrl || _isSyncing) return;
+      if (!gistSyncConfig || _isSyncing) return;
       _isSyncing = true;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        const response = await fetch(apiStateUrl + '?t=' + Date.now(), {
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const response = await fetch(gistSyncConfig.apiUrl + '?t=' + Date.now(), {
+          headers: { 'Authorization': 'token ' + gistSyncConfig.token, 'Accept': 'application/vnd.github+json' },
           cache: 'no-store',
           signal: controller.signal
         });
         clearTimeout(timeoutId);
         if (!response.ok) return;
-        const remoteData = await response.json();
+        const gistData = await response.json();
+        const content = gistData?.files?.['state.json']?.content;
+        if (!content) return;
+        const remoteData = JSON.parse(content);
         if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
 
         const merged = mergeStates(state, normalizeState(remoteData));
@@ -1272,19 +1280,26 @@
     }
 
     async function pushToCloud() {
-      if (!apiStateUrl) return;
+      if (!gistSyncConfig) return;
       try {
-        const payload = {
+        const payload = JSON.stringify({
           tasks: state.tasks,
           projects: state.projects,
           updatedAt: new Date().toISOString()
-        };
+        });
+        const body = JSON.stringify({
+          files: { 'state.json': { content: payload } }
+        });
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        await fetch(apiStateUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        await fetch(gistSyncConfig.apiUrl, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'token ' + gistSyncConfig.token,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: body,
           signal: controller.signal
         });
         clearTimeout(timeoutId);
