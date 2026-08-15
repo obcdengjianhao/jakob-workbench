@@ -1099,6 +1099,7 @@
     }
 
     const storageKey = 'formulaWorkbenchSharedData';
+    const apiStateUrl = window.location.protocol === 'file:' ? '' : '/api/state';
 
     const seed = {
       tasks: [
@@ -1217,6 +1218,10 @@
       }
     }
 
+    let _debounceTimer = null;
+    let _pushTimer = null;
+    let _isSyncing = false;
+
     function saveState() {
       state = normalizeState(state);
       try {
@@ -1228,12 +1233,135 @@
           throw e;
         }
       }
+      if (!_isSyncing && apiStateUrl) {
+        clearTimeout(_pushTimer);
+        _pushTimer = setTimeout(() => pushToCloud(), 800);
+      }
     }
 
-    let _debounceTimer = null;
     function debouncedSaveState() {
       clearTimeout(_debounceTimer);
       _debounceTimer = setTimeout(() => saveState(), 500);
+    }
+
+    async function syncFromCloud() {
+      if (!apiStateUrl || _isSyncing) return;
+      _isSyncing = true;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch(apiStateUrl + '?t=' + Date.now(), {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!response.ok) return;
+        const remoteData = await response.json();
+        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
+
+        const merged = mergeStates(state, normalizeState(remoteData));
+        state = merged;
+        saveState();
+        render();
+        pushToCloud();
+      } catch (e) {
+        console.warn('云端同步失败:', e);
+      } finally {
+        _isSyncing = false;
+      }
+    }
+
+    async function pushToCloud() {
+      if (!apiStateUrl) return;
+      try {
+        const payload = {
+          tasks: state.tasks,
+          projects: state.projects,
+          updatedAt: new Date().toISOString()
+        };
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        await fetch(apiStateUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+      } catch (e) {
+        console.warn('推送云端失败:', e);
+      }
+    }
+
+    function mergeStates(localState, remoteState) {
+      const localTasks = localState.tasks || [];
+      const remoteTasks = remoteState.tasks || [];
+      const taskMap = new Map();
+
+      remoteTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (key) taskMap.set(key, { ...t });
+      });
+      localTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (!key) return;
+        const existing = taskMap.get(key);
+        if (!existing) {
+          taskMap.set(key, { ...t });
+        } else if (t.done && !existing.done) {
+          taskMap.set(key, { ...t });
+        }
+      });
+
+      const localProjects = localState.projects || [];
+      const remoteProjects = remoteState.projects || [];
+      const projectMap = new Map();
+
+      remoteProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (key) projectMap.set(key, { ...p });
+      });
+      localProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (!key) return;
+        const existing = projectMap.get(key);
+        if (!existing) {
+          projectMap.set(key, { ...p });
+        } else {
+          const merged = { ...existing };
+          ['category', 'phase', 'status', 'priority', 'next', 'risk', 'background'].forEach(field => {
+            const localVal = (p[field] || '').trim();
+            const remoteVal = (existing[field] || '').trim();
+            if (localVal && (!remoteVal || remoteVal === '/' || remoteVal === '补充本周重点或下一步')) {
+              merged[field] = localVal;
+            }
+          });
+          const existingLogs = Array.isArray(existing.progressLog) ? existing.progressLog : [];
+          const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
+          const logSet = new Set();
+          const mergedLogs = [];
+          [...existingLogs, ...localLogs].forEach(log => {
+            const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
+            if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
+          });
+          merged.progressLog = mergedLogs;
+          const existingAttach = Array.isArray(existing.attachments) ? existing.attachments : [];
+          const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
+          const attachSet = new Set();
+          const mergedAttach = [];
+          [...existingAttach, ...localAttach].forEach(att => {
+            const sig = (att.name || '') + '|' + (att.size || 0);
+            if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
+          });
+          merged.attachments = mergedAttach;
+          projectMap.set(key, merged);
+        }
+      });
+
+      return {
+        tasks: Array.from(taskMap.values()),
+        projects: Array.from(projectMap.values())
+      };
     }
 
     function exportData() {
@@ -2225,6 +2353,7 @@
     })();
 
     render();
+    syncFromCloud();
 
     // === 事项详情弹窗 ===
     let tdTaskIndex = -1;
