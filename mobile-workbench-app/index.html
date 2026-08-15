@@ -1248,6 +1248,8 @@
       _debounceTimer = setTimeout(() => saveState(), 500);
     }
 
+    let _isPushing = false;
+
     async function syncFromCloud() {
       if (!gistSyncConfig || _isSyncing) return;
       _isSyncing = true;
@@ -1268,10 +1270,14 @@
         if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
 
         const merged = mergeStates(state, normalizeState(remoteData));
+        const localJson = JSON.stringify(state);
+        const mergedJson = JSON.stringify(merged);
         state = merged;
         saveState();
         render();
-        pushToCloud();
+        if (localJson !== mergedJson) {
+          await pushToCloud();
+        }
       } catch (e) {
         console.warn('云端同步失败:', e);
       } finally {
@@ -1280,7 +1286,8 @@
     }
 
     async function pushToCloud() {
-      if (!gistSyncConfig) return;
+      if (!gistSyncConfig || _isPushing) return;
+      _isPushing = true;
       try {
         const payload = JSON.stringify({
           tasks: state.tasks,
@@ -1292,7 +1299,7 @@
         });
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
-        await fetch(gistSyncConfig.apiUrl, {
+        const response = await fetch(gistSyncConfig.apiUrl, {
           method: 'PATCH',
           headers: {
             'Authorization': 'token ' + gistSyncConfig.token,
@@ -1303,8 +1310,13 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
+        if (!response.ok) {
+          console.warn('推送失败: HTTP ' + response.status);
+        }
       } catch (e) {
         console.warn('推送云端失败:', e);
+      } finally {
+        _isPushing = false;
       }
     }
 
@@ -1485,7 +1497,7 @@
           uploadedAt: file.uploadedAt || '',
           category: attachmentCategories.includes(file.category) ? file.category : '未分类'
         };
-        if (file.dataUrl) o.dataUrl = String(file.dataUrl);
+        if (file.dataUrl && String(file.dataUrl).startsWith('data:')) o.dataUrl = String(file.dataUrl);
         return o;
       }) : [];
     }
@@ -1881,7 +1893,6 @@
     function closeProjectDetail() {
       document.getElementById('projectDetailOverlay').classList.remove('show');
       pdProjectIndex = -1;
-      saveState();
       renderHome();
       renderProjects();
     }
@@ -2028,17 +2039,18 @@
     });
 
     // 搜索（防抖）
-    let _searchTimer = null;
+    let _taskSearchTimer = null;
+    let _projectSearchTimer = null;
     document.getElementById('taskSearch').addEventListener('input', event => {
-      clearTimeout(_searchTimer);
-      _searchTimer = setTimeout(() => {
+      clearTimeout(_taskSearchTimer);
+      _taskSearchTimer = setTimeout(() => {
         taskSearchQuery = event.target.value.trim();
         renderTasks();
       }, 200);
     });
     document.getElementById('projectSearch').addEventListener('input', event => {
-      clearTimeout(_searchTimer);
-      _searchTimer = setTimeout(() => {
+      clearTimeout(_projectSearchTimer);
+      _projectSearchTimer = setTimeout(() => {
         projectSearchQuery = event.target.value.trim();
         renderProjects();
       }, 200);
@@ -2383,7 +2395,6 @@
     function closeTaskDetail() {
       document.getElementById('taskDetailOverlay').classList.remove('show');
       tdTaskIndex = -1;
-      saveState();
       renderHome();
       renderTasks();
     }
@@ -2631,7 +2642,6 @@
   document.getElementById('taskDetailOverlay').addEventListener('change', event => {
     if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
       state.tasks[tdTaskIndex][event.target.dataset.tdField] = event.target.value;
-      saveState();
     }
   });
 
@@ -2685,7 +2695,6 @@
   document.getElementById('projectDetailOverlay').addEventListener('change', event => {
     if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
       state.projects[pdProjectIndex][event.target.dataset.pdField] = event.target.value;
-      saveState();
     }
   });
 
