@@ -1328,8 +1328,6 @@
     .container { padding: 16px; }
     .topbar-inner { flex-direction: column; align-items: stretch; }
     .nav-tabs { justify-content: center; }
-    #desktopSyncText { display: none; }
-    #desktopSyncBtn { padding: 8px 12px; align-self: center; }
   }
 
   .add-task-form {
@@ -1370,9 +1368,6 @@
       <button data-tab="projects">项目管理</button>
       <button data-tab="formulas">配方管理</button>
     </nav>
-    <button id="desktopSyncBtn" type="button" style="background:var(--primary);color:#fff;border:none;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
-      <span id="desktopSyncIcon">🔄</span><span id="desktopSyncText">同步</span>
-    </button>
   </div>
 </header>
 
@@ -2735,57 +2730,6 @@
     }
   }
 
-  async function manualDesktopSync() {
-    if (isDesktopSyncing) return;
-    if (!gistSyncConfig) {
-      alert('当前为本地模式（非云端地址），无法同步');
-      return;
-    }
-    isDesktopSyncing = true;
-    const syncBtn = document.getElementById('desktopSyncBtn');
-    const syncIcon = document.getElementById('desktopSyncIcon');
-    const syncText = document.getElementById('desktopSyncText');
-    if (syncBtn) syncBtn.style.opacity = '0.6';
-    if (syncIcon) syncIcon.textContent = '⏳';
-    if (syncText) syncText.textContent = '同步中...';
-
-    try {
-      const response = await fetchGist();
-      if (!response.ok) throw new Error('服务器响应异常');
-      const gistData = await response.json();
-      const content = gistData?.files?.['state.json']?.content;
-      if (!content) throw new Error('远程数据为空');
-      const remoteData = JSON.parse(content);
-      if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) {
-        throw new Error('远程数据格式异常');
-      }
-
-      const localData = getDesktopState();
-      const merged = mergeDesktopStates(localData, remoteData);
-      applySharedState(merged);
-      await patchGist(JSON.stringify(merged));
-
-      if (syncIcon) syncIcon.textContent = '✅';
-      if (syncText) syncText.textContent = '已同步';
-      setTimeout(() => {
-        if (syncIcon) syncIcon.textContent = '🔄';
-        if (syncText) syncText.textContent = '同步';
-        if (syncBtn) syncBtn.style.opacity = '1';
-      }, 2000);
-    } catch (error) {
-      console.warn('同步失败:', error);
-      if (syncIcon) syncIcon.textContent = '⚠️';
-      if (syncText) syncText.textContent = '同步失败';
-      setTimeout(() => {
-        if (syncIcon) syncIcon.textContent = '🔄';
-        if (syncText) syncText.textContent = '同步';
-        if (syncBtn) syncBtn.style.opacity = '1';
-      }, 2500);
-    } finally {
-      isDesktopSyncing = false;
-    }
-  }
-
   function getProjectRows() {
     const table = document.getElementById('projectTable');
     if (!table) return [];
@@ -3753,6 +3697,10 @@
     setupProjectDetail();
     autoDesktopSync();
 
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && gistSyncConfig) autoDesktopSync();
+    });
+
     document.addEventListener('click', (event) => {
       if (event.target.matches('#addTaskBtn')) {
         const titleInput = document.getElementById('newTaskTitle');
@@ -3778,9 +3726,6 @@
         document.getElementById('addTaskBtn')?.click();
       }
     });
-
-    // 手动同步按钮
-    document.getElementById('desktopSyncBtn')?.addEventListener('click', manualDesktopSync);
   });
 </script>
 
