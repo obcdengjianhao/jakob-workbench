@@ -2153,11 +2153,6 @@
     });
   }
 
-  async function saveAttachmentFilesToWorkspace() {}
-  async function moveAttachmentFile() {}
-  async function getLocalFileUrl() { return ''; }
-  async function downloadLocalFile() {}
-
   let attachModalContext = null;
 
   function normalizeAttachments(attachments) {
@@ -2359,7 +2354,7 @@
                   }
                   <button class="attach-mini-btn primary" type="button" data-attach-preview="${realIndex}">浏览</button>
                   ${(file.path && !file.dataUrl)
-                    ? `<button class="attach-mini-btn primary" type="button" data-attach-download="${realIndex}" data-attach-path="${escapeHtml(file.path)}">下载</button>`
+                    ? `<button class="attach-mini-btn primary" type="button" data-attach-download="${realIndex}">下载</button>`
                     : `<a class="attach-mini-btn primary" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">下载</a>`
                   }
                   <button class="attach-mini-btn danger" type="button" data-attach-delete="${realIndex}">删除</button>
@@ -2548,13 +2543,20 @@
     }
   }
 
+  let _sharedStateCache = null;
+  let _sharedStateRaw = null;
+
   function loadCachedSharedState() {
+    const raw = localStorage.getItem(sharedStorageKey);
+    if (raw === _sharedStateRaw) return _sharedStateCache;
+    _sharedStateRaw = raw;
     try {
-      const data = JSON.parse(localStorage.getItem(sharedStorageKey) || 'null');
-      return Array.isArray(data?.tasks) && Array.isArray(data?.projects) ? normalizeSharedState(data) : null;
+      const data = JSON.parse(raw || 'null');
+      _sharedStateCache = Array.isArray(data?.tasks) && Array.isArray(data?.projects) ? normalizeSharedState(data) : null;
     } catch {
-      return null;
+      _sharedStateCache = null;
     }
+    return _sharedStateCache;
   }
 
   function applySharedState(state) {
@@ -2643,10 +2645,54 @@
   }
 
   let isDesktopSyncing = false;
+  let _isDesktopPushing = false;
   let _desktopPushTimer = null;
 
+  function patchGist(content) {
+    const body = JSON.stringify({
+      files: { 'state.json': { content: typeof content === 'string' ? content : JSON.stringify(content) } }
+    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    return fetch(gistSyncConfig.apiUrl, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'token ' + gistSyncConfig.token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: body,
+      signal: controller.signal
+    }).then(response => {
+      clearTimeout(timeoutId);
+      if (!response.ok) console.warn('推送失败: HTTP ' + response.status);
+      return response;
+    }).catch(e => {
+      clearTimeout(timeoutId);
+      console.warn('推送云端失败:', e);
+      throw e;
+    });
+  }
+
+  function fetchGist() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    return fetch(gistSyncConfig.apiUrl + '?t=' + Date.now(), {
+      headers: { 'Authorization': 'token ' + gistSyncConfig.token, 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store',
+      signal: controller.signal
+    }).then(response => {
+      clearTimeout(timeoutId);
+      return response;
+    }).catch(e => {
+      clearTimeout(timeoutId);
+      throw e;
+    });
+  }
+
   async function pushDesktopToCloud() {
-    if (!gistSyncConfig) return;
+    if (!gistSyncConfig || _isDesktopPushing || isDesktopSyncing) return;
+    _isDesktopPushing = true;
     try {
       const state = getDesktopState();
       const payload = JSON.stringify({
@@ -2654,24 +2700,10 @@
         projects: state.projects,
         updatedAt: new Date().toISOString()
       });
-      const body = JSON.stringify({
-        files: { 'state.json': { content: payload } }
-      });
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      await fetch(gistSyncConfig.apiUrl, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'token ' + gistSyncConfig.token,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json'
-        },
-        body: body,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-    } catch (e) {
-      console.warn('推送云端失败:', e);
+      await patchGist(payload);
+    } catch (e) { /* already logged in patchGist */ }
+    finally {
+      _isDesktopPushing = false;
     }
   }
 
@@ -2679,14 +2711,7 @@
     if (!gistSyncConfig || isDesktopSyncing) return;
     isDesktopSyncing = true;
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      const response = await fetch(gistSyncConfig.apiUrl + '?t=' + Date.now(), {
-        headers: { 'Authorization': 'token ' + gistSyncConfig.token, 'Accept': 'application/vnd.github+json' },
-        cache: 'no-store',
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
+      const response = await fetchGist();
       if (!response.ok) return;
       const gistData = await response.json();
       const content = gistData?.files?.['state.json']?.content;
@@ -2698,18 +2723,11 @@
       const merged = mergeDesktopStates(localData, remoteData);
       applySharedState(merged);
 
-      const pushBody = JSON.stringify({
-        files: { 'state.json': { content: JSON.stringify(merged) } }
-      });
-      await fetch(gistSyncConfig.apiUrl, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'token ' + gistSyncConfig.token,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json'
-        },
-        body: pushBody
-      });
+      const localJson = JSON.stringify(localData);
+      const mergedJson = JSON.stringify(merged);
+      if (localJson !== mergedJson) {
+        await patchGist(JSON.stringify(merged));
+      }
     } catch (e) {
       console.warn('云端同步失败:', e);
     } finally {
@@ -2731,16 +2749,8 @@
     if (syncIcon) syncIcon.textContent = '⏳';
     if (syncText) syncText.textContent = '同步中...';
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     try {
-      // 1. 获取远程数据
-      const response = await fetch(gistSyncConfig.apiUrl + '?t=' + Date.now(), {
-        headers: { 'Authorization': 'token ' + gistSyncConfig.token, 'Accept': 'application/vnd.github+json' },
-        cache: 'no-store',
-        signal: controller.signal
-      });
+      const response = await fetchGist();
       if (!response.ok) throw new Error('服务器响应异常');
       const gistData = await response.json();
       const content = gistData?.files?.['state.json']?.content;
@@ -2750,29 +2760,11 @@
         throw new Error('远程数据格式异常');
       }
 
-      // 2. 合并本地与远程
       const localData = getDesktopState();
       const merged = mergeDesktopStates(localData, remoteData);
-
-      // 3. 应用合并结果到页面
       applySharedState(merged);
+      await patchGist(JSON.stringify(merged));
 
-      // 4. 推送合并结果到Gist
-      const pushBody = JSON.stringify({
-        files: { 'state.json': { content: JSON.stringify(merged) } }
-      });
-      await fetch(gistSyncConfig.apiUrl, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'token ' + gistSyncConfig.token,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json'
-        },
-        body: pushBody,
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
       if (syncIcon) syncIcon.textContent = '✅';
       if (syncText) syncText.textContent = '已同步';
       setTimeout(() => {
@@ -2781,7 +2773,6 @@
         if (syncBtn) syncBtn.style.opacity = '1';
       }, 2000);
     } catch (error) {
-      clearTimeout(timeoutId);
       console.warn('同步失败:', error);
       if (syncIcon) syncIcon.textContent = '⚠️';
       if (syncText) syncText.textContent = '同步失败';
@@ -3151,11 +3142,11 @@
       renderDesktopTasks(desktopTasks);
       refreshProjectDashboard();
     }
-    // 不自动拉取，由手动同步按钮触发
-
+    let _dashboardDebounce = null;
     table.addEventListener('input', (event) => {
       if (event.target.matches('td[contenteditable="true"]')) {
-        refreshProjectDashboard();
+        clearTimeout(_dashboardDebounce);
+        _dashboardDebounce = setTimeout(() => refreshProjectDashboard(), 400);
       }
     });
 
@@ -3263,10 +3254,8 @@
             if (oldPath) {
               const parts = oldPath.split('/');
               const newPath = parts.slice(0, -2).concat(event.target.value, parts[parts.length - 1]).join('/');
-              moveAttachmentFile(oldPath, newPath).then(() => {
-                current[idx].path = newPath;
-                setAttachmentsToContext(attachModalContext, current);
-              });
+              current[idx].path = newPath;
+              setAttachmentsToContext(attachModalContext, current);
             } else {
               setAttachmentsToContext(attachModalContext, current);
             }
@@ -3276,15 +3265,14 @@
         }
       });
 
-      overlay.addEventListener('click', async (event) => {
+      overlay.addEventListener('click', (event) => {
         if (event.target.matches('[data-attach-preview]')) {
           const idx = Number(event.target.dataset.attachPreview);
           if (attachModalContext) {
             const files = getAttachmentsFromContext(attachModalContext);
             const file = files[idx];
             if (file?.path && !file?.dataUrl) {
-              const url = await getLocalFileUrl(file.path);
-              if (!url) { alert('无法读取本地文件，请检查工作台地址是否可用。'); return; }
+              alert('该附件为本地路径引用，无法在线预览。'); return;
             }
             attachModalContext.previewIndex = idx;
             attachModalContext.renamingIndex = -1;
@@ -3323,10 +3311,8 @@
                 if (oldPath) {
                   const parts = oldPath.split('/');
                   const newPath = parts.slice(0, -1).concat(safeFileName(newName)).join('/');
-                  moveAttachmentFile(oldPath, newPath).then(() => {
-                    current[idx].path = newPath;
-                    setAttachmentsToContext(attachModalContext, current);
-                  });
+                  current[idx].path = newPath;
+                  setAttachmentsToContext(attachModalContext, current);
                 }
               }
             }
@@ -3337,10 +3323,9 @@
         }
         if (event.target.matches('[data-attach-download]')) {
           const idx = Number(event.target.dataset.attachDownload);
-          const path = event.target.dataset.attachPath;
           const files = getAttachmentsFromContext(attachModalContext);
           const file = files[idx];
-          if (file) downloadLocalFile(path || file.path, file.name);
+          if (file && !file.dataUrl) { alert('该附件为本地路径引用，无法下载。'); }
           return;
         }
         if (event.target.matches('[data-attach-delete]')) {
@@ -3434,10 +3419,10 @@
     const display = latest
       ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${escapeHtml(formatProgressDate(latest.date))}</div><div style="font-size:12px;">${escapeHtml(latest.progress)}</div>`
       : '<div style="font-size:12px;color:var(--text-secondary);">暂无记录</div>';
-    btn.insertAdjacentHTML('afterend', display);
-    Array.from(cell.children).forEach((child, i) => {
-      if (i > 0 && child !== cell.children[1]) child.remove();
+    Array.from(cell.children).forEach(child => {
+      if (child !== btn) child.remove();
     });
+    btn.insertAdjacentHTML('afterend', display);
   }
 
   function setupProgressLogModal() {
