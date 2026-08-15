@@ -2538,7 +2538,10 @@
     if (isApplyingSharedState) return;
     const state = getDesktopState();
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
-    // 仅保存到本地，不自动推送
+    if (apiStateUrl) {
+      clearTimeout(_desktopPushTimer);
+      _desktopPushTimer = setTimeout(() => pushDesktopToCloud(), 800);
+    }
   }
 
   function loadCachedSharedState() {
@@ -2636,6 +2639,61 @@
   }
 
   let isDesktopSyncing = false;
+  let _desktopPushTimer = null;
+
+  async function pushDesktopToCloud() {
+    if (!apiStateUrl) return;
+    try {
+      const state = getDesktopState();
+      const payload = {
+        tasks: state.tasks,
+        projects: state.projects,
+        updatedAt: new Date().toISOString()
+      };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      await fetch(apiStateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+    } catch (e) {
+      console.warn('推送云端失败:', e);
+    }
+  }
+
+  async function autoDesktopSync() {
+    if (!apiStateUrl || isDesktopSyncing) return;
+    isDesktopSyncing = true;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(apiStateUrl + '?t=' + Date.now(), {
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!response.ok) return;
+      const remoteData = await response.json();
+      if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
+
+      const localData = getDesktopState();
+      const merged = mergeDesktopStates(localData, remoteData);
+      applySharedState(merged);
+
+      await fetch(apiStateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(merged)
+      });
+    } catch (e) {
+      console.warn('云端同步失败:', e);
+    } finally {
+      isDesktopSyncing = false;
+    }
+  }
 
   async function manualDesktopSync() {
     if (isDesktopSyncing) return;
@@ -3675,6 +3733,7 @@
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
+    autoDesktopSync();
 
     document.addEventListener('click', (event) => {
       if (event.target.matches('#addTaskBtn')) {
