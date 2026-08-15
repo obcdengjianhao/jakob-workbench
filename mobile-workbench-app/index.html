@@ -797,26 +797,7 @@
       border-color: var(--primary);
     }
 
-    .data-mgmt-row {
-      display: flex;
-      gap: 10px;
-    }
 
-    .data-btn {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
-      font-size: 13px;
-      cursor: pointer;
-      transition: background .15s;
-    }
-
-    .data-btn:active {
-      background: var(--primary-soft);
-    }
 
     .sort-chip {
       padding: 4px 10px;
@@ -959,17 +940,6 @@
           <span class="sort-chip" data-home-project-sort="progress">最新进度</span>
         </div>
         <div id="homeProjects"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title-row">
-          <span>数据管理</span>
-        </div>
-        <div class="data-mgmt-row">
-          <button class="data-btn" id="exportBtn" type="button">导出数据</button>
-          <button class="data-btn" id="importBtn" type="button">导入数据</button>
-          <input type="file" id="importFile" accept=".json" style="display:none;">
-        </div>
       </div>
 
     </section>
@@ -1389,37 +1359,6 @@
         tasks: Array.from(taskMap.values()),
         projects: Array.from(projectMap.values())
       };
-    }
-
-    function exportData() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `workbench-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('数据已导出');
-    }
-
-    function importData(file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          state = normalizeState(data);
-          saveState();
-          renderHome();
-          renderTasks();
-          renderProjects();
-          showToast('数据导入成功');
-        } catch {
-          showToast('导入失败：文件格式不正确');
-        }
-      };
-      reader.readAsText(file);
     }
 
     function showToast(text) {
@@ -2024,20 +1963,6 @@
       });
     });
 
-    // 数据导出/导入
-    document.getElementById('exportBtn').addEventListener('click', exportData);
-    document.getElementById('importBtn').addEventListener('click', () => {
-      document.getElementById('importFile').click();
-    });
-    document.getElementById('importFile').addEventListener('change', event => {
-      const file = event.target.files[0];
-      if (file) {
-        if (!confirm('导入将覆盖当前数据，确认继续？')) return;
-        importData(file);
-      }
-      event.target.value = '';
-    });
-
     // 搜索（防抖）
     let _taskSearchTimer = null;
     let _projectSearchTimer = null;
@@ -2381,6 +2306,10 @@
 
     render();
     syncFromCloud();
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && gistSyncConfig) syncFromCloud();
+    });
 
     // === 事项详情弹窗 ===
     let tdTaskIndex = -1;
