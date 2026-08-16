@@ -1517,6 +1517,50 @@
     cursor: pointer;
     border: 1px solid var(--border);
   }
+
+  .cl-btn {
+    background: rgba(75,63,227,.1); border: none; color: var(--primary, #4B3FE3);
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .cl-btn:hover { background: rgba(75,63,227,.2); }
+  .cl-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1200;
+    display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 16px;
+  }
+  .cl-overlay.show { display: flex; }
+  .cl-modal {
+    background: var(--card); border-radius: 14px; width: 100%; max-width: 600px;
+    margin: auto; box-shadow: 0 8px 32px rgba(0,0,0,.12); display: flex; flex-direction: column;
+    max-height: 80vh;
+  }
+  .cl-modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .cl-modal-title { margin: 0; font-size: 16px; font-weight: 600; }
+  .cl-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); }
+  .cl-filters { display: flex; gap: 6px; padding: 12px 20px 0; flex-wrap: wrap; }
+  .cl-filter-chip {
+    padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--card); font-size: 12px; cursor: pointer; color: var(--text-secondary);
+  }
+  .cl-filter-chip.active { background: var(--primary, #4B3FE3); color: #fff; border-color: var(--primary, #4B3FE3); }
+  .cl-list { display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 20px; overflow-y: auto; flex: 1; }
+  .cl-item { display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); }
+  .cl-icon {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .cl-icon.create { background: rgba(34,197,94,.15); }
+  .cl-icon.update { background: rgba(59,130,246,.15); }
+  .cl-icon.delete { background: rgba(239,68,68,.15); }
+  .cl-icon.toggle { background: rgba(168,85,247,.15); }
+  .cl-body { flex: 1; min-width: 0; }
+  .cl-item-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .cl-desc { font-size: 12px; color: var(--text-secondary); word-break: break-word; }
+  .cl-time { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+  .cl-empty { text-align: center; padding: 40px 0; color: var(--text-secondary); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -1531,6 +1575,7 @@
       <button data-tab="projects">项目管理</button>
       <button data-tab="formulas">配方管理</button>
     </nav>
+    <button class="cl-btn" id="changeLogBtn" type="button">📋 修改记录</button>
   </div>
 </header>
 
@@ -1742,7 +1787,22 @@
     token: _dt.join('')
   };
   let desktopTasks = [];
+  let desktopChangeLog = [];
   let isApplyingSharedState = false;
+  let _clFilterMode = 'all';
+
+  function logChange(action, type, name, details) {
+    desktopChangeLog.unshift({
+      action: action,
+      type: type,
+      name: name || '',
+      timestamp: Date.now(),
+      details: details || ''
+    });
+    if (desktopChangeLog.length > 200) {
+      desktopChangeLog = desktopChangeLog.slice(0, 200);
+    }
+  }
 
   function splitProjectPriority(project) {
     const rawName = (project.name || '').trim();
@@ -1815,7 +1875,8 @@
   function normalizeSharedState(state) {
     return {
       tasks: Array.isArray(state?.tasks) ? state.tasks.map(normalizeTaskData) : [],
-      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : [])
+      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : []),
+      changeLog: Array.isArray(state?.changeLog) ? state.changeLog : []
     };
   }
 
@@ -1876,6 +1937,58 @@
       '"': '&quot;',
       "'": '&#39;'
     }[s]));
+  }
+
+  const clActionMap = {
+    create: { icon: '➕', label: '新增' },
+    update: { icon: '✏️', label: '编辑' },
+    delete: { icon: '🗑️', label: '删除' },
+    toggle: { icon: '🔄', label: '状态切换' }
+  };
+  const clTypeMap = { task: '事项', project: '项目', progress: '进度' };
+
+  function formatClTime(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (d.toDateString() === now.toDateString()) return '今天 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+
+  function renderChangeLog() {
+    const logs = desktopChangeLog || [];
+    const filtered = _clFilterMode === 'all' ? logs : logs.filter(l => l.action === _clFilterMode);
+    const container = document.getElementById('changeLogList');
+    if (!container) return;
+    if (!filtered.length) {
+      container.innerHTML = '<div class="cl-empty">暂无修改记录</div>';
+      return;
+    }
+    container.innerHTML = filtered.map(log => {
+      const am = clActionMap[log.action] || { icon: '📝', label: log.action };
+      const typeLabel = clTypeMap[log.type] || log.type;
+      const name = escapeHtml(log.name || '');
+      const details = log.details ? escapeHtml(log.details) : '';
+      return '<div class="cl-item">' +
+        '<div class="cl-icon ' + log.action + '">' + am.icon + '</div>' +
+        '<div class="cl-body">' +
+          '<div class="cl-item-title">' + am.label + typeLabel + (name ? ' · ' + name : '') + '</div>' +
+          (details ? '<div class="cl-desc">' + details + '</div>' : '') +
+          '<div class="cl-time">' + formatClTime(log.timestamp) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openChangeLog() {
+    document.getElementById('changeLogOverlay').classList.add('show');
+    renderChangeLog();
+  }
+
+  function closeChangeLog() {
+    document.getElementById('changeLogOverlay').classList.remove('show');
   }
 
   const attachmentCategories = ['未分类', '文档', '图片', '表格', '报告', '其他'];
@@ -2393,7 +2506,8 @@
   function getDesktopState() {
     return {
       tasks: desktopTasks.length ? desktopTasks : extractDesktopTasksFromDom(),
-      projects: sortProjectsByPriority(getProjectRows())
+      projects: sortProjectsByPriority(getProjectRows()),
+      changeLog: desktopChangeLog
     };
   }
 
@@ -2430,6 +2544,7 @@
     renderProjectTableRows(state.projects);
     updateProjectTableVisuals();
     renderDesktopTasks(state.tasks);
+    desktopChangeLog = Array.isArray(state.changeLog) ? state.changeLog : [];
     refreshProjectDashboard();
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
     isApplyingSharedState = false;
@@ -2501,9 +2616,20 @@
       }
     });
 
+    const localLogs = Array.isArray(localState.changeLog) ? localState.changeLog : [];
+    const remoteLogs = Array.isArray(remoteState.changeLog) ? remoteState.changeLog : [];
+    const logSeen = new Set();
+    const mergedLogs = [];
+    [...localLogs, ...remoteLogs].forEach(log => {
+      const sig = log.timestamp + '|' + log.action + '|' + log.type + '|' + (log.name || '') + '|' + (log.details || '');
+      if (!logSeen.has(sig)) { logSeen.add(sig); mergedLogs.push(log); }
+    });
+    mergedLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
     return {
       tasks: Array.from(taskMap.values()),
       projects: Array.from(projectMap.values()),
+      changeLog: mergedLogs.slice(0, 200),
       updatedAt: new Date().toISOString()
     };
   }
@@ -2984,12 +3110,45 @@
       }
     });
 
+    table.addEventListener('focus', (event) => {
+      if (event.target.matches('td[contenteditable="true"]')) {
+        event.target._clOldValue = event.target.textContent.trim();
+      }
+      if (event.target.matches('.status-select')) {
+        event.target._clOldValue = event.target.value;
+      }
+    }, true);
+
+    table.addEventListener('blur', (event) => {
+      if (event.target.matches('td[contenteditable="true"]')) {
+        const field = event.target.dataset.field;
+        const newVal = event.target.textContent.trim();
+        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+        if (newVal !== oldVal) {
+          const row = event.target.closest('tr');
+          const projName = row?.cells[0]?.textContent?.trim() || '';
+          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+          saveDesktopState();
+        }
+        delete event.target._clOldValue;
+      }
+    }, true);
+
     table.addEventListener('change', (event) => {
       if (event.target.matches('.status-select')) {
+        const field = event.target.dataset.field;
+        const row = event.target.closest('tr');
+        const projName = row?.cells[0]?.textContent?.trim() || '';
+        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+        if (event.target.value !== oldVal) {
+          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (event.target.value || '空'));
+        }
+        delete event.target._clOldValue;
         if (event.target.dataset.field === 'priority') {
           renderProjectTableRows(getProjectRows());
           updateProjectTableVisuals();
         }
+        saveDesktopState();
         refreshProjectDashboard();
       }
     });
@@ -3021,7 +3180,11 @@
         return;
       }
       if (event.target.matches('.row-delete-btn')) {
-        event.target.closest('tr')?.remove();
+        const row = event.target.closest('tr');
+        const projName = row?.cells[0]?.textContent?.trim() || '';
+        row?.remove();
+        logChange('delete', 'project', projName, '删除项目');
+        saveDesktopState();
         refreshProjectDashboard();
       }
     });
@@ -3040,6 +3203,8 @@
         progressCell.innerHTML = '<button class="progress-log-btn" type="button" data-progress-open>进度记录</button><div style="font-size:12px;color:var(--text-secondary);">暂无记录</div>';
         updateProjectTableVisuals();
         refreshProjectDashboard();
+        logChange('create', 'project', '新项目', '新增项目');
+        saveDesktopState();
         row.querySelector('td')?.focus();
       });
     }
@@ -3237,6 +3402,9 @@
     const log = decodeProgressLog(progressLogContext.dataset.progressLog);
     log.push({ date, progress, remark });
     progressLogContext.dataset.progressLog = encodeProgressLog(log);
+    const projRow = progressLogContext.closest('tr');
+    const projName = projRow?.cells[0]?.textContent?.trim() || '';
+    logChange('create', 'progress', projName, '新增进度：' + progress + (date ? '（' + date + '）' : ''));
     updateProgressCellDisplay(progressLogContext);
     renderProgressLogList();
     document.getElementById('progressLogText').value = '';
@@ -3276,8 +3444,12 @@
       if (delBtn && progressLogContext) {
         const index = Number(delBtn.dataset.delIndex);
         const log = decodeProgressLog(progressLogContext.dataset.progressLog);
+        const delProgress = log[index]?.progress || '';
         log.splice(index, 1);
         progressLogContext.dataset.progressLog = encodeProgressLog(log);
+        const projRow = progressLogContext.closest('tr');
+        const projName = projRow?.cells[0]?.textContent?.trim() || '';
+        logChange('delete', 'progress', projName, '删除进度：' + delProgress);
         updateProgressCellDisplay(progressLogContext);
         renderProgressLogList();
         saveDesktopState();
@@ -3532,12 +3704,15 @@
         const remark = document.getElementById('pdProgressRemark').value.trim();
         if (!progress) { alert('请输入进展描述'); return; }
         if (!projectDetailRow) return;
+        const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
         const progressCell = projectDetailRow.querySelector('.progress-cell');
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
           log.push({ date, progress, remark });
           progressCell.dataset.progressLog = encodeProgressLog(log);
         }
+        logChange('create', 'progress', projName, '新增进度：' + progress + (date ? '（' + date + '）' : ''));
+        saveDesktopState();
         // Re-render detail to show new entry
         const project = getProjectFromRow(projectDetailRow);
         renderProjectDetail(project);
@@ -3548,11 +3723,15 @@
       if (delBtn && projectDetailRow) {
         const idx = Number(delBtn.dataset.pdDelProgress);
         const progressCell = projectDetailRow.querySelector('.progress-cell');
+        const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
+          const delProgress = log[idx]?.progress || '';
           log.splice(idx, 1);
           progressCell.dataset.progressLog = encodeProgressLog(log);
+          logChange('delete', 'progress', projName, '删除进度：' + delProgress);
         }
+        saveDesktopState();
         const project = getProjectFromRow(projectDetailRow);
         renderProjectDetail(project);
         return;
@@ -3566,17 +3745,40 @@
       }
     });
 
+    // Track old values for change logging
+    overlay.addEventListener('focus', (event) => {
+      if (event.target.matches('[data-pd-field]')) {
+        event.target._clOldValue = event.target.tagName === 'SELECT' ? event.target.value : event.target.value;
+      }
+    }, true);
+
     // Save on select change
     overlay.addEventListener('change', (event) => {
       if (event.target.matches('[data-pd-field]')) {
+        const field = event.target.dataset.pdField;
+        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+        const newVal = event.target.value;
+        if (event.target.tagName === 'SELECT' && newVal !== oldVal) {
+          const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
+          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+        }
         saveProjectDetailToRow();
+        delete event.target._clOldValue;
       }
     });
 
     // Save on blur of editable fields
     overlay.addEventListener('blur', (event) => {
       if (event.target.matches('[data-pd-field]')) {
+        const field = event.target.dataset.pdField;
+        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+        const newVal = event.target.value.trim();
+        if (event.target.tagName !== 'SELECT' && newVal !== oldVal) {
+          const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
+          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+        }
         saveProjectDetailToRow();
+        delete event.target._clOldValue;
       }
     }, true);
   }
@@ -3605,6 +3807,7 @@
       });
       if (titleInput) titleInput.value = '';
       if (metaInput) metaInput.value = '';
+      logChange('create', 'task', title, '新增事项' + (meta ? '（' + meta + '）' : ''));
       saveDesktopState();
       renderTaskList();
       renderHomeRecent();
@@ -3626,6 +3829,7 @@
         const idx = Number(event.target.dataset.taskToggle);
         if (!Number.isNaN(idx) && desktopTasks[idx]) {
           desktopTasks[idx].done = !desktopTasks[idx].done;
+          logChange('toggle', 'task', desktopTasks[idx].title, desktopTasks[idx].done ? '标记完成' : '取消完成');
           saveDesktopState();
           renderTaskList();
           renderHomeRecent();
@@ -3643,7 +3847,9 @@
         const idx = Number(event.target.dataset.taskDelete);
         if (!Number.isNaN(idx) && desktopTasks[idx]) {
           if (!confirm('确认删除该事项？')) return;
+          const taskName = desktopTasks[idx].title || '';
           desktopTasks.splice(idx, 1);
+          logChange('delete', 'task', taskName, '删除事项');
           saveDesktopState();
           renderTaskList();
           renderHomeRecent();
@@ -3665,6 +3871,7 @@
       if (event.target.matches('#tdToggleDone')) {
         if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
           desktopTasks[_tdTaskIndex].done = !desktopTasks[_tdTaskIndex].done;
+          logChange('toggle', 'task', desktopTasks[_tdTaskIndex].title, desktopTasks[_tdTaskIndex].done ? '标记完成' : '取消完成');
           saveDesktopState();
           const doneBtn = document.getElementById('tdToggleDone');
           doneBtn.textContent = desktopTasks[_tdTaskIndex].done ? '取消完成' : '标记完成';
@@ -3676,7 +3883,9 @@
       if (event.target.matches('#tdDelete')) {
         if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
           if (!confirm('确认删除该事项？')) return;
+          const taskName = desktopTasks[_tdTaskIndex].title || '';
           desktopTasks.splice(_tdTaskIndex, 1);
+          logChange('delete', 'task', taskName, '删除事项');
           _tdTaskIndex = -1;
           saveDesktopState();
           document.getElementById('taskDetailOverlay').classList.remove('show');
@@ -3738,12 +3947,32 @@
       }, 200);
     });
 
-    // 事项详情弹窗字段自动保存
+    // 事项详情弹窗字段自动保存 + 修改记录
+    const tdFieldLabels = { tdTitle: '标题', tdMeta: '备注', tdDeadline: '截止日期', tdKind: '类型' };
     ['tdTitle', 'tdMeta', 'tdDeadline', 'tdKind'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        el.addEventListener('blur', saveTaskDetail);
-        if (el.tagName === 'SELECT') el.addEventListener('change', saveTaskDetail);
+        el.addEventListener('focus', () => { el._clOldValue = el.value; });
+        el.addEventListener('blur', () => {
+          const oldVal = el._clOldValue !== undefined ? el._clOldValue : '';
+          const newVal = el.value.trim();
+          if (newVal !== oldVal && _tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
+            logChange('update', 'task', desktopTasks[_tdTaskIndex].title, '修改' + tdFieldLabels[id] + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+          }
+          delete el._clOldValue;
+          saveTaskDetail();
+        });
+        if (el.tagName === 'SELECT') {
+          el.addEventListener('change', () => {
+            const oldVal = el._clOldValue !== undefined ? el._clOldValue : '';
+            const newVal = el.value;
+            if (newVal !== oldVal && _tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
+              logChange('update', 'task', desktopTasks[_tdTaskIndex].title, '修改' + tdFieldLabels[id] + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+            }
+            delete el._clOldValue;
+            saveTaskDetail();
+          });
+        }
       }
     });
 
@@ -3764,6 +3993,22 @@
       if (event.key === 'Enter' && event.target.matches('#newTaskTitle, #newTaskMeta')) {
         event.preventDefault();
         addNewTask();
+      }
+    });
+
+    // 修改记录弹窗事件
+    document.getElementById('changeLogBtn').addEventListener('click', openChangeLog);
+    document.getElementById('changeLogOverlay').addEventListener('click', event => {
+      if (event.target === document.getElementById('changeLogOverlay') || event.target.matches('[data-cl-close]')) {
+        closeChangeLog();
+        return;
+      }
+      const chip = event.target.closest('[data-cl-filter]');
+      if (chip) {
+        _clFilterMode = chip.dataset.clFilter;
+        document.querySelectorAll('.cl-filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderChangeLog();
       }
     });
 
@@ -3846,6 +4091,24 @@
 <div class="overlay" id="projectDetailOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
   <div id="projectDetailCard" style="background:var(--card);border-radius:16px;width:100%;max-width:860px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);">
     <div id="projectDetailContent"></div>
+  </div>
+</div>
+
+<!-- 修改记录弹窗 -->
+<div class="cl-overlay" id="changeLogOverlay">
+  <div class="cl-modal">
+    <div class="cl-modal-header">
+      <h3 class="cl-modal-title">修改记录</h3>
+      <button class="cl-modal-close" data-cl-close type="button">&times;</button>
+    </div>
+    <div class="cl-filters">
+      <span class="cl-filter-chip active" data-cl-filter="all">全部</span>
+      <span class="cl-filter-chip" data-cl-filter="create">新增</span>
+      <span class="cl-filter-chip" data-cl-filter="update">编辑</span>
+      <span class="cl-filter-chip" data-cl-filter="delete">删除</span>
+      <span class="cl-filter-chip" data-cl-filter="toggle">状态切换</span>
+    </div>
+    <div class="cl-list" id="changeLogList"></div>
   </div>
 </div>
 
