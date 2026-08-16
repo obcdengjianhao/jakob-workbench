@@ -1354,6 +1354,169 @@
     padding: 7px 16px;
     font-size: 13px;
   }
+
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .card-add-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .card-add-btn:hover { background: var(--primary-soft); }
+  .muted { color: var(--text-secondary); font-size: 12px; font-weight: normal; }
+
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .sort-label { font-size: 12px; color: var(--text-secondary); }
+  .sort-chip {
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sort-chip.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .search-input:focus { outline: none; border-color: var(--primary); }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-checkbox {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+  .task-checkbox.done {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .task-checkbox.done::after {
+    content: '✓'; color: #fff; font-size: 12px;
+  }
+  .task-content { flex: 1; cursor: pointer; }
+  .task-title { font-size: 14px; }
+  .task-title.done { text-decoration: line-through; color: var(--text-secondary); }
+  .task-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .task-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-left: 4px;
+  }
+  .task-tag.urgent { background: rgba(239,74,74,0.1); color: var(--danger); }
+  .task-tag.normal { background: rgba(34,165,247,0.1); color: var(--info); }
+  .task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .task-action-btn {
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .task-group-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 12px 0 4px;
+    font-weight: 600;
+  }
+
+  .detail-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .detail-overlay.show { display: flex; }
+  .detail-modal {
+    background: var(--card);
+    border-radius: 12px;
+    width: 90%; max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .detail-field { margin-bottom: 14px; }
+  .detail-field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .detail-field input, .detail-field textarea, .detail-field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .detail-field input:focus, .detail-field textarea:focus, .detail-field select:focus {
+    outline: none; border-color: var(--primary);
+  }
+  .detail-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .detail-actions button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
 </style>
 </head>
 <body>
@@ -1380,23 +1543,23 @@
   <div class="metrics-row">
     <div class="metric-card" data-jump-tab="tasks">
       <div class="metric-label">待办事项</div>
-      <div class="metric-value">3</div>
-      <div class="metric-trend trend-neutral">含奥乐齐成本测算跟进</div>
+      <div class="metric-value" id="homeTodoCount">0</div>
+      <div class="metric-trend trend-neutral">未完成事项</div>
     </div>
     <div class="metric-card" data-jump-tab="tasks">
-      <div class="metric-label">待处理审批</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无待处理审批</div>
+      <div class="metric-label">日程提醒</div>
+      <div class="metric-value" id="homeScheduleCount">0</div>
+      <div class="metric-trend trend-neutral">今天/明天重点</div>
     </div>
     <div class="metric-card" data-jump-tab="projects">
       <div class="metric-label">进行中项目</div>
-      <div class="metric-value">11</div>
-      <div class="metric-trend trend-up">健豪相关项目</div>
+      <div class="metric-value" id="homeActiveProjectCount">0</div>
+      <div class="metric-trend trend-up">需持续跟进</div>
     </div>
     <div class="metric-card" data-jump-tab="projects">
       <div class="metric-label">风险提醒</div>
-      <div class="metric-value">4</div>
-      <div class="metric-trend trend-down">含节奏/成本/可行性风险</div>
+      <div class="metric-value" id="homeRiskCount">0</div>
+      <div class="metric-trend trend-down">含暂停/待确认</div>
     </div>
   </div>
 
@@ -1404,82 +1567,32 @@
   <div class="two-col">
     <!-- 最近动态 -->
     <div class="card">
-      <div class="card-title"><span class="dot"></span>事项动态</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">奥乐齐有机料酒卖点梳理</div>
-          <div class="list-meta">今天下午完成 · 关联 14:00-15:00 标签设计会</div>
-        </div>
+      <div class="card-title-row">
+        <span><span class="dot"></span>事项动态 <span class="muted">最近</span></span>
+        <button class="card-add-btn" data-add="task" type="button" aria-label="新增事项">+</button>
       </div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">盘点奥乐齐有机料酒大日程</div>
-          <div class="list-meta">下周二前给出明确时间判断：9月供货能做到就做到，做不到就明确反馈。</div>
-        </div>
+      <div class="sort-row" id="homeTaskSortRow">
+        <span class="sort-label">排序</span>
+        <span class="sort-chip active" data-home-task-sort="recent">最新</span>
+        <span class="sort-chip" data-home-task-sort="deadline">截止日</span>
+        <span class="sort-chip" data-home-task-sort="important">重要</span>
       </div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">跟进奥乐齐有机糯米料酒成本测算</div>
-          <div class="list-meta">明天 · 工作台日程提醒</div>
-        </div>
-      </div>
+      <div id="homeRecentList"></div>
     </div>
 
     <!-- 项目进度概览 -->
     <div class="card">
-      <div class="card-title" data-jump-tab="projects" style="cursor:pointer;"><span class="dot" style="background:var(--info)"></span>项目进度概览</div>
-      <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;">
-          <span>料酒品类重塑</span><span style="color:var(--text-secondary);font-size:12px;">方向确认</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div>
+      <div class="card-title-row">
+        <span><span class="dot" style="background:var(--info)"></span>项目进度概览 <span class="muted">Top 4</span></span>
+        <button class="card-add-btn" data-add="project" type="button" aria-label="新增项目">+</button>
       </div>
-      <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;">
-          <span>电商1.9L料酒定制</span><span style="color:var(--text-secondary);font-size:12px;">产品确认</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div>
+      <div class="sort-row" id="homeProjectSortRow">
+        <span class="sort-label">排序</span>
+        <span class="sort-chip active" data-home-project-sort="priority">重要程度</span>
+        <span class="sort-chip" data-home-project-sort="recent">新增时间</span>
+        <span class="sort-chip" data-home-project-sort="progress">最新进度</span>
       </div>
-      <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;">
-          <span>广西桂菜项目</span><span style="color:var(--text-secondary);font-size:12px;">试菜跟进</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div>
-      </div>
-      <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;">
-          <span>奥乐齐有机糯米料酒</span><span style="color:var(--text-secondary);font-size:12px;">方向确认</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 快捷入口 -->
-  <div class="quick-links">
-    <div class="quick-link" data-jump-tab="tasks">
-      <div class="quick-link-icon">📝</div>
-      <div class="quick-link-text">待办事项</div>
-    </div>
-    <div class="quick-link" data-jump-tab="projects">
-      <div class="quick-link-icon">📌</div>
-      <div class="quick-link-text">项目进度</div>
-    </div>
-    <div class="quick-link" data-jump-tab="tasks">
-      <div class="quick-link-icon">✅</div>
-      <div class="quick-link-text">审批中心</div>
-    </div>
-    <div class="quick-link" data-jump-tab="tasks">
-      <div class="quick-link-icon">⏱</div>
-      <div class="quick-link-text">今日安排</div>
-    </div>
-    <div class="quick-link" data-jump-tab="projects">
-      <div class="quick-link-icon">⚠</div>
-      <div class="quick-link-text">风险预警</div>
-    </div>
-    <div class="quick-link" data-jump-tab="tasks">
-      <div class="quick-link-icon">📅</div>
-      <div class="quick-link-text">排期日历</div>
+      <div id="homeProjectList"></div>
     </div>
   </div>
 
@@ -1488,82 +1601,23 @@
 <!-- ==================== 零碎事项管理 ==================== -->
 <section id="tasks" class="tab-content">
 
-  <div class="three-col">
-    <!-- 待办清单 -->
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--danger)"></span>待办清单</div>
-      <div class="list-item">
-        <div class="checkbox" onclick="toggleCheck(this)"></div>
-        <div class="list-content">
-          <div class="list-title">做好奥乐齐有机料酒卖点梳理</div>
-          <div class="list-meta">截止：今天下午 <span class="tag tag-urgent">紧急</span></div>
-        </div>
-      </div>
-      <div class="list-item">
-        <div class="checkbox" onclick="toggleCheck(this)"></div>
-        <div class="list-content">
-          <div class="list-title">盘完奥乐齐有机料酒大日程并给出明确供货时间</div>
-          <div class="list-meta">截止：下周二 · 判断 9 月供货是否可达成，避免战区签约后被动承诺 <span class="tag tag-urgent">重要</span></div>
-        </div>
-      </div>
-      <div class="list-item">
-        <div class="checkbox" onclick="toggleCheck(this)"></div>
-        <div class="list-content">
-          <div class="list-title">跟进奥乐齐有机糯米料酒成本测算</div>
-          <div class="list-meta">截止：明天 <span class="tag tag-normal">日程提醒</span></div>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-title-row">
+      <span><span class="dot" style="background:var(--danger)"></span>事项管理 <span class="muted" id="taskDoneText"></span></span>
+      <button class="card-add-btn" id="addTaskBtn2" type="button" aria-label="新增事项">+</button>
     </div>
-
-    <!-- 临时任务 -->
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--warning)"></span>临时任务 / 插单</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">暂无临时任务</div>
-          <div class="list-meta">可在这里记录突发事项、插单任务和预估耗时。</div>
-        </div>
-      </div>
+    <div class="sort-row" id="taskSortRow">
+      <span class="sort-label">排序</span>
+      <span class="sort-chip active" data-task-sort="recent">添加时间</span>
+      <span class="sort-chip" data-task-sort="deadline">截止日期</span>
+      <span class="sort-chip" data-task-sort="important">重要优先</span>
     </div>
-
-    <!-- 审批通知 -->
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--info)"></span>审批与消息</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">奥乐齐有机料酒标签设计会</div>
-          <div class="list-meta">今天 14:00-15:00 · 会议提醒</div>
-        </div>
-      </div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">跟进奥乐齐有机糯米料酒成本测算</div>
-          <div class="list-meta">明天 · 工作台日程提醒</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 完成统计 -->
-  <div class="card" style="margin-top:16px;">
-    <div class="card-title"><span class="dot" style="background:var(--success)"></span>本周完成统计</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center;">
-      <div>
-        <div class="stat-big">0</div>
-        <div class="stat-label">完成任务</div>
-      </div>
-      <div>
-        <div class="stat-big">0</div>
-        <div class="stat-label">临时任务</div>
-      </div>
-      <div>
-        <div class="stat-big">2</div>
-        <div class="stat-label">日程提醒</div>
-      </div>
-      <div>
-        <div class="stat-big">0</div>
-        <div class="stat-label">已归档</div>
-      </div>
+    <input type="search" class="search-input" id="taskSearchInput" placeholder="搜索事项..." autocomplete="off">
+    <div id="taskListContainer"></div>
+    <div class="add-task-form">
+      <input type="text" id="newTaskTitle" placeholder="事项名称..." style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+      <input type="text" id="newTaskMeta" placeholder="时间/备注" style="width:140px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+      <button id="addTaskBtn" type="button" style="padding:7px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">新增</button>
     </div>
   </div>
 
@@ -1572,164 +1626,20 @@
 <!-- ==================== 项目管理 ==================== -->
 <section id="projects" class="tab-content">
 
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div class="metric-label">健豪相关项目</div>
-      <div class="metric-value">21</div>
-      <div class="metric-trend trend-neutral">来自项目进度表筛选</div>
+  <div class="card" style="overflow-x:auto;">
+    <div class="card-title-row">
+      <span><span class="dot"></span>项目管理 <span class="muted">全部</span></span>
+      <button class="card-add-btn" id="addProjectRow" type="button" aria-label="新增项目">+</button>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">进行中</div>
-      <div class="metric-value">11</div>
-      <div class="metric-trend trend-up">需持续跟进</div>
+    <div class="sort-row" id="projectSortRow">
+      <span class="sort-label">排序</span>
+      <span class="sort-chip active" data-project-sort="priority">重要程度</span>
+      <span class="sort-chip" data-project-sort="recent">新增时间</span>
+      <span class="sort-chip" data-project-sort="progress">最新进度</span>
+      <span class="sort-chip" data-project-sort="status">状态</span>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">已完结</div>
-      <div class="metric-value">7</div>
-      <div class="metric-trend trend-up">已完成/上市/交付</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">暂停项目</div>
-      <div class="metric-value">3</div>
-      <div class="metric-trend trend-down">待方向或条件确认</div>
-    </div>
-  </div>
-
-  <div class="project-card risk">
-    <div class="project-header">
-      <div>
-        <div class="project-name">⭐⭐⭐料酒品类重塑</div>
-        <div class="project-desc">年度重点战略项目，已完成竞品分析、销售数据分析、走访沟通、策略大纲和技术方案初稿；当前重点是输出大单品构想和三个具体产品方案。</div>
-      </div>
-      <span class="project-phase">方向确认</span>
-    </div>
-    <div class="latest-progress-box" style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div></div>
-    <div class="project-footer" style="margin-top:10px;">
-      <span>责任人：华、健豪 &nbsp;|&nbsp; 本周重点：7.20 技术资料、7.22 构想沟通、7.23 产品方案</span>
-      <span style="color:var(--danger);">● 时间严重滞后</span>
-    </div>
-  </div>
-
-  <div class="project-card warn">
-    <div class="project-header">
-      <div>
-        <div class="project-name">⭐电商1.9L料酒定制</div>
-        <div class="project-desc">电商提出 1.9L 新规格料酒需求，现阶段采用手工模式小批量投产，保障双十一前面市，并同步推进后续设备采购与量产切换。</div>
-      </div>
-      <span class="project-phase">产品开发&确认</span>
-    </div>
-    <div class="latest-progress-box" style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div></div>
-    <div class="project-footer" style="margin-top:10px;">
-      <span>责任人：健豪 &nbsp;|&nbsp; 新方案上市时间：2026.8.22</span>
-      <span style="color:var(--warning);">● 品质/生产模式风险</span>
-    </div>
-  </div>
-
-  <div class="project-card">
-    <div class="project-header">
-      <div>
-        <div class="project-name">广西桂菜项目</div>
-        <div class="project-desc">围绕酱油、蚝油、料酒、醋四大品类研发适配桂菜高端菜式的 0 添加大规格商用产品，已完成前端评估和多品类可行性对齐。</div>
-      </div>
-      <span class="project-phase">方向确认</span>
-    </div>
-    <div class="latest-progress-box" style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div></div>
-    <div class="project-footer" style="margin-top:10px;">
-      <span>责任人：健豪 &nbsp;|&nbsp; 本周重点：收集战区试菜结果，跟进 4 种原料酱油推进进度</span>
-      <span style="color:var(--success);">● 正常推进</span>
-    </div>
-  </div>
-
-  <div class="project-card warn">
-    <div class="project-header">
-      <div>
-        <div class="project-name">奥乐齐有机糯米料酒</div>
-        <div class="project-desc">奥乐齐渠道重点机会产品，目标规格为 500ml 有机糯米料酒，当前处于可行性、成本评估与外部沟通阶段。</div>
-      </div>
-      <span class="project-phase">方向确认</span>
-    </div>
-    <div class="latest-progress-box" style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:8px;"><div style="font-size:12px;color:var(--text-secondary);">暂无进度记录</div></div>
-    <div class="project-footer" style="margin-top:10px;">
-      <span>责任人：健豪 &nbsp;|&nbsp; 本周重点：确认外部项目进度、开展竞品调研</span>
-      <span style="color:var(--warning);">● 12度可行性及时效待确认</span>
-    </div>
-  </div>
-
-  <div class="two-col" style="margin-top:8px;">
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--success)"></span>近期重点事项</div>
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="timeline-dot pending"></div>
-          <div class="timeline-date">7月20日-7月23日</div>
-          <div class="timeline-text">料酒品类重塑：技术资料收集、构想沟通、输出产品方案</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-dot pending"></div>
-          <div class="timeline-date">7月24日</div>
-          <div class="timeline-text">料酒新国标改版：跟进纯粮料酒新方案及改版通知</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-dot pending"></div>
-          <div class="timeline-date">近期</div>
-          <div class="timeline-text">纯粮葱姜汁料酒需求：接收战区价值链测算，评估可行性</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-dot pending"></div>
-          <div class="timeline-date">2026.8.22</div>
-          <div class="timeline-text">电商1.9L料酒定制：新方案上市节点</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--danger)"></span>风险预警</div>
-      <div class="alert-item">
-        <div class="alert-icon">⚠</div>
-        <div class="alert-content">
-          <div class="alert-title">料酒品类重塑节奏滞后</div>
-          <div class="alert-desc">时间节奏紧张，存在方向对齐和能力掌握不足导致的效率风险。</div>
-        </div>
-      </div>
-      <div class="alert-item">
-        <div class="alert-icon">⚠</div>
-        <div class="alert-content">
-          <div class="alert-title">电商1.9L料酒生产模式非长远方案</div>
-          <div class="alert-desc">当前为手工/拼凑模式，需持续关注品质可行性、排期与销量承接。</div>
-        </div>
-      </div>
-      <div class="alert-item" style="background:rgba(239,170,23,0.05);border-color:rgba(239,170,23,0.12);">
-        <div class="alert-icon" style="background:rgba(239,170,23,0.1);color:var(--warning);">!</div>
-        <div class="alert-content">
-          <div class="alert-title">奥乐齐有机糯米料酒可行性待确认</div>
-          <div class="alert-desc">需确认 12 度产品可行性、时效性与价格竞争力。</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <div class="card-title"><span class="dot" style="background:var(--info)"></span>项目背景会议</div>
-    <div class="list-item">
-      <div class="list-content">
-        <div class="list-title">广西桂菜项目：项目前端对齐</div>
-        <div class="list-meta">参与人包含邓健豪；确认酱油、蚝油、料酒、醋等产品需求，样品可按准备进度分批寄出，后续需产品安排样品、战区集中试菜并反馈。</div>
-      </div>
-    </div>
-    <div class="list-item">
-      <div class="list-content">
-        <div class="list-title">广西桂菜项目信息对齐</div>
-        <div class="list-meta">参与人包含邓健豪；共识为后续集中推进蚝油和酱油定制，料酒和醋以现有标品采购使用；需跟进试菜结果、蚝油周转周期及四种原料酱油供应规格。</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px;overflow-x:auto;">
-    <div class="card-title"><span class="dot"></span>健豪相关项目清单</div>
-    <div class="editable-note">可直接点击单元格编辑项目、分类、下一步和风险备注；星级、阶段、状态通过下拉菜单选择，其他统计与预警会实时刷新。</div>
-    <div class="table-actions">
-      <button class="secondary-btn" id="addProjectRow" type="button">新增项目</button>
-    </div>
+    <input type="search" class="search-input" id="projectSearchInput" placeholder="搜索项目..." autocomplete="off">
+    <div class="editable-note">可直接点击单元格编辑项目、分类、下一步和风险备注；星级、阶段、状态通过下拉菜单选择。</div>
     <table class="formula-table" id="projectTable">
       <thead>
         <tr>
@@ -1743,7 +1653,7 @@
           <th>最新进度</th>
           <th>附件</th>
           <th>操作</th>
-</tr>
+        </tr>
       </thead>
       <tbody>
         <tr><td>料酒品类重塑</td><td>⭐⭐⭐</td><td>战略规划</td><td>方向确认</td><td>进行</td><td>技术资料收集、构想沟通、输出 3 个具体产品方案</td><td>时间严重滞后，方向需向上对齐</td><td></td></tr>
@@ -1776,148 +1686,21 @@
 <!-- ==================== 配方管理 ==================== -->
 <section id="formulas" class="tab-content">
 
-  <div class="formula-toolbar">
-    <div class="search-box">输入用户需求：品类、口味、成本、营养、工艺或原料限制</div>
-    <button class="primary-btn">匹配基础配方</button>
-  </div>
-
-  <div class="base-flow">
-    <div class="base-step">
-      <div class="base-step-num">1</div>
-      <div class="base-step-title">录入用户需求</div>
-      <div class="base-step-desc">收集客户目标，如低糖、高纤、植物基、成本区间、口味偏好。</div>
-    </div>
-    <div class="base-step">
-      <div class="base-step-num">2</div>
-      <div class="base-step-title">匹配基础配方</div>
-      <div class="base-step-desc">从成熟配方库中定位最接近的基础配方，减少从零开发。</div>
-    </div>
-    <div class="base-step">
-      <div class="base-step-num">3</div>
-      <div class="base-step-title">微调关键参数</div>
-      <div class="base-step-desc">调整甜度、风味、质构、原料比例、成本和工艺参数。</div>
-    </div>
-    <div class="base-step">
-      <div class="base-step-num">4</div>
-      <div class="base-step-title">生成定制版本</div>
-      <div class="base-step-desc">形成客户适配版本，并关联试验、感官、原料与审批记录。</div>
-    </div>
-  </div>
-
-  <div class="base-card-grid">
-    <div class="base-card">
-      <div class="base-card-title">暂无基础配方</div>
-      <div class="base-card-desc">后续可在这里维护可复用的基础配方，用于匹配客户需求。</div>
-    </div>
-    <div class="base-card">
-      <div class="base-card-title">暂无微调模板</div>
-      <div class="base-card-desc">后续可记录常用微调项，如甜度、风味、成本、质构、工艺等。</div>
-    </div>
-    <div class="base-card">
-      <div class="base-card-title">暂无客户适配记录</div>
-      <div class="base-card-desc">后续可记录从基础配方生成的客户定制版本。</div>
-    </div>
-  </div>
-
-  <div class="metrics-row">
-    <div class="metric-card">
-      <div class="metric-label">基础配方数</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无基础配方</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">定制配方数</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无定制配方</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">在研版本</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无在研版本</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">待复核</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无待复核内容</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">已定版</div>
-      <div class="metric-value">0</div>
-      <div class="metric-trend trend-neutral">暂无已定版配方</div>
-    </div>
-  </div>
-
-  <div class="formula-grid">
-    <div class="formula-card">
-      <div class="formula-name">暂无配方记录</div>
-      <div class="formula-code">可在这里新增配方名称、编号、基础配方、版本和状态。</div>
-    </div>
-
-  </div>
-
-  <div class="two-col">
-    <div class="card">
-      <div class="card-title"><span class="dot"></span>配方版本记录</div>
-      <table class="formula-table">
-        <thead>
-          <tr>
-            <th>配方</th>
-            <th>基础配方</th>
-            <th>版本</th>
-            <th>变更内容</th>
-            <th>状态</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="5">暂无配方版本记录</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--info)"></span>原料与成本关注</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">暂无原料与成本关注</div>
-          <div class="list-meta">后续可记录原料价格、供应商资质、成本变化和配方影响。</div>
-        </div>
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>配方管理</div>
+    <div class="section-note">这里保留基础配方、定制配方、试验记录、感官数据和原料信息的入口，后续可逐步完善。</div>
+    <div class="formula-grid">
+      <div class="formula-card">
+        <div class="formula-name">基础配方定位</div>
+        <div class="formula-code">从成熟配方库中匹配最接近的基础配方，减少从零开发。</div>
       </div>
-    </div>
-  </div>
-
-  <div class="three-col" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--warning)"></span>试验记录</div>
-      <div class="section-note">集中记录每个配方版本对应的小试、中试、复测与异常情况。</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">暂无试验记录</div>
-          <div class="list-meta">后续可记录小试、中试、复测、异常和结论。</div>
-        </div>
+      <div class="formula-card">
+        <div class="formula-name">试验与感官记录</div>
+        <div class="formula-code">按版本沉淀小试、中试、复测与感官评价数据。</div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--info)"></span>感官数据</div>
-      <div class="section-note">按配方版本沉淀口感、风味、色泽、组织状态等评价数据。</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">暂无感官数据</div>
-          <div class="list-meta">后续可记录口感、风味、色泽、稳定性等评价结果。</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--success)"></span>原料信息</div>
-      <div class="section-note">把原料、供应商、成本和资质状态关联到具体配方。</div>
-      <div class="list-item">
-        <div class="list-content">
-          <div class="list-title">暂无原料信息</div>
-          <div class="list-meta">后续可记录原料名称、供应商、成本、资质和使用状态。</div>
-        </div>
+      <div class="formula-card">
+        <div class="formula-name">原料与成本关注</div>
+        <div class="formula-code">关联原料、供应商、成本和资质到具体配方。</div>
       </div>
     </div>
   </div>
@@ -1949,31 +1732,6 @@
       switchTab(target);
     });
   });
-
-  // 待办勾选
-  function toggleCheck(el) {
-    el.classList.toggle('checked');
-    const title = el.nextElementSibling.querySelector('.list-title');
-    const tag = el.nextElementSibling.querySelector('.tag');
-    if (el.classList.contains('checked')) {
-      title.classList.add('done');
-      if (tag) { tag.textContent = '已完成'; tag.className = 'tag tag-done'; }
-    } else {
-      title.classList.remove('done');
-      if (tag) {
-        const meta = el.nextElementSibling.querySelector('.list-meta').textContent;
-        if (meta.includes('紧急')) { tag.textContent = '紧急'; tag.className = 'tag tag-urgent'; }
-        else { tag.textContent = '正常'; tag.className = 'tag tag-normal'; }
-      }
-    }
-    const item = el.closest('.list-item');
-    const index = Number(item?.dataset.taskIndex);
-    if (!Number.isNaN(index) && desktopTasks[index]) {
-      desktopTasks[index].done = el.classList.contains('checked');
-      saveDesktopState();
-      renderDesktopTasks(desktopTasks);
-    }
-  }
 
   const projectFields = ['name', 'priority', 'category', 'phase', 'status', 'next', 'risk'];
   const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
@@ -2045,9 +1803,11 @@
     return {
       ...task,
       title: task?.title || '未命名事项',
-      meta: task?.meta || '工作台提醒',
+      meta: task?.meta || '',
       done: Boolean(task?.done),
       kind: task?.kind || 'normal',
+      deadline: task?.deadline || '',
+      createdAt: task?.createdAt || Date.now(),
       attachments: normalizeAttachments(task?.attachments)
     };
   }
@@ -2392,110 +2152,218 @@
   }
 
   function extractDesktopTasksFromDom() {
-    const todoCard = Array.from(document.querySelectorAll('#tasks .card')).find(card => {
-      return card.querySelector('.card-title')?.textContent.includes('待办清单');
-    });
-    if (!todoCard) return [];
-    return Array.from(todoCard.querySelectorAll('.list-item')).map(item => {
-      const meta = item.querySelector('.list-meta')?.textContent.trim() || '';
-      return {
-        title: item.querySelector('.list-title')?.textContent.trim() || '未命名事项',
-        meta: meta.replace(/\s+/g, ' '),
-        done: item.querySelector('.checkbox')?.classList.contains('checked') || false,
-        kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal'
-      };
-    });
+    return desktopTasks.length ? desktopTasks : [];
   }
 
   function isScheduleTask(task) {
     return /日程|会议|今天|明天|上午|下午|[0-9]{1,2}:[0-9]{2}/.test(`${task.title} ${task.meta}`);
   }
 
-  function taskMetaWithoutTag(task) {
-    return (task.meta || '').replace(/(紧急|重要|提醒|日程提醒|已完成|正常)$/g, '').trim();
+  let _taskSearchQuery = '';
+  let _taskSortMode = 'recent';
+  let _homeTaskSortMode = 'recent';
+  let _homeProjectSortMode = 'priority';
+  let _projectSearchQuery = '';
+  let _projectSortMode = 'priority';
+  let _tdTaskIndex = -1;
+
+  function formatDeadline(deadline) {
+    if (!deadline) return '';
+    const d = new Date(deadline);
+    if (isNaN(d)) return '';
+    return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function getSortedTasks(tasks, mode) {
+    const arr = [...tasks];
+    if (mode === 'deadline') {
+      arr.sort((a, b) => {
+        if (!a.deadline && !b.deadline) return 0;
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline) - new Date(b.deadline);
+      });
+    } else if (mode === 'important') {
+      arr.sort((a, b) => {
+        if (a.kind === b.kind) return (b.createdAt || 0) - (a.createdAt || 0);
+        return a.kind === 'urgent' ? -1 : 1;
+      });
+    } else {
+      arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+    return arr;
   }
 
   function renderDesktopTasks(tasks) {
     desktopTasks = Array.isArray(tasks) ? tasks.map(normalizeTaskData) : [];
-    const todoCard = Array.from(document.querySelectorAll('#tasks .card')).find(card => {
-      return card.querySelector('.card-title')?.textContent.includes('待办清单');
-    });
-    const overviewCard = Array.from(document.querySelectorAll('#overview .card')).find(card => {
-      return card.querySelector('.card-title')?.textContent.includes('事项动态');
-    });
-    const messageCard = Array.from(document.querySelectorAll('#tasks .card')).find(card => {
-      return card.querySelector('.card-title')?.textContent.includes('审批与消息');
-    });
+    renderTaskList();
+    renderHomeRecent();
+    renderHomeMetrics();
+  }
 
-    if (todoCard) {
-      const title = todoCard.querySelector('.card-title');
-      todoCard.innerHTML = '';
-      todoCard.appendChild(title);
-      desktopTasks.forEach((task, index) => {
-        const tagClass = task.done ? 'tag-done' : task.kind === 'urgent' ? 'tag-urgent' : 'tag-normal';
-        const tagText = task.done ? '已完成' : task.kind === 'urgent' ? '重要' : '提醒';
-        todoCard.insertAdjacentHTML('beforeend', `
-          <div class="list-item" data-task-index="${index}">
-            <div class="checkbox ${task.done ? 'checked' : ''}" onclick="toggleCheck(this)"></div>
-            <div class="list-content">
-              <div class="list-title ${task.done ? 'done' : ''}">${escapeHtml(task.title)}</div>
-              <div class="list-meta">${escapeHtml(taskMetaWithoutTag(task))} <span class="tag ${tagClass}">${tagText}</span></div>
-              ${renderAttachmentButton('task', task.attachments, task.title)}
-            </div>
+  function renderTaskList() {
+    const container = document.getElementById('taskListContainer');
+    if (!container) return;
+    let filtered = desktopTasks;
+    if (_taskSearchQuery) {
+      const q = _taskSearchQuery.toLowerCase();
+      filtered = desktopTasks.filter(t =>
+        (t.title || '').toLowerCase().includes(q) ||
+        (t.meta || '').toLowerCase().includes(q)
+      );
+    }
+    const sorted = getSortedTasks(filtered, _taskSortMode);
+    const undone = sorted.filter(t => !t.done);
+    const done = sorted.filter(t => t.done);
+    const doneText = document.getElementById('taskDoneText');
+    if (doneText) doneText.textContent = done.length ? `已完成 ${done.length}` : '';
+
+    let html = '';
+    if (undone.length) {
+      html += '<div class="task-group-label">未完成</div>';
+      html += undone.map((t, i) => renderTaskItem(t, desktopTasks.indexOf(t))).join('');
+    }
+    if (done.length) {
+      html += '<div class="task-group-label">已完成</div>';
+      html += done.map((t, i) => renderTaskItem(t, desktopTasks.indexOf(t))).join('');
+    }
+    if (!sorted.length) {
+      html = '<div style="padding:20px;text-align:center;color:var(--text-secondary);">暂无事项</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  function renderTaskItem(task, index) {
+    const tagClass = task.kind === 'urgent' ? 'urgent' : 'normal';
+    const tagText = task.kind === 'urgent' ? '重要' : '提醒';
+    const deadlineStr = formatDeadline(task.deadline);
+    return `
+      <div class="task-item">
+        <div class="task-checkbox ${task.done ? 'done' : ''}" data-task-toggle="${index}"></div>
+        <div class="task-content" data-task-detail="${index}">
+          <div class="task-title ${task.done ? 'done' : ''}">${escapeHtml(task.title)}</div>
+          <div class="task-meta">
+            ${task.meta ? escapeHtml(task.meta) : ''}
+            ${deadlineStr ? ` · 截止 ${escapeHtml(deadlineStr)}` : ''}
+            <span class="task-tag ${tagClass}">${tagText}</span>
           </div>
-        `);
-      });
-      todoCard.insertAdjacentHTML('beforeend', `
-        <div class="add-task-form">
-          <input type="text" id="newTaskTitle" placeholder="事项名称" style="flex:2;">
-          <input type="text" id="newTaskMeta" placeholder="备注/截止时间（可选）" style="flex:3;">
-          <button class="secondary-btn" id="addTaskBtn" type="button">新增</button>
         </div>
-      `);
-    }
+        <div class="task-actions">
+          ${renderAttachmentButton('task', task.attachments, task.title)}
+          <button class="task-action-btn" data-task-delete="${index}" title="删除">×</button>
+        </div>
+      </div>
+    `;
+  }
 
-    if (overviewCard) {
-      const title = overviewCard.querySelector('.card-title');
-      overviewCard.innerHTML = '';
-      overviewCard.appendChild(title);
-      desktopTasks.slice(0, 5).forEach(task => {
-        overviewCard.insertAdjacentHTML('beforeend', `
-          <div class="list-item">
-            <div class="list-content">
-              <div class="list-title ${task.done ? 'done' : ''}">${escapeHtml(task.title)}</div>
-              <div class="list-meta">${escapeHtml(taskMetaWithoutTag(task))}</div>
+  function renderHomeRecent() {
+    const container = document.getElementById('homeRecentList');
+    if (!container) return;
+    let tasks = desktopTasks.filter(t => !t.done);
+    const sorted = getSortedTasks(tasks, _homeTaskSortMode).slice(0, 5);
+    if (!sorted.length) {
+      container.innerHTML = '<div style="padding:12px;color:var(--text-secondary);font-size:13px;">暂无事项</div>';
+      return;
+    }
+    container.innerHTML = sorted.map(t => {
+      const idx = desktopTasks.indexOf(t);
+      const deadlineStr = formatDeadline(t.deadline);
+      return `
+        <div class="task-item">
+          <div class="task-checkbox" data-task-toggle="${idx}"></div>
+          <div class="task-content" data-task-detail="${idx}">
+            <div class="task-title">${escapeHtml(t.title)}</div>
+            <div class="task-meta">
+              ${t.meta ? escapeHtml(t.meta) : ''}
+              ${deadlineStr ? ` · 截止 ${escapeHtml(deadlineStr)}` : ''}
+              <span class="task-tag ${t.kind === 'urgent' ? 'urgent' : 'normal'}">${t.kind === 'urgent' ? '重要' : '提醒'}</span>
             </div>
           </div>
-        `);
-      });
-    }
+        </div>
+      `;
+    }).join('');
+  }
 
-    if (messageCard) {
-      const title = messageCard.querySelector('.card-title');
-      messageCard.innerHTML = '';
-      messageCard.appendChild(title);
-      const scheduleTasks = desktopTasks.filter(isScheduleTask);
-      if (!scheduleTasks.length) {
-        messageCard.insertAdjacentHTML('beforeend', '<div class="list-item"><div class="list-content"><div class="list-title">暂无日程提醒</div><div class="list-meta">手机或电脑端新增日程后会同步显示。</div></div></div>');
-      }
-      scheduleTasks.forEach(task => {
-        messageCard.insertAdjacentHTML('beforeend', `
-          <div class="list-item">
-            <div class="list-content">
-              <div class="list-title">${escapeHtml(task.title)}</div>
-              <div class="list-meta">${escapeHtml(taskMetaWithoutTag(task))}</div>
-            </div>
+  function renderHomeMetrics() {
+    const todoCount = desktopTasks.filter(t => !t.done).length;
+    const scheduleCount = desktopTasks.filter(t => isScheduleTask(t) && !t.done).length;
+    const projects = getProjectRows();
+    const activeCount = projects.filter(p => normalizeStatus(p.status) === '进行').length;
+    const riskCount = projects.filter(p => hasRisk(p)).length;
+    const el = (id) => document.getElementById(id);
+    if (el('homeTodoCount')) el('homeTodoCount').textContent = todoCount;
+    if (el('homeScheduleCount')) el('homeScheduleCount').textContent = scheduleCount;
+    if (el('homeActiveProjectCount')) el('homeActiveProjectCount').textContent = activeCount;
+    if (el('homeRiskCount')) el('homeRiskCount').textContent = riskCount;
+  }
+
+  function renderHomeProjectList() {
+    const container = document.getElementById('homeProjectList');
+    if (!container) return;
+    let projects = getProjectRows().filter(p => normalizeStatus(p.status) !== '完结');
+    if (_homeProjectSortMode === 'recent') {
+      projects.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } else if (_homeProjectSortMode === 'progress') {
+      projects.sort((a, b) => {
+        const la = getLatestProgress(a), lb = getLatestProgress(b);
+        if (!la && !lb) return 0;
+        if (!la) return 1;
+        if (!lb) return -1;
+        return new Date(lb.date) - new Date(la.date);
+      });
+    } else {
+      projects.sort((a, b) => priorityScore(b) - priorityScore(a));
+    }
+    projects = projects.slice(0, 4);
+    if (!projects.length) {
+      container.innerHTML = '<div style="padding:12px;color:var(--text-secondary);font-size:13px;">暂无进行中项目</div>';
+      return;
+    }
+    container.innerHTML = projects.map(p => {
+      const latest = getLatestProgress(p);
+      return `
+        <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:14px;">
+            <span>${escapeHtml(p.priority !== '普通' ? p.priority + ' ' : '')}${escapeHtml(p.name)}</span>
+            <span style="color:var(--text-secondary);font-size:12px;">${escapeHtml(p.phase)}</span>
           </div>
-        `);
-      });
-    }
+          <div style="font-size:12px;color:var(--text-secondary);">${latest ? escapeHtml(formatProgressDate(latest.date)) + ' · ' + escapeHtml(latest.progress) : '暂无进度记录'}</div>
+        </div>
+      `;
+    }).join('');
+  }
 
-    setMetric(document, '待办事项', desktopTasks.filter(task => !task.done).length, '与手机端工作台同步', 'trend-neutral');
-    const completed = desktopTasks.filter(task => task.done).length;
-    const scheduleCount = desktopTasks.filter(isScheduleTask).length;
-    const statCards = Array.from(document.querySelectorAll('#tasks .stat-big'));
-    if (statCards[0]) statCards[0].textContent = completed;
-    if (statCards[2]) statCards[2].textContent = scheduleCount;
+  function openTaskDetail(index) {
+    if (index < 0 || !desktopTasks[index]) return;
+    _tdTaskIndex = index;
+    const task = desktopTasks[index];
+    document.getElementById('tdTitle').value = task.title || '';
+    document.getElementById('tdMeta').value = task.meta || '';
+    document.getElementById('tdDeadline').value = task.deadline || '';
+    document.getElementById('tdKind').value = task.kind || 'normal';
+    document.getElementById('tdAttachCount').textContent = (task.attachments?.length || 0) ? `(${task.attachments.length})` : '';
+    const doneBtn = document.getElementById('tdToggleDone');
+    doneBtn.textContent = task.done ? '取消完成' : '标记完成';
+    document.getElementById('taskDetailOverlay').classList.add('show');
+  }
+
+  function saveTaskDetail() {
+    if (_tdTaskIndex < 0 || !desktopTasks[_tdTaskIndex]) return;
+    const task = desktopTasks[_tdTaskIndex];
+    task.title = document.getElementById('tdTitle').value.trim() || '未命名事项';
+    task.meta = document.getElementById('tdMeta').value.trim();
+    task.deadline = document.getElementById('tdDeadline').value;
+    task.kind = document.getElementById('tdKind').value;
+    saveDesktopState();
+    renderTaskList();
+    renderHomeRecent();
+    renderHomeMetrics();
+  }
+
+  function closeTaskDetail() {
+    saveTaskDetail();
+    _tdTaskIndex = -1;
+    document.getElementById('taskDetailOverlay').classList.remove('show');
   }
 
   function renderProjectTableRows(projects) {
@@ -2519,6 +2387,7 @@
         <td class="attachment-cell" data-attachments="${escapeHtml(encodeAttachments(project.attachments))}">${renderAttachmentButton('project', project.attachments, project.name)}</td>
       </tr>
     `;}).join('');
+    applyProjectSortAndSearch();
   }
 
   function getDesktopState() {
@@ -3057,19 +2926,39 @@
   }
 
   function refreshProjectDashboard() {
-    const projects = getProjectRows();
-    const summary = getProjectSummary(projects);
-    setMetric(document, '进行中项目', summary.active, `${summary.total} 个健豪相关项目`, summary.active ? 'trend-up' : 'trend-neutral');
-    setMetric(document, '风险提醒', summary.risks.length, summary.risks.length ? '需重点跟进' : '暂无明显风险', summary.risks.length ? 'trend-down' : 'trend-neutral');
-    setMetric(document.getElementById('projects'), '健豪相关项目', summary.total, '根据下方清单实时计算');
-    setMetric(document.getElementById('projects'), '进行中', summary.active, '需持续跟进', summary.active ? 'trend-up' : 'trend-neutral');
-    setMetric(document.getElementById('projects'), '已完结', summary.done, '已完成/上市/交付', summary.done ? 'trend-up' : 'trend-neutral');
-    setMetric(document.getElementById('projects'), '暂停项目', summary.paused, summary.paused ? '待方向或条件确认' : '暂无暂停项目', summary.paused ? 'trend-down' : 'trend-neutral');
-    renderOverviewProgress(projects);
-    renderFeaturedProjectCards(projects);
-    renderPriorityTimeline(projects);
-    renderRiskAlerts(summary.risks);
+    renderHomeMetrics();
+    renderHomeProjectList();
     saveDesktopState();
+  }
+
+  function applyProjectSortAndSearch() {
+    const tbody = document.querySelector('#projectTable tbody');
+    if (!tbody) return;
+    let rows = Array.from(tbody.querySelectorAll('tr'));
+    if (_projectSearchQuery) {
+      const q = _projectSearchQuery.toLowerCase();
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    } else {
+      rows.forEach(row => row.style.display = '');
+    }
+    if (_projectSortMode === 'priority') {
+      rows.sort((a, b) => {
+        const pa = a.cells[1]?.textContent.trim() || '普通';
+        const pb = b.cells[1]?.textContent.trim() || '普通';
+        return priorityScore({ priority: pb }) - priorityScore({ priority: pa });
+      });
+    } else if (_projectSortMode === 'status') {
+      const statusOrder = { '进行': 0, '暂停': 1, '完结': 2 };
+      rows.sort((a, b) => {
+        const sa = normalizeStatus(a.cells[4]?.textContent.trim() || '');
+        const sb = normalizeStatus(b.cells[4]?.textContent.trim() || '');
+        return (statusOrder[sa] || 0) - (statusOrder[sb] || 0);
+      });
+    }
+    rows.forEach(row => tbody.appendChild(row));
   }
 
   function setupEditableProjectTable() {
@@ -3086,6 +2975,7 @@
       renderDesktopTasks(desktopTasks);
       refreshProjectDashboard();
     }
+    applyProjectSortAndSearch();
     let _dashboardDebounce = null;
     table.addEventListener('input', (event) => {
       if (event.target.matches('td[contenteditable="true"]')) {
@@ -3701,33 +3591,223 @@
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
     });
 
+    // 新增事项
+    function addNewTask() {
+      const titleInput = document.getElementById('newTaskTitle');
+      const metaInput = document.getElementById('newTaskMeta');
+      const title = (titleInput?.value || '').trim();
+      if (!title) { titleInput?.focus(); return; }
+      const meta = (metaInput?.value || '').trim();
+      desktopTasks.unshift({
+        title, meta, done: false,
+        kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal',
+        deadline: '', createdAt: Date.now(), attachments: []
+      });
+      if (titleInput) titleInput.value = '';
+      if (metaInput) metaInput.value = '';
+      saveDesktopState();
+      renderTaskList();
+      renderHomeRecent();
+      renderHomeMetrics();
+    }
+
     document.addEventListener('click', (event) => {
-      if (event.target.matches('#addTaskBtn')) {
-        const titleInput = document.getElementById('newTaskTitle');
-        const metaInput = document.getElementById('newTaskMeta');
-        const title = (titleInput?.value || '').trim();
-        if (!title) { titleInput?.focus(); return; }
-        const meta = (metaInput?.value || '').trim() || '工作台提醒';
-        desktopTasks.unshift({
-          title,
-          meta,
-          done: false,
-          kind: /紧急|重要/.test(meta) ? 'urgent' : 'normal',
-          attachments: []
-        });
-        saveDesktopState();
-        renderDesktopTasks(desktopTasks);
+      if (event.target.matches('#addTaskBtn') || event.target.matches('#addTaskBtn2')) {
+        if (event.target.id === 'addTaskBtn2') {
+          switchTab('tasks');
+          document.getElementById('newTaskTitle')?.focus();
+          return;
+        }
+        addNewTask();
+      }
+
+      // 事项勾选
+      if (event.target.matches('[data-task-toggle]')) {
+        const idx = Number(event.target.dataset.taskToggle);
+        if (!Number.isNaN(idx) && desktopTasks[idx]) {
+          desktopTasks[idx].done = !desktopTasks[idx].done;
+          saveDesktopState();
+          renderTaskList();
+          renderHomeRecent();
+          renderHomeMetrics();
+        }
+      }
+
+      // 事项详情
+      if (event.target.matches('[data-task-detail]')) {
+        openTaskDetail(Number(event.target.dataset.taskDetail));
+      }
+
+      // 事项删除
+      if (event.target.matches('[data-task-delete]')) {
+        const idx = Number(event.target.dataset.taskDelete);
+        if (!Number.isNaN(idx) && desktopTasks[idx]) {
+          if (!confirm('确认删除该事项？')) return;
+          desktopTasks.splice(idx, 1);
+          saveDesktopState();
+          renderTaskList();
+          renderHomeRecent();
+          renderHomeMetrics();
+        }
+      }
+
+      // 首页新增按钮
+      if (event.target.matches('[data-add="task"]')) {
+        switchTab('tasks');
+        document.getElementById('newTaskTitle')?.focus();
+      }
+      if (event.target.matches('[data-add="project"]')) {
+        document.getElementById('addProjectRow')?.click();
+      }
+
+      // 事项详情弹窗操作
+      if (event.target.matches('#tdClose')) closeTaskDetail();
+      if (event.target.matches('#tdToggleDone')) {
+        if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
+          desktopTasks[_tdTaskIndex].done = !desktopTasks[_tdTaskIndex].done;
+          saveDesktopState();
+          const doneBtn = document.getElementById('tdToggleDone');
+          doneBtn.textContent = desktopTasks[_tdTaskIndex].done ? '取消完成' : '标记完成';
+          renderTaskList();
+          renderHomeRecent();
+          renderHomeMetrics();
+        }
+      }
+      if (event.target.matches('#tdDelete')) {
+        if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
+          if (!confirm('确认删除该事项？')) return;
+          desktopTasks.splice(_tdTaskIndex, 1);
+          _tdTaskIndex = -1;
+          saveDesktopState();
+          document.getElementById('taskDetailOverlay').classList.remove('show');
+          renderTaskList();
+          renderHomeRecent();
+          renderHomeMetrics();
+        }
+      }
+      if (event.target.matches('#tdOpenAttach')) {
+        if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
+          openAttachModal({ scope: 'task', index: _tdTaskIndex, name: desktopTasks[_tdTaskIndex].title });
+        }
+      }
+
+      // 排序芯片
+      if (event.target.matches('[data-task-sort]')) {
+        _taskSortMode = event.target.dataset.taskSort;
+        document.querySelectorAll('#taskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        renderTaskList();
+      }
+      if (event.target.matches('[data-home-task-sort]')) {
+        _homeTaskSortMode = event.target.dataset.homeTaskSort;
+        document.querySelectorAll('#homeTaskSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        renderHomeRecent();
+      }
+      if (event.target.matches('[data-home-project-sort]')) {
+        _homeProjectSortMode = event.target.dataset.homeProjectSort;
+        document.querySelectorAll('#homeProjectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        renderHomeProjectList();
+      }
+      if (event.target.matches('[data-project-sort]')) {
+        _projectSortMode = event.target.dataset.projectSort;
+        document.querySelectorAll('#projectSortRow .sort-chip').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active');
+        applyProjectSortAndSearch();
+      }
+    });
+
+    // 事项搜索（防抖）
+    let _taskSearchTimer = null;
+    document.getElementById('taskSearchInput')?.addEventListener('input', (event) => {
+      clearTimeout(_taskSearchTimer);
+      _taskSearchTimer = setTimeout(() => {
+        _taskSearchQuery = event.target.value.trim();
+        renderTaskList();
+      }, 200);
+    });
+
+    // 项目搜索（防抖）
+    let _projectSearchTimer = null;
+    document.getElementById('projectSearchInput')?.addEventListener('input', (event) => {
+      clearTimeout(_projectSearchTimer);
+      _projectSearchTimer = setTimeout(() => {
+        _projectSearchQuery = event.target.value.trim();
+        applyProjectSortAndSearch();
+      }, 200);
+    });
+
+    // 事项详情弹窗字段自动保存
+    ['tdTitle', 'tdMeta', 'tdDeadline', 'tdKind'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('blur', saveTaskDetail);
+        if (el.tagName === 'SELECT') el.addEventListener('change', saveTaskDetail);
+      }
+    });
+
+    // 点击遮罩关闭事项详情
+    document.getElementById('taskDetailOverlay')?.addEventListener('click', (event) => {
+      if (event.target.id === 'taskDetailOverlay') closeTaskDetail();
+    });
+
+    // Escape关闭弹窗
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        const overlay = document.getElementById('taskDetailOverlay');
+        if (overlay?.classList.contains('show')) closeTaskDetail();
       }
     });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && event.target.matches('#newTaskTitle, #newTaskMeta')) {
         event.preventDefault();
-        document.getElementById('addTaskBtn')?.click();
+        addNewTask();
       }
     });
+
+    // 初始渲染
+    renderTaskList();
+    renderHomeRecent();
+    renderHomeMetrics();
+    renderHomeProjectList();
   });
 </script>
+
+<!-- 事项详情弹窗 -->
+<div class="detail-overlay" id="taskDetailOverlay">
+  <div class="detail-modal" id="taskDetailModal">
+    <div class="detail-field">
+      <label>事项标题</label>
+      <input type="text" id="tdTitle" placeholder="事项名称...">
+    </div>
+    <div class="detail-field">
+      <label>时间 / 备注</label>
+      <textarea id="tdMeta" rows="2" placeholder="时间或备注信息..."></textarea>
+    </div>
+    <div class="detail-field">
+      <label>截止日期</label>
+      <input type="datetime-local" id="tdDeadline">
+    </div>
+    <div class="detail-field">
+      <label>类型</label>
+      <select id="tdKind">
+        <option value="normal">提醒</option>
+        <option value="urgent">重要</option>
+      </select>
+    </div>
+    <div class="detail-field">
+      <label>附件 <span id="tdAttachCount"></span></label>
+      <button type="button" id="tdOpenAttach" class="task-action-btn">管理附件</button>
+    </div>
+    <div class="detail-actions">
+      <button type="button" id="tdToggleDone" style="background:var(--primary);color:#fff;border-color:var(--primary);">标记完成</button>
+      <button type="button" id="tdDelete" style="color:var(--danger);">删除事项</button>
+      <button type="button" id="tdClose" style="margin-left:auto;">关闭</button>
+    </div>
+  </div>
+</div>
 
 <!-- 附件管理弹窗 -->
 <div class="attach-overlay" id="attachOverlay">
