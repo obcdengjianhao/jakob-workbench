@@ -863,6 +863,64 @@
     .add-modal-body .field { width: 100%; box-sizing: border-box; }
     .add-modal-actions { display: flex; gap: 8px; margin-top: 8px; }
     .add-modal-actions button { flex: 1; }
+
+    .cl-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .cl-modal {
+      background: var(--card);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px 16px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .cl-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .cl-modal-title { font-size: 17px; font-weight: 600; }
+    .cl-modal-close {
+      background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted);
+    }
+    .cl-filters {
+      display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .cl-filter-chip {
+      padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border);
+      background: var(--card); font-size: 12px; cursor: pointer; color: var(--muted);
+    }
+    .cl-filter-chip.active {
+      background: var(--primary,#4B3FE3); color: #fff; border-color: var(--primary,#4B3FE3);
+    }
+    .cl-list { display: flex; flex-direction: column; gap: 8px; }
+    .cl-item {
+      display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border);
+    }
+    .cl-icon {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .cl-icon.create { background: rgba(34,197,94,.15); }
+    .cl-icon.update { background: rgba(59,130,246,.15); }
+    .cl-icon.delete { background: rgba(239,68,68,.15); }
+    .cl-icon.toggle { background: rgba(168,85,247,.15); }
+    .cl-body { flex: 1; min-width: 0; }
+    .cl-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .cl-desc { font-size: 12px; color: var(--muted); word-break: break-word; }
+    .cl-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .cl-empty { text-align: center; padding: 40px 0; color: var(--muted); font-size: 13px; }
   </style>
 </head>
 <body>
@@ -886,6 +944,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <div class="date-pill" id="todayText"></div>
+        <button id="changeLogBtn" type="button" aria-label="修改记录" style="background:rgba(75,63,227,.1);border:none;color:var(--primary,#4B3FE3);width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;">📋</button>
       </div>
     </header>
 
@@ -1028,6 +1087,23 @@
     </div>
   </div>
 
+  <div class="cl-overlay" id="changeLogOverlay" style="display:none;">
+    <div class="cl-modal">
+      <div class="cl-modal-header">
+        <span class="cl-modal-title">修改记录</span>
+        <button class="cl-modal-close" data-cl-close type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="cl-filters">
+        <span class="cl-filter-chip active" data-cl-filter="all">全部</span>
+        <span class="cl-filter-chip" data-cl-filter="create">新增</span>
+        <span class="cl-filter-chip" data-cl-filter="update">编辑</span>
+        <span class="cl-filter-chip" data-cl-filter="delete">删除</span>
+        <span class="cl-filter-chip" data-cl-filter="toggle">状态切换</span>
+      </div>
+      <div class="cl-list" id="changeLogList"></div>
+    </div>
+  </div>
+
   <script>
     const phaseOptions = ['方向确认', '开发过程执行', '产品开发&确认', '生产上市', '新品上市后跟进与复盘'];
     const statusOptions = ['进行', '完结', '暂停'];
@@ -1042,6 +1118,7 @@
     // 搜索状态
     let taskSearchQuery = '';
     let projectSearchQuery = '';
+    let clFilterMode = 'all';
 
     // 项目排序函数
     function sortProjects(projects, mode) {
@@ -1177,8 +1254,23 @@
     function normalizeState(data) {
       return {
         tasks: Array.isArray(data?.tasks) ? data.tasks.map(normalizeTask) : [],
-        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : []
+        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : [],
+        changeLog: Array.isArray(data?.changeLog) ? data.changeLog : []
       };
+    }
+
+    function logChange(action, type, name, details) {
+      if (!state.changeLog) state.changeLog = [];
+      state.changeLog.unshift({
+        action: action,
+        type: type,
+        name: name || '',
+        timestamp: Date.now(),
+        details: details || ''
+      });
+      if (state.changeLog.length > 200) {
+        state.changeLog = state.changeLog.slice(0, 200);
+      }
     }
 
     let state = loadState();
@@ -1355,9 +1447,20 @@
         }
       });
 
+      const localLogs = Array.isArray(localState.changeLog) ? localState.changeLog : [];
+      const remoteLogs = Array.isArray(remoteState.changeLog) ? remoteState.changeLog : [];
+      const logSeen = new Set();
+      const mergedLogs = [];
+      [...localLogs, ...remoteLogs].forEach(log => {
+        const sig = log.timestamp + '|' + log.action + '|' + log.type + '|' + (log.name || '') + '|' + (log.details || '');
+        if (!logSeen.has(sig)) { logSeen.add(sig); mergedLogs.push(log); }
+      });
+      mergedLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
       return {
         tasks: Array.from(taskMap.values()),
-        projects: Array.from(projectMap.values())
+        projects: Array.from(projectMap.values()),
+        changeLog: mergedLogs.slice(0, 200)
       };
     }
 
@@ -1366,6 +1469,57 @@
       toast.textContent = text;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    const clActionMap = {
+      create: { icon: '➕', label: '新增' },
+      update: { icon: '✏️', label: '编辑' },
+      delete: { icon: '🗑️', label: '删除' },
+      toggle: { icon: '🔄', label: '状态切换' }
+    };
+    const clTypeMap = { task: '事项', project: '项目', progress: '进度' };
+
+    function formatClTime(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+      if (d.toDateString() === now.toDateString()) return '今天 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+      return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    }
+
+    function renderChangeLog() {
+      const logs = state.changeLog || [];
+      const filtered = clFilterMode === 'all' ? logs : logs.filter(l => l.action === clFilterMode);
+      const container = document.getElementById('changeLogList');
+      if (!filtered.length) {
+        container.innerHTML = '<div class="cl-empty">暂无修改记录</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(log => {
+        const am = clActionMap[log.action] || { icon: '📝', label: log.action };
+        const typeLabel = clTypeMap[log.type] || log.type;
+        const name = escapeHtml(log.name || '');
+        const details = log.details ? escapeHtml(log.details) : '';
+        return '<div class="cl-item">' +
+          '<div class="cl-icon ' + log.action + '">' + am.icon + '</div>' +
+          '<div class="cl-body">' +
+            '<div class="cl-title">' + am.label + typeLabel + (name ? ' · ' + name : '') + '</div>' +
+            (details ? '<div class="cl-desc">' + details + '</div>' : '') +
+            '<div class="cl-time">' + formatClTime(log.timestamp) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function openChangeLog() {
+      document.getElementById('changeLogOverlay').style.display = 'flex';
+      renderChangeLog();
+    }
+
+    function closeChangeLog() {
+      document.getElementById('changeLogOverlay').style.display = 'none';
     }
 
     function hasRisk(project) {
@@ -1996,6 +2150,7 @@
         const index = Number(toggleEl.dataset.homeToggle);
         if (!Number.isNaN(index) && state.tasks[index]) {
           state.tasks[index].done = !state.tasks[index].done;
+          logChange('toggle', 'task', state.tasks[index].title, state.tasks[index].done ? '标记完成' : '取消完成');
           saveState();
           renderHome();
           renderTasks();
@@ -2027,6 +2182,7 @@
       const index = Number(item.dataset.task);
       if (event.target.dataset.action === 'toggle-task') {
         state.tasks[index].done = !state.tasks[index].done;
+        logChange('toggle', 'task', state.tasks[index].title, state.tasks[index].done ? '标记完成' : '取消完成');
         saveState();
         renderHome();
         renderTasks();
@@ -2034,7 +2190,9 @@
       }
       if (event.target.dataset.action === 'delete-task') {
         if (!confirm('确认删除该事项？')) return;
+        const taskName = state.tasks[index]?.title || '';
         state.tasks.splice(index, 1);
+        logChange('delete', 'task', taskName, '删除事项');
         saveState();
         renderHome();
         renderTasks();
@@ -2054,10 +2212,27 @@
       state.projects[Number(card.dataset.project)][field] = event.target.innerText.trim();
       debouncedSaveState();
     });
+    document.getElementById('projectList').addEventListener('focus', event => {
+      const card = event.target.closest('[data-project]');
+      const field = event.target.dataset.field;
+      if (card && field && event.target.isContentEditable) {
+        event.target._clOldValue = event.target.innerText.trim();
+      }
+    }, true);
     document.getElementById('projectList').addEventListener('blur', event => {
       const card = event.target.closest('[data-project]');
       const field = event.target.dataset.field;
       if (!card || !field) return;
+      if (event.target.isContentEditable && event.target._clOldValue !== undefined) {
+        const newVal = event.target.innerText.trim();
+        const oldVal = event.target._clOldValue;
+        if (newVal !== oldVal) {
+          const proj = state.projects[Number(card.dataset.project)];
+          logChange('update', 'project', proj?.name || '', '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+          saveState();
+        }
+        delete event.target._clOldValue;
+      }
       renderHome();
     }, true);
 
@@ -2065,7 +2240,10 @@
       const card = event.target.closest('[data-project]');
       const field = event.target.dataset.field;
       if (!card || !field) return;
-      state.projects[Number(card.dataset.project)][field] = event.target.value;
+      const projIndex = Number(card.dataset.project);
+      const oldVal = state.projects[projIndex]?.[field] || '';
+      state.projects[projIndex][field] = event.target.value;
+      logChange('update', 'project', state.projects[projIndex]?.name || '', '修改' + field + '：' + (oldVal || '空') + ' → ' + (event.target.value || '空'));
       saveState();
       renderHome();
       renderProjects();
@@ -2091,7 +2269,9 @@
         const card = event.target.closest('[data-project]');
         const index = Number(card?.dataset.project);
         if (!confirm('确认删除该项目？删除后无法恢复。')) return;
+        const projName = state.projects[index]?.name || '';
         state.projects.splice(index, 1);
+        logChange('delete', 'project', projName, '删除项目');
         saveState();
         renderHome();
         renderProjects();
@@ -2411,6 +2591,22 @@
       addModalType = null;
     }
 
+    // 修改记录弹窗事件
+    document.getElementById('changeLogBtn').addEventListener('click', openChangeLog);
+    document.getElementById('changeLogOverlay').addEventListener('click', event => {
+      if (event.target === document.getElementById('changeLogOverlay') || event.target.matches('[data-cl-close]')) {
+        closeChangeLog();
+        return;
+      }
+      const chip = event.target.closest('[data-cl-filter]');
+      if (chip) {
+        clFilterMode = chip.dataset.clFilter;
+        document.querySelectorAll('.cl-filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderChangeLog();
+      }
+    });
+
     // 排序选项事件处理
     document.addEventListener('click', event => {
       // 首页事项排序
@@ -2474,6 +2670,7 @@
           const deadline = document.getElementById('addTaskDeadline').value || '';
           if (!title) { showToast('请先填写事项名称'); return; }
           state.tasks.unshift({ title, meta, done: false, kind, deadline, createdAt: Date.now(), attachments: [] });
+          logChange('create', 'task', title, '新增事项' + (deadline ? '，截止' + deadline : ''));
           saveState();
           renderHome();
           renderTasks();
@@ -2494,6 +2691,7 @@
             attachments: [],
             progressLog: []
           });
+          logChange('create', 'project', name, '新增项目');
           saveState();
           renderHome();
           renderProjects();
@@ -2543,6 +2741,7 @@
     if (event.target.matches('[data-td-toggle-done]')) {
       if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
         state.tasks[tdTaskIndex].done = !state.tasks[tdTaskIndex].done;
+        logChange('toggle', 'task', state.tasks[tdTaskIndex].title, state.tasks[tdTaskIndex].done ? '标记完成' : '取消完成');
         saveState();
         renderTaskDetail(state.tasks[tdTaskIndex]);
         renderHome();
@@ -2559,7 +2758,9 @@
     if (event.target.matches('[data-td-delete]')) {
       if (tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
         if (!confirm('确认删除该事项？')) return;
+        const taskName = state.tasks[tdTaskIndex].title || '';
         state.tasks.splice(tdTaskIndex, 1);
+        logChange('delete', 'task', taskName, '删除事项');
         saveState();
         closeTaskDetail();
         showToast('事项已删除');
@@ -2567,6 +2768,12 @@
       return;
     }
   });
+
+  document.getElementById('taskDetailOverlay').addEventListener('focus', event => {
+    if (event.target.matches('[data-td-field]')) {
+      event.target._clOldValue = event.target.value;
+    }
+  }, true);
 
   document.getElementById('taskDetailOverlay').addEventListener('change', event => {
     if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
@@ -2577,11 +2784,17 @@
   document.getElementById('taskDetailOverlay').addEventListener('blur', event => {
     if (event.target.matches('[data-td-field]') && tdTaskIndex >= 0 && state.tasks[tdTaskIndex]) {
       const field = event.target.dataset.tdField;
-      state.tasks[tdTaskIndex][field] = event.target.value.trim();
+      const newVal = event.target.value.trim();
+      const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+      state.tasks[tdTaskIndex][field] = newVal;
+      if (newVal !== oldVal) {
+        logChange('update', 'task', state.tasks[tdTaskIndex].title, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+      }
       saveState();
       if (field === 'title') {
         document.getElementById('tdTitle').textContent = state.tasks[tdTaskIndex].title || '事项详情';
       }
+      delete event.target._clOldValue;
     }
   }, true);
 
@@ -2599,6 +2812,7 @@
       if (!progress) { showToast('请输入进展描述'); return; }
       if (!state.projects[pdProjectIndex].progressLog) state.projects[pdProjectIndex].progressLog = [];
       state.projects[pdProjectIndex].progressLog.push({ date, progress, remark });
+      logChange('create', 'progress', state.projects[pdProjectIndex].name, '新增进度：' + progress + (date ? '（' + date + '）' : ''));
       saveState();
       renderProjectDetail(state.projects[pdProjectIndex]);
       return;
@@ -2607,7 +2821,9 @@
     if (delBtn && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
       const idx = Number(delBtn.dataset.pdDelProgress);
       if (state.projects[pdProjectIndex].progressLog) {
+        const delProgress = state.projects[pdProjectIndex].progressLog[idx]?.progress || '';
         state.projects[pdProjectIndex].progressLog.splice(idx, 1);
+        logChange('delete', 'progress', state.projects[pdProjectIndex].name, '删除进度：' + delProgress);
         saveState();
         renderProjectDetail(state.projects[pdProjectIndex]);
       }
@@ -2621,17 +2837,34 @@
     }
   });
 
+  document.getElementById('projectDetailOverlay').addEventListener('focus', event => {
+    if (event.target.matches('[data-pd-field]')) {
+      event.target._clOldValue = event.target.value;
+    }
+  }, true);
+
   document.getElementById('projectDetailOverlay').addEventListener('change', event => {
     if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
-      state.projects[pdProjectIndex][event.target.dataset.pdField] = event.target.value;
+      const field = event.target.dataset.pdField;
+      const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : (state.projects[pdProjectIndex][field] || '');
+      state.projects[pdProjectIndex][field] = event.target.value;
+      if (event.target.tagName === 'SELECT' && event.target.value !== oldVal) {
+        logChange('update', 'project', state.projects[pdProjectIndex].name, '修改' + field + '：' + (oldVal || '空') + ' → ' + (event.target.value || '空'));
+      }
     }
   });
 
   document.getElementById('projectDetailOverlay').addEventListener('blur', event => {
     if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
       const field = event.target.dataset.pdField;
-      state.projects[pdProjectIndex][field] = event.target.tagName === 'SELECT' ? event.target.value : event.target.value.trim();
+      const newVal = event.target.tagName === 'SELECT' ? event.target.value : event.target.value.trim();
+      const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
+      state.projects[pdProjectIndex][field] = newVal;
+      if (event.target.tagName !== 'SELECT' && newVal !== oldVal) {
+        logChange('update', 'project', state.projects[pdProjectIndex].name, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
+      }
       saveState();
+      delete event.target._clOldValue;
     }
   }, true);
 </script>
