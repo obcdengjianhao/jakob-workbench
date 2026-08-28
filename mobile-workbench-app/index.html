@@ -128,6 +128,30 @@
       font-size: 12px;
       box-shadow: var(--shadow);
     }
+    .sync-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 120px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .sync-dot-mobile {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: #9ca3af;
+    }
+    .sync-dot-mobile.active { background: var(--success); }
+    .sync-dot-mobile.syncing { background: #f59e0b; animation: m-sync-pulse 1s ease-in-out infinite; }
+    .sync-dot-mobile.error { background: var(--danger); }
+    .sync-dot-mobile.offline { background: #9ca3af; }
+    @keyframes m-sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
     .screen { display: none; }
     .screen.active { display: block; animation: rise .18s ease-out; }
@@ -936,6 +960,7 @@
         <h1>Jakob的工作台</h1>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
+        <div class="sync-badge" id="mobileSyncBadge"><span class="sync-dot-mobile" id="mobileSyncDot"></span><span id="mobileSyncText">本地</span></div>
         <div class="date-pill" id="todayText"></div>
       </div>
     </header>
@@ -1228,7 +1253,8 @@
 
     function getLatestProgress(project) {
       const log = Array.isArray(project.progressLog) ? project.progressLog : [];
-      return log.length ? log[log.length - 1] : null;
+      if (!log.length) return null;
+      return log.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
     }
     function formatProgressDate(dateStr) {
       if (!dateStr) return '暂无';
@@ -1312,7 +1338,7 @@
       }
       if (!_isSyncing && gistSyncConfig) {
         clearTimeout(_pushTimer);
-        _pushTimer = setTimeout(() => pushToCloud(), 800);
+        _pushTimer = setTimeout(() => pushToCloud(), 2000);
       }
     }
 
@@ -1322,10 +1348,63 @@
     }
 
     let _isPushing = false;
+    let _mIsOnline = navigator.onLine;
+    let _mLastSyncTime = null;
+    let _mPollTimer = null;
+
+    function setMobileSyncStatus(status, text) {
+      const dot = document.getElementById('mobileSyncDot');
+      const txt = document.getElementById('mobileSyncText');
+      if (!dot || !txt) return;
+      dot.className = 'sync-dot-mobile';
+      if (status === 'syncing') dot.classList.add('syncing');
+      else if (status === 'error') dot.classList.add('error');
+      else if (status === 'offline') dot.classList.add('offline');
+      else if (status === 'connected') dot.classList.add('active');
+      txt.textContent = text;
+    }
+
+    function formatMobileSyncTime() {
+      if (!_mLastSyncTime) return '已同步';
+      const d = new Date(_mLastSyncTime);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function updateMobileSyncStatus() {
+      if (!gistSyncConfig) { setMobileSyncStatus('', '本地'); return; }
+      if (!_mIsOnline) { setMobileSyncStatus('offline', '离线'); return; }
+      setMobileSyncStatus('connected', formatMobileSyncTime());
+    }
+
+    function saveMobileVersionSnapshot() {
+      try {
+        const key = 'workbench_mobile_version_history';
+        const history = JSON.parse(localStorage.getItem(key) || '[]');
+        history.unshift({ timestamp: Date.now(), data: state });
+        if (history.length > 10) history.length = 10;
+        localStorage.setItem(key, JSON.stringify(history));
+      } catch (e) { /* ignore */ }
+    }
+
+    window.addEventListener('online', () => {
+      _mIsOnline = true;
+      updateMobileSyncStatus();
+      if (gistSyncConfig) syncFromCloud();
+    });
+    window.addEventListener('offline', () => {
+      _mIsOnline = false;
+      updateMobileSyncStatus();
+    });
 
     async function syncFromCloud() {
       if (!gistSyncConfig || _isSyncing) return;
+      if (!navigator.onLine) { setMobileSyncStatus('offline', '离线'); return; }
       _isSyncing = true;
+      setMobileSyncStatus('syncing', '同步中');
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1335,12 +1414,12 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        if (!response.ok) return;
+        if (!response.ok) { setMobileSyncStatus('error', '失败'); return; }
         const gistData = await response.json();
         const content = gistData?.files?.['state.json']?.content;
-        if (!content) return;
+        if (!content) { _mLastSyncTime = Date.now(); setMobileSyncStatus('connected', formatMobileSyncTime()); return; }
         const remoteData = JSON.parse(content);
-        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
+        if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) { setMobileSyncStatus('error', '格式错误'); return; }
 
         const merged = mergeStates(state, normalizeState(remoteData));
         const localJson = JSON.stringify(state);
@@ -1351,8 +1430,10 @@
         if (localJson !== mergedJson) {
           await pushToCloud();
         }
+        _mLastSyncTime = Date.now();
+        setMobileSyncStatus('connected', formatMobileSyncTime());
       } catch (e) {
-        console.warn('云端同步失败:', e);
+        setMobileSyncStatus('error', '失败');
       } finally {
         _isSyncing = false;
       }
@@ -1360,8 +1441,11 @@
 
     async function pushToCloud() {
       if (!gistSyncConfig || _isPushing) return;
+      if (!navigator.onLine) { setMobileSyncStatus('offline', '离线'); return; }
       _isPushing = true;
+      setMobileSyncStatus('syncing', '同步中');
       try {
+        saveMobileVersionSnapshot();
         const payload = JSON.stringify({
           tasks: state.tasks,
           projects: state.projects,
@@ -1383,11 +1467,11 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        if (!response.ok) {
-          console.warn('推送失败: HTTP ' + response.status);
-        }
+        if (!response.ok) { setMobileSyncStatus('error', '失败'); return; }
+        _mLastSyncTime = Date.now();
+        setMobileSyncStatus('connected', formatMobileSyncTime());
       } catch (e) {
-        console.warn('推送云端失败:', e);
+        setMobileSyncStatus('error', '失败');
       } finally {
         _isPushing = false;
       }
@@ -2410,11 +2494,17 @@
     })();
 
     render();
+    updateMobileSyncStatus();
     syncFromCloud();
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) syncFromCloud();
     });
+
+    // 30秒轮询
+    _mPollTimer = setInterval(() => {
+      if (gistSyncConfig && !document.hidden && navigator.onLine) syncFromCloud();
+    }, 30000);
 
     // === 设置页面 ===
     (function setupSettings() {

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Jakob的工作台 v3.4</title>
+<title>Jakob的工作台 v3.5</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -147,8 +147,13 @@
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--text-secondary);
+    flex-shrink: 0;
   }
   .sync-dot.active { background: var(--success); }
+  .sync-dot.syncing { background: #f59e0b; animation: sync-pulse 1s ease-in-out infinite; }
+  .sync-dot.error { background: var(--danger); }
+  .sync-dot.offline { background: #9ca3af; }
+  @keyframes sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
@@ -2568,7 +2573,7 @@
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
     if (gistSyncConfig) {
       clearTimeout(_desktopPushTimer);
-      _desktopPushTimer = setTimeout(() => pushDesktopToCloud(), 800);
+      _desktopPushTimer = setTimeout(() => pushDesktopToCloud(), 2000);
     }
   }
 
@@ -2721,8 +2726,11 @@
 
   async function pushDesktopToCloud() {
     if (!gistSyncConfig || _isDesktopPushing || isDesktopSyncing) return;
+    if (!navigator.onLine) { setSyncStatus('offline', '离线模式'); return; }
     _isDesktopPushing = true;
+    setSyncStatus('syncing', '同步中...');
     try {
+      saveVersionSnapshot();
       const state = getDesktopState();
       const payload = JSON.stringify({
         tasks: state.tasks,
@@ -2730,7 +2738,11 @@
         updatedAt: new Date().toISOString()
       });
       await patchGist(payload);
-    } catch (e) { /* already logged in patchGist */ }
+      _lastSyncTime = Date.now();
+      setSyncStatus('connected', formatSyncTime());
+    } catch (e) {
+      setSyncStatus('error', '同步失败');
+    }
     finally {
       _isDesktopPushing = false;
     }
@@ -2738,15 +2750,17 @@
 
   async function autoDesktopSync() {
     if (!gistSyncConfig || isDesktopSyncing) return;
+    if (!navigator.onLine) { setSyncStatus('offline', '离线模式'); return; }
     isDesktopSyncing = true;
+    setSyncStatus('syncing', '同步中...');
     try {
       const response = await fetchGist();
-      if (!response.ok) return;
+      if (!response.ok) { setSyncStatus('error', '同步失败'); return; }
       const gistData = await response.json();
       const content = gistData?.files?.['state.json']?.content;
-      if (!content) return;
+      if (!content) { _lastSyncTime = Date.now(); setSyncStatus('connected', formatSyncTime()); return; }
       const remoteData = JSON.parse(content);
-      if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) return;
+      if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) { setSyncStatus('error', '数据格式错误'); return; }
 
       const localData = getDesktopState();
       const merged = mergeDesktopStates(localData, remoteData);
@@ -2757,8 +2771,10 @@
       if (localJson !== mergedJson) {
         await patchGist(JSON.stringify(merged));
       }
+      _lastSyncTime = Date.now();
+      setSyncStatus('connected', formatSyncTime());
     } catch (e) {
-      console.warn('云端同步失败:', e);
+      setSyncStatus('error', '同步失败');
     } finally {
       isDesktopSyncing = false;
     }
@@ -3898,6 +3914,11 @@
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
     });
 
+    // 30秒轮询
+    _pollTimer = setInterval(() => {
+      if (gistSyncConfig && !document.hidden && navigator.onLine) autoDesktopSync();
+    }, 30000);
+
     // 新增事项
     function addNewTask() {
       const titleInput = document.getElementById('newTaskTitle');
@@ -4137,15 +4158,70 @@
     const syncDot = document.getElementById('syncDot');
     const syncText = document.getElementById('syncText');
 
-    function updateSyncStatus() {
-      if (gistSyncConfig) {
-        syncDot?.classList.add('active');
-        syncText && (syncText.textContent = '云端已连接');
-      } else {
-        syncDot?.classList.remove('active');
-        syncText && (syncText.textContent = '本地模式');
-      }
+    function setSyncStatus(status, text) {
+      const dot = document.getElementById('syncDot');
+      const txt = document.getElementById('syncText');
+      if (!dot || !txt) return;
+      dot.className = 'sync-dot';
+      if (status === 'syncing') dot.classList.add('syncing');
+      else if (status === 'error') dot.classList.add('error');
+      else if (status === 'offline') dot.classList.add('offline');
+      else if (status === 'connected') dot.classList.add('active');
+      txt.textContent = text;
     }
+
+    let _isOnline = navigator.onLine;
+    let _lastSyncTime = null;
+    let _pollTimer = null;
+
+    function formatSyncTime() {
+      if (!_lastSyncTime) return '已同步';
+      const d = new Date(_lastSyncTime);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `已同步 ${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function updateSyncStatus() {
+      if (!gistSyncConfig) {
+        setSyncStatus('', '本地模式');
+        return;
+      }
+      if (!_isOnline) {
+        setSyncStatus('offline', '离线模式');
+        return;
+      }
+      setSyncStatus('connected', formatSyncTime());
+    }
+
+    // 网络监听
+    window.addEventListener('online', () => {
+      _isOnline = true;
+      updateSyncStatus();
+      if (gistSyncConfig) autoDesktopSync();
+    });
+    window.addEventListener('offline', () => {
+      _isOnline = false;
+      updateSyncStatus();
+    });
+
+    // 版本历史快照
+    function saveVersionSnapshot() {
+      try {
+        const state = getDesktopState();
+        const key = 'workbench_version_history';
+        const history = JSON.parse(localStorage.getItem(key) || '[]');
+        history.unshift({
+          timestamp: Date.now(),
+          data: state
+        });
+        if (history.length > 10) history.length = 10;
+        localStorage.setItem(key, JSON.stringify(history));
+      } catch (e) { /* ignore quota errors */ }
+    }
+
     updateSyncStatus();
 
     document.getElementById('settingsBtn')?.addEventListener('click', () => {
