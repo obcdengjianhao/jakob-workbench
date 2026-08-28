@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jakob的工作台</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Jakob的工作台 v3.3</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -22,6 +25,130 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
     --shadow-hover: 0 4px 12px rgba(0,0,0,0.08), 0 12px 24px rgba(0,0,0,0.06);
   }
+  body.dark {
+    --bg: #14161a;
+    --card: #1e2026;
+    --text: #e8e8e8;
+    --text-secondary: #9ca3af;
+    --border: rgba(255,255,255,0.1);
+    --primary: #7c6ff5;
+    --primary-soft: #252440;
+    --primary-text: #c4c0ff;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.4), 0 12px 24px rgba(0,0,0,0.3);
+  }
+  body.dark .attach-file-item { background: #252830; }
+  body.dark .attach-preview { background: #252830; }
+  body.dark .attach-preview-head { background: #1e2026; }
+  body.dark .search-input,
+  body.dark .pd-edit-field,
+  body.dark .pd-select { background: #252830; color: var(--text); }
+  body.dark .formula-table th { background: #252830; }
+  body.dark .status-select { background: var(--card); color: var(--text); }
+  body.dark .task-action-btn { background: var(--card); }
+
+  /* 工具栏按钮 */
+  .toolbar-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .toolbar-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  /* 设置面板 */
+  .settings-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .settings-overlay.show { display: flex; }
+  .settings-modal {
+    background: var(--card);
+    border-radius: 16px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-title { font-size: 16px; font-weight: 700; }
+  .settings-body { padding: 20px; }
+  .settings-field { margin-bottom: 16px; }
+  .settings-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .settings-field input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .settings-field input:focus { outline: none; border-color: var(--primary); }
+  .settings-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+  }
+
+  /* 同步状态指示 */
+  .sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg);
+  }
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+  }
+  .sync-dot.active { background: var(--success); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
@@ -1292,10 +1419,9 @@
     .topbar-inner {
       height: auto;
       padding: 12px 16px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
     }
     .brand {
       padding: 0;
@@ -1306,12 +1432,13 @@
     .nav-tabs {
       flex-direction: row;
       flex-wrap: wrap;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 6px;
     }
     .nav-tabs button {
       text-align: center;
       padding: 8px 12px;
+      font-size: 13px;
     }
     .nav-tabs button.active {
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -1319,15 +1446,33 @@
     }
     .container {
       margin-left: 0;
-      padding: 18px;
+      padding: 16px;
     }
+    .pd-info-grid { grid-template-columns: 1fr; }
+    .pd-phase-timeline { flex-wrap: wrap; gap: 12px; }
+    .pd-phase-step { min-width: 80px; }
+    .pd-phase-line { display: none !important; }
+    .settings-modal { max-width: 95vw; }
+    .detail-modal { width: 95%; max-width: none; }
+    #projectTable { font-size: 12px; }
+    #projectTable th, #projectTable td { padding: 8px 6px; }
   }
   @media (max-width: 600px) {
     .metrics-row { grid-template-columns: 1fr; }
     .quick-links { grid-template-columns: repeat(2, 1fr); }
-    .container { padding: 16px; }
-    .topbar-inner { flex-direction: column; align-items: stretch; }
-    .nav-tabs { justify-content: center; }
+    .container { padding: 12px; }
+    .topbar-inner { padding: 10px 12px; gap: 8px; }
+    .nav-tabs button { padding: 6px 10px; font-size: 12px; }
+    .toolbar-btn { width: 32px; height: 32px; font-size: 14px; }
+    .card { padding: 14px; }
+    .metric-card { padding: 14px; }
+    .metric-value { font-size: 22px; }
+    .pd-header { padding: 16px 18px 12px; }
+    .pd-body { padding: 16px 18px; gap: 16px; }
+    .pd-name { font-size: 18px; }
+    .pd-add-progress { flex-direction: column; }
+    .pd-add-progress input[type="date"] { width: 100%; }
+    .pd-add-progress input[type="text"] { min-width: 0; }
   }
 
   .add-task-form {
@@ -1517,50 +1662,6 @@
     cursor: pointer;
     border: 1px solid var(--border);
   }
-
-  .cl-btn {
-    background: rgba(75,63,227,.1); border: none; color: var(--primary, #4B3FE3);
-    padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer;
-    display: flex; align-items: center; gap: 4px; white-space: nowrap;
-  }
-  .cl-btn:hover { background: rgba(75,63,227,.2); }
-  .cl-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1200;
-    display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 16px;
-  }
-  .cl-overlay.show { display: flex; }
-  .cl-modal {
-    background: var(--card); border-radius: 14px; width: 100%; max-width: 600px;
-    margin: auto; box-shadow: 0 8px 32px rgba(0,0,0,.12); display: flex; flex-direction: column;
-    max-height: 80vh;
-  }
-  .cl-modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; border-bottom: 1px solid var(--border);
-  }
-  .cl-modal-title { margin: 0; font-size: 16px; font-weight: 600; }
-  .cl-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); }
-  .cl-filters { display: flex; gap: 6px; padding: 12px 20px 0; flex-wrap: wrap; }
-  .cl-filter-chip {
-    padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border);
-    background: var(--card); font-size: 12px; cursor: pointer; color: var(--text-secondary);
-  }
-  .cl-filter-chip.active { background: var(--primary, #4B3FE3); color: #fff; border-color: var(--primary, #4B3FE3); }
-  .cl-list { display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 20px; overflow-y: auto; flex: 1; }
-  .cl-item { display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); }
-  .cl-icon {
-    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 14px;
-  }
-  .cl-icon.create { background: rgba(34,197,94,.15); }
-  .cl-icon.update { background: rgba(59,130,246,.15); }
-  .cl-icon.delete { background: rgba(239,68,68,.15); }
-  .cl-icon.toggle { background: rgba(168,85,247,.15); }
-  .cl-body { flex: 1; min-width: 0; }
-  .cl-item-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .cl-desc { font-size: 12px; color: var(--text-secondary); word-break: break-word; }
-  .cl-time { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
-  .cl-empty { text-align: center; padding: 40px 0; color: var(--text-secondary); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -1575,7 +1676,18 @@
       <button data-tab="projects">项目管理</button>
       <button data-tab="formulas">配方管理</button>
     </nav>
-    <button class="cl-btn" id="changeLogBtn" type="button">📋 修改记录</button>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;">
+      <div style="display:flex;gap:6px;">
+        <button class="toolbar-btn" id="darkModeBtn" title="深色/浅色模式" type="button">🌙</button>
+        <button class="toolbar-btn" id="exportBtn" title="导出数据" type="button">📥</button>
+        <button class="toolbar-btn" id="importBtn" title="导入数据" type="button">📤</button>
+        <button class="toolbar-btn" id="settingsBtn" title="设置" type="button">⚙️</button>
+      </div>
+      <div class="sync-status" id="syncStatus">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">本地模式</span>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1731,23 +1843,28 @@
 <!-- ==================== 配方管理 ==================== -->
 <section id="formulas" class="tab-content">
 
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>配方管理</div>
-    <div class="section-note">这里保留基础配方、定制配方、试验记录、感官数据和原料信息的入口，后续可逐步完善。</div>
-    <div class="formula-grid">
-      <div class="formula-card">
-        <div class="formula-name">基础配方定位</div>
-        <div class="formula-code">从成熟配方库中匹配最接近的基础配方，减少从零开发。</div>
-      </div>
-      <div class="formula-card">
-        <div class="formula-name">试验与感官记录</div>
-        <div class="formula-code">按版本沉淀小试、中试、复测与感官评价数据。</div>
-      </div>
-      <div class="formula-card">
-        <div class="formula-name">原料与成本关注</div>
-        <div class="formula-code">关联原料、供应商、成本和资质到具体配方。</div>
-      </div>
+  <div class="card" style="overflow-x:auto;">
+    <div class="card-title-row">
+      <span><span class="dot" style="background:var(--warning)"></span>配方管理 <span class="muted" id="formulaCount"></span></span>
+      <button class="card-add-btn" id="addFormulaBtn" type="button" aria-label="新增配方">+</button>
     </div>
+    <div class="editable-note">记录和管理产品配方信息，支持版本追踪和状态管理。</div>
+    <input type="search" class="search-input" id="formulaSearchInput" placeholder="搜索配方..." autocomplete="off">
+    <table class="formula-table" id="formulaTable">
+      <thead>
+        <tr>
+          <th>配方名称</th>
+          <th>产品类别</th>
+          <th>版本</th>
+          <th>状态</th>
+          <th>关键原料</th>
+          <th>备注</th>
+          <th>最后更新</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="formulaTableBody"></tbody>
+    </table>
   </div>
 
 </section>
@@ -1781,28 +1898,15 @@
   const projectFields = ['name', 'priority', 'category', 'phase', 'status', 'next', 'risk'];
   const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
   const sharedStorageKey = 'formulaWorkbenchSharedData';
-  const _dt = ['ghp_aj41', 'hF97J8KK9', 'xioNXkhF', 'LKzKAInx', 'W11CmMp'];
-  const gistSyncConfig = window.location.protocol === 'file:' ? null : {
-    apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
-    token: _dt.join('')
-  };
+  const gistSyncConfig = (() => {
+    if (window.location.protocol === 'file:') return null;
+    const token = localStorage.getItem('workbench_gist_token') || '';
+    const apiUrl = localStorage.getItem('workbench_gist_url') || '';
+    if (!token || !apiUrl) return null;
+    return { apiUrl, token };
+  })();
   let desktopTasks = [];
-  let desktopChangeLog = [];
   let isApplyingSharedState = false;
-  let _clFilterMode = 'all';
-
-  function logChange(action, type, name, details) {
-    desktopChangeLog.unshift({
-      action: action,
-      type: type,
-      name: name || '',
-      timestamp: Date.now(),
-      details: details || ''
-    });
-    if (desktopChangeLog.length > 200) {
-      desktopChangeLog = desktopChangeLog.slice(0, 200);
-    }
-  }
 
   function splitProjectPriority(project) {
     const rawName = (project.name || '').trim();
@@ -1835,7 +1939,8 @@
   }
 
   function encodeProgressLog(log) {
-    return encodeURIComponent(JSON.stringify(log || []));
+    const sorted = (log || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    return encodeURIComponent(JSON.stringify(sorted));
   }
   function decodeProgressLog(value) {
     try {
@@ -1850,7 +1955,7 @@
   function getLatestProgress(project) {
     const log = Array.isArray(project.progressLog) ? project.progressLog : [];
     if (!log.length) return null;
-    return log[log.length - 1];
+    return log.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
   }
   function formatProgressDate(dateStr) {
     if (!dateStr) return '暂无';
@@ -1875,8 +1980,7 @@
   function normalizeSharedState(state) {
     return {
       tasks: Array.isArray(state?.tasks) ? state.tasks.map(normalizeTaskData) : [],
-      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : []),
-      changeLog: Array.isArray(state?.changeLog) ? state.changeLog : []
+      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : [])
     };
   }
 
@@ -1937,58 +2041,6 @@
       '"': '&quot;',
       "'": '&#39;'
     }[s]));
-  }
-
-  const clActionMap = {
-    create: { icon: '➕', label: '新增' },
-    update: { icon: '✏️', label: '编辑' },
-    delete: { icon: '🗑️', label: '删除' },
-    toggle: { icon: '🔄', label: '状态切换' }
-  };
-  const clTypeMap = { task: '事项', project: '项目', progress: '进度' };
-
-  function formatClTime(ts) {
-    const d = new Date(ts);
-    const now = new Date();
-    const diff = now - d;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-    if (d.toDateString() === now.toDateString()) return '今天 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-    return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-  }
-
-  function renderChangeLog() {
-    const logs = desktopChangeLog || [];
-    const filtered = _clFilterMode === 'all' ? logs : logs.filter(l => l.action === _clFilterMode);
-    const container = document.getElementById('changeLogList');
-    if (!container) return;
-    if (!filtered.length) {
-      container.innerHTML = '<div class="cl-empty">暂无修改记录</div>';
-      return;
-    }
-    container.innerHTML = filtered.map(log => {
-      const am = clActionMap[log.action] || { icon: '📝', label: log.action };
-      const typeLabel = clTypeMap[log.type] || log.type;
-      const name = escapeHtml(log.name || '');
-      const details = log.details ? escapeHtml(log.details) : '';
-      return '<div class="cl-item">' +
-        '<div class="cl-icon ' + log.action + '">' + am.icon + '</div>' +
-        '<div class="cl-body">' +
-          '<div class="cl-item-title">' + am.label + typeLabel + (name ? ' · ' + name : '') + '</div>' +
-          (details ? '<div class="cl-desc">' + details + '</div>' : '') +
-          '<div class="cl-time">' + formatClTime(log.timestamp) + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  function openChangeLog() {
-    document.getElementById('changeLogOverlay').classList.add('show');
-    renderChangeLog();
-  }
-
-  function closeChangeLog() {
-    document.getElementById('changeLogOverlay').classList.remove('show');
   }
 
   const attachmentCategories = ['未分类', '文档', '图片', '表格', '报告', '其他'];
@@ -2506,8 +2558,7 @@
   function getDesktopState() {
     return {
       tasks: desktopTasks.length ? desktopTasks : extractDesktopTasksFromDom(),
-      projects: sortProjectsByPriority(getProjectRows()),
-      changeLog: desktopChangeLog
+      projects: sortProjectsByPriority(getProjectRows())
     };
   }
 
@@ -2544,7 +2595,6 @@
     renderProjectTableRows(state.projects);
     updateProjectTableVisuals();
     renderDesktopTasks(state.tasks);
-    desktopChangeLog = Array.isArray(state.changeLog) ? state.changeLog : [];
     refreshProjectDashboard();
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
     isApplyingSharedState = false;
@@ -2616,20 +2666,9 @@
       }
     });
 
-    const localLogs = Array.isArray(localState.changeLog) ? localState.changeLog : [];
-    const remoteLogs = Array.isArray(remoteState.changeLog) ? remoteState.changeLog : [];
-    const logSeen = new Set();
-    const mergedLogs = [];
-    [...localLogs, ...remoteLogs].forEach(log => {
-      const sig = log.timestamp + '|' + log.action + '|' + log.type + '|' + (log.name || '') + '|' + (log.details || '');
-      if (!logSeen.has(sig)) { logSeen.add(sig); mergedLogs.push(log); }
-    });
-    mergedLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
     return {
       tasks: Array.from(taskMap.values()),
       projects: Array.from(projectMap.values()),
-      changeLog: mergedLogs.slice(0, 200),
       updatedAt: new Date().toISOString()
     };
   }
@@ -3083,6 +3122,14 @@
         const sb = normalizeStatus(b.cells[4]?.textContent.trim() || '');
         return (statusOrder[sa] || 0) - (statusOrder[sb] || 0);
       });
+    } else if (_projectSortMode === 'progress') {
+      rows.sort((a, b) => {
+        const la = decodeProgressLog(a.querySelector('.progress-cell')?.dataset.progressLog);
+        const lb = decodeProgressLog(b.querySelector('.progress-cell')?.dataset.progressLog);
+        const da = la.length ? Math.max(...la.map(e => new Date(e.date || 0).getTime())) : 0;
+        const db = lb.length ? Math.max(...lb.map(e => new Date(e.date || 0).getTime())) : 0;
+        return db - da;
+      });
     }
     rows.forEach(row => tbody.appendChild(row));
   }
@@ -3110,45 +3157,12 @@
       }
     });
 
-    table.addEventListener('focus', (event) => {
-      if (event.target.matches('td[contenteditable="true"]')) {
-        event.target._clOldValue = event.target.textContent.trim();
-      }
-      if (event.target.matches('.status-select')) {
-        event.target._clOldValue = event.target.value;
-      }
-    }, true);
-
-    table.addEventListener('blur', (event) => {
-      if (event.target.matches('td[contenteditable="true"]')) {
-        const field = event.target.dataset.field;
-        const newVal = event.target.textContent.trim();
-        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
-        if (newVal !== oldVal) {
-          const row = event.target.closest('tr');
-          const projName = row?.cells[0]?.textContent?.trim() || '';
-          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
-          saveDesktopState();
-        }
-        delete event.target._clOldValue;
-      }
-    }, true);
-
     table.addEventListener('change', (event) => {
       if (event.target.matches('.status-select')) {
-        const field = event.target.dataset.field;
-        const row = event.target.closest('tr');
-        const projName = row?.cells[0]?.textContent?.trim() || '';
-        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
-        if (event.target.value !== oldVal) {
-          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (event.target.value || '空'));
-        }
-        delete event.target._clOldValue;
         if (event.target.dataset.field === 'priority') {
           renderProjectTableRows(getProjectRows());
           updateProjectTableVisuals();
         }
-        saveDesktopState();
         refreshProjectDashboard();
       }
     });
@@ -3180,11 +3194,7 @@
         return;
       }
       if (event.target.matches('.row-delete-btn')) {
-        const row = event.target.closest('tr');
-        const projName = row?.cells[0]?.textContent?.trim() || '';
-        row?.remove();
-        logChange('delete', 'project', projName, '删除项目');
-        saveDesktopState();
+        event.target.closest('tr')?.remove();
         refreshProjectDashboard();
       }
     });
@@ -3203,8 +3213,6 @@
         progressCell.innerHTML = '<button class="progress-log-btn" type="button" data-progress-open>进度记录</button><div style="font-size:12px;color:var(--text-secondary);">暂无记录</div>';
         updateProjectTableVisuals();
         refreshProjectDashboard();
-        logChange('create', 'project', '新项目', '新增项目');
-        saveDesktopState();
         row.querySelector('td')?.focus();
       });
     }
@@ -3359,10 +3367,13 @@
 
   function openProgressLogModal(cell, projectName) {
     progressLogContext = cell;
+    const existingLog = decodeProgressLog(cell.dataset.progressLog);
+    cell.dataset.progressLog = encodeProgressLog(existingLog);
     document.getElementById('progressLogTitle').textContent = `进度记录 - ${projectName}`;
     document.getElementById('progressLogDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('progressLogText').value = '';
     document.getElementById('progressLogRemark').value = '';
+    updateSortButtonLabel();
     renderProgressLogList();
     const overlay = document.getElementById('progressLogOverlay');
     overlay.style.display = 'flex';
@@ -3373,19 +3384,36 @@
     progressLogContext = null;
   }
 
+  let progressLogSortDesc = localStorage.getItem('progressLogSortDesc') === '1';
+  function toggleProgressLogSort() {
+    progressLogSortDesc = !progressLogSortDesc;
+    localStorage.setItem('progressLogSortDesc', progressLogSortDesc ? '1' : '0');
+    updateSortButtonLabel();
+    renderProgressLogList();
+  }
+  function updateSortButtonLabel() {
+    const label = document.getElementById('progressLogSortLabel');
+    if (label) label.textContent = progressLogSortDesc ? '↓ 时间倒序' : '↑ 时间正序';
+  }
+
   function renderProgressLogList() {
     if (!progressLogContext) return;
-    const log = decodeProgressLog(progressLogContext.dataset.progressLog);
+    const raw = decodeProgressLog(progressLogContext.dataset.progressLog);
+    const log = raw.map((entry, originalIndex) => ({ entry, originalIndex }))
+      .sort((a, b) => {
+        const cmp = new Date(a.entry.date) - new Date(b.entry.date);
+        return progressLogSortDesc ? -cmp : cmp;
+      });
     const listEl = document.getElementById('progressLogList');
     if (!log.length) {
       listEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无进度记录</div>';
       return;
     }
-    listEl.innerHTML = log.map((entry, i) => `
+    listEl.innerHTML = log.map(({ entry, originalIndex }) => `
       <div style="padding:10px 0;border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-weight:600;font-size:13px;">${escapeHtml(formatProgressDate(entry.date))}</span>
-          <button class="progress-entry-del" type="button" data-del-index="${i}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
+          <button class="progress-entry-del" type="button" data-del-index="${originalIndex}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
         </div>
         <div style="font-size:13px;margin-top:4px;">${escapeHtml(entry.progress)}</div>
         ${entry.remark ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：${escapeHtml(entry.remark)}</div>` : ''}
@@ -3402,9 +3430,6 @@
     const log = decodeProgressLog(progressLogContext.dataset.progressLog);
     log.push({ date, progress, remark });
     progressLogContext.dataset.progressLog = encodeProgressLog(log);
-    const projRow = progressLogContext.closest('tr');
-    const projName = projRow?.cells[0]?.textContent?.trim() || '';
-    logChange('create', 'progress', projName, '新增进度：' + progress + (date ? '（' + date + '）' : ''));
     updateProgressCellDisplay(progressLogContext);
     renderProgressLogList();
     document.getElementById('progressLogText').value = '';
@@ -3415,7 +3440,7 @@
 
   function updateProgressCellDisplay(cell) {
     const log = decodeProgressLog(cell.dataset.progressLog);
-    const latest = log.length ? log[log.length - 1] : null;
+    const latest = log.length ? log.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0] : null;
     const btn = cell.querySelector('[data-progress-open]');
     if (!btn) return;
     const display = latest
@@ -3439,17 +3464,17 @@
     if (addBtn) {
       addBtn.addEventListener('click', addProgressLogEntry);
     }
+    const sortBtn = document.getElementById('progressLogSortBtn');
+    if (sortBtn) {
+      sortBtn.addEventListener('click', toggleProgressLogSort);
+    }
     overlay.addEventListener('click', (event) => {
       const delBtn = event.target.closest('.progress-entry-del');
       if (delBtn && progressLogContext) {
         const index = Number(delBtn.dataset.delIndex);
         const log = decodeProgressLog(progressLogContext.dataset.progressLog);
-        const delProgress = log[index]?.progress || '';
         log.splice(index, 1);
         progressLogContext.dataset.progressLog = encodeProgressLog(log);
-        const projRow = progressLogContext.closest('tr');
-        const projName = projRow?.cells[0]?.textContent?.trim() || '';
-        logChange('delete', 'progress', projName, '删除进度：' + delProgress);
         updateProgressCellDisplay(progressLogContext);
         renderProgressLogList();
         saveDesktopState();
@@ -3510,7 +3535,9 @@
     const statusColor = status === '完结' ? 'var(--success)' : status === '暂停' ? 'var(--warning)' : 'var(--info)';
     const riskColor = project.risk && project.risk !== '/' ? 'var(--danger)' : 'var(--success)';
     const attachments = normalizeAttachments(project.attachments);
-    const progressLog = Array.isArray(project.progressLog) ? project.progressLog : [];
+    const progressLog = (Array.isArray(project.progressLog) ? project.progressLog : [])
+      .map((entry, originalIndex) => ({ entry, originalIndex }))
+      .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
 
     const content = document.getElementById('projectDetailContent');
     content.innerHTML = `
@@ -3596,13 +3623,13 @@
         <div class="pd-section">
           <div class="pd-section-title">进度记录</div>
           <div class="pd-progress-list" id="pdProgressList">
-            ${progressLog.length ? progressLog.map((entry, i) => `
+            ${progressLog.length ? progressLog.map(({ entry, originalIndex }) => `
               <div class="pd-progress-entry">
                 <div class="pd-progress-date">${escapeHtml(formatProgressDate(entry.date))}</div>
                 <div class="pd-progress-content">
                   ${escapeHtml(entry.progress)}
                   ${entry.remark ? `<div class="pd-progress-remark">备注：${escapeHtml(entry.remark)}</div>` : ''}
-                  <button class="row-delete-btn" type="button" data-pd-del-progress="${i}" style="margin-top:4px;font-size:12px;">删除</button>
+                  <button class="row-delete-btn" type="button" data-pd-del-progress="${originalIndex}" style="margin-top:4px;font-size:12px;">删除</button>
                 </div>
               </div>
             `).join('') : '<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">暂无进度记录</div>'}
@@ -3704,15 +3731,12 @@
         const remark = document.getElementById('pdProgressRemark').value.trim();
         if (!progress) { alert('请输入进展描述'); return; }
         if (!projectDetailRow) return;
-        const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
         const progressCell = projectDetailRow.querySelector('.progress-cell');
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
           log.push({ date, progress, remark });
           progressCell.dataset.progressLog = encodeProgressLog(log);
         }
-        logChange('create', 'progress', projName, '新增进度：' + progress + (date ? '（' + date + '）' : ''));
-        saveDesktopState();
         // Re-render detail to show new entry
         const project = getProjectFromRow(projectDetailRow);
         renderProjectDetail(project);
@@ -3723,15 +3747,11 @@
       if (delBtn && projectDetailRow) {
         const idx = Number(delBtn.dataset.pdDelProgress);
         const progressCell = projectDetailRow.querySelector('.progress-cell');
-        const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
-          const delProgress = log[idx]?.progress || '';
           log.splice(idx, 1);
           progressCell.dataset.progressLog = encodeProgressLog(log);
-          logChange('delete', 'progress', projName, '删除进度：' + delProgress);
         }
-        saveDesktopState();
         const project = getProjectFromRow(projectDetailRow);
         renderProjectDetail(project);
         return;
@@ -3745,42 +3765,126 @@
       }
     });
 
-    // Track old values for change logging
-    overlay.addEventListener('focus', (event) => {
-      if (event.target.matches('[data-pd-field]')) {
-        event.target._clOldValue = event.target.tagName === 'SELECT' ? event.target.value : event.target.value;
-      }
-    }, true);
-
     // Save on select change
     overlay.addEventListener('change', (event) => {
       if (event.target.matches('[data-pd-field]')) {
-        const field = event.target.dataset.pdField;
-        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
-        const newVal = event.target.value;
-        if (event.target.tagName === 'SELECT' && newVal !== oldVal) {
-          const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
-          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
-        }
         saveProjectDetailToRow();
-        delete event.target._clOldValue;
       }
     });
 
     // Save on blur of editable fields
     overlay.addEventListener('blur', (event) => {
       if (event.target.matches('[data-pd-field]')) {
-        const field = event.target.dataset.pdField;
-        const oldVal = event.target._clOldValue !== undefined ? event.target._clOldValue : '';
-        const newVal = event.target.value.trim();
-        if (event.target.tagName !== 'SELECT' && newVal !== oldVal) {
-          const projName = projectDetailRow?.querySelector('td')?.textContent.trim() || '';
-          logChange('update', 'project', projName, '修改' + field + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
-        }
         saveProjectDetailToRow();
-        delete event.target._clOldValue;
       }
     }, true);
+  }
+
+  // 配方管理
+  const formulaStorageKey = 'workbench_formulas';
+  let formulaList = [];
+  let _formulaSearchQuery = '';
+
+  function loadFormulas() {
+    try {
+      const raw = localStorage.getItem(formulaStorageKey);
+      formulaList = raw ? JSON.parse(raw) : [];
+    } catch { formulaList = []; }
+    if (!Array.isArray(formulaList)) formulaList = [];
+  }
+
+  function saveFormulas() {
+    localStorage.setItem(formulaStorageKey, JSON.stringify(formulaList));
+  }
+
+  function renderFormulaTable() {
+    const tbody = document.getElementById('formulaTableBody');
+    if (!tbody) return;
+    const countEl = document.getElementById('formulaCount');
+    let filtered = formulaList;
+    if (_formulaSearchQuery) {
+      const q = _formulaSearchQuery.toLowerCase();
+      filtered = formulaList.filter(f =>
+        (f.name || '').toLowerCase().includes(q) ||
+        (f.category || '').toLowerCase().includes(q) ||
+        (f.materials || '').toLowerCase().includes(q)
+      );
+    }
+    if (countEl) countEl.textContent = filtered.length ? `${filtered.length} 条` : '';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无配方记录，点击右上角 + 添加</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map((f, i) => {
+      const realIndex = formulaList.indexOf(f);
+      const statusColor = f.status === '已定稿' ? 'var(--success)' : f.status === '试验中' ? 'var(--warning)' : 'var(--info)';
+      return `
+        <tr>
+          <td style="color:var(--primary);cursor:pointer;" data-formula-edit="${realIndex}">${escapeHtml(f.name || '未命名')}</td>
+          <td>${escapeHtml(f.category || '-')}</td>
+          <td>${escapeHtml(f.version || 'v1.0')}</td>
+          <td><span style="color:${statusColor};font-weight:600;">${escapeHtml(f.status || '草稿')}</span></td>
+          <td>${escapeHtml(f.materials || '-')}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.note || '-')}</td>
+          <td style="font-size:12px;color:var(--text-secondary);">${escapeHtml(f.updatedAt || '-')}</td>
+          <td><button class="row-delete-btn" type="button" data-formula-delete="${realIndex}">删除</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openFormulaEditor(index) {
+    const formula = index >= 0 ? formulaList[index] : { name: '', category: '', version: 'v1.0', status: '草稿', materials: '', note: '', updatedAt: new Date().toLocaleString('zh-CN', { hour12: false }) };
+    const name = prompt('配方名称', formula.name);
+    if (name === null) return;
+    const category = prompt('产品类别（如：料酒、酱油、醋等）', formula.category);
+    if (category === null) return;
+    const version = prompt('版本号', formula.version);
+    if (version === null) return;
+    const status = prompt('状态（草稿/试验中/已定稿）', formula.status);
+    if (status === null) return;
+    const materials = prompt('关键原料（逗号分隔）', formula.materials);
+    if (materials === null) return;
+    const note = prompt('备注', formula.note);
+    if (note === null) return;
+
+    const data = { name: name.trim() || '未命名', category: category.trim(), version: version.trim() || 'v1.0', status: status.trim() || '草稿', materials: materials.trim(), note: note.trim(), updatedAt: new Date().toLocaleString('zh-CN', { hour12: false }) };
+    if (index >= 0) {
+      formulaList[index] = data;
+    } else {
+      formulaList.push(data);
+    }
+    saveFormulas();
+    renderFormulaTable();
+  }
+
+  function initFormulaManager() {
+    loadFormulas();
+    renderFormulaTable();
+    document.getElementById('addFormulaBtn')?.addEventListener('click', () => openFormulaEditor(-1));
+    document.getElementById('formulaSearchInput')?.addEventListener('input', (e) => {
+      clearTimeout(window._formulaSearchTimer);
+      window._formulaSearchTimer = setTimeout(() => {
+        _formulaSearchQuery = e.target.value.trim();
+        renderFormulaTable();
+      }, 200);
+    });
+    document.getElementById('formulaTableBody')?.addEventListener('click', (e) => {
+      const editTarget = e.target.closest('[data-formula-edit]');
+      if (editTarget) {
+        openFormulaEditor(Number(editTarget.dataset.formulaEdit));
+        return;
+      }
+      const delTarget = e.target.closest('[data-formula-delete]');
+      if (delTarget) {
+        const idx = Number(delTarget.dataset.formulaDelete);
+        if (!isNaN(idx) && formulaList[idx] && confirm(`确认删除配方「${formulaList[idx].name}」？`)) {
+          formulaList.splice(idx, 1);
+          saveFormulas();
+          renderFormulaTable();
+        }
+      }
+    });
   }
 
   window.addEventListener('load', () => {
@@ -3788,6 +3892,7 @@
     setupProgressLogModal();
     setupProjectDetail();
     autoDesktopSync();
+    initFormulaManager();
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
@@ -3807,7 +3912,6 @@
       });
       if (titleInput) titleInput.value = '';
       if (metaInput) metaInput.value = '';
-      logChange('create', 'task', title, '新增事项' + (meta ? '（' + meta + '）' : ''));
       saveDesktopState();
       renderTaskList();
       renderHomeRecent();
@@ -3829,7 +3933,6 @@
         const idx = Number(event.target.dataset.taskToggle);
         if (!Number.isNaN(idx) && desktopTasks[idx]) {
           desktopTasks[idx].done = !desktopTasks[idx].done;
-          logChange('toggle', 'task', desktopTasks[idx].title, desktopTasks[idx].done ? '标记完成' : '取消完成');
           saveDesktopState();
           renderTaskList();
           renderHomeRecent();
@@ -3838,8 +3941,9 @@
       }
 
       // 事项详情
-      if (event.target.matches('[data-task-detail]')) {
-        openTaskDetail(Number(event.target.dataset.taskDetail));
+      const _detailTarget = event.target.closest('[data-task-detail]');
+      if (_detailTarget) {
+        openTaskDetail(Number(_detailTarget.dataset.taskDetail));
       }
 
       // 事项删除
@@ -3847,9 +3951,7 @@
         const idx = Number(event.target.dataset.taskDelete);
         if (!Number.isNaN(idx) && desktopTasks[idx]) {
           if (!confirm('确认删除该事项？')) return;
-          const taskName = desktopTasks[idx].title || '';
           desktopTasks.splice(idx, 1);
-          logChange('delete', 'task', taskName, '删除事项');
           saveDesktopState();
           renderTaskList();
           renderHomeRecent();
@@ -3871,7 +3973,6 @@
       if (event.target.matches('#tdToggleDone')) {
         if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
           desktopTasks[_tdTaskIndex].done = !desktopTasks[_tdTaskIndex].done;
-          logChange('toggle', 'task', desktopTasks[_tdTaskIndex].title, desktopTasks[_tdTaskIndex].done ? '标记完成' : '取消完成');
           saveDesktopState();
           const doneBtn = document.getElementById('tdToggleDone');
           doneBtn.textContent = desktopTasks[_tdTaskIndex].done ? '取消完成' : '标记完成';
@@ -3883,9 +3984,7 @@
       if (event.target.matches('#tdDelete')) {
         if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
           if (!confirm('确认删除该事项？')) return;
-          const taskName = desktopTasks[_tdTaskIndex].title || '';
           desktopTasks.splice(_tdTaskIndex, 1);
-          logChange('delete', 'task', taskName, '删除事项');
           _tdTaskIndex = -1;
           saveDesktopState();
           document.getElementById('taskDetailOverlay').classList.remove('show');
@@ -3947,32 +4046,12 @@
       }, 200);
     });
 
-    // 事项详情弹窗字段自动保存 + 修改记录
-    const tdFieldLabels = { tdTitle: '标题', tdMeta: '备注', tdDeadline: '截止日期', tdKind: '类型' };
+    // 事项详情弹窗字段自动保存
     ['tdTitle', 'tdMeta', 'tdDeadline', 'tdKind'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        el.addEventListener('focus', () => { el._clOldValue = el.value; });
-        el.addEventListener('blur', () => {
-          const oldVal = el._clOldValue !== undefined ? el._clOldValue : '';
-          const newVal = el.value.trim();
-          if (newVal !== oldVal && _tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
-            logChange('update', 'task', desktopTasks[_tdTaskIndex].title, '修改' + tdFieldLabels[id] + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
-          }
-          delete el._clOldValue;
-          saveTaskDetail();
-        });
-        if (el.tagName === 'SELECT') {
-          el.addEventListener('change', () => {
-            const oldVal = el._clOldValue !== undefined ? el._clOldValue : '';
-            const newVal = el.value;
-            if (newVal !== oldVal && _tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
-              logChange('update', 'task', desktopTasks[_tdTaskIndex].title, '修改' + tdFieldLabels[id] + '：' + (oldVal || '空') + ' → ' + (newVal || '空'));
-            }
-            delete el._clOldValue;
-            saveTaskDetail();
-          });
-        }
+        el.addEventListener('blur', saveTaskDetail);
+        if (el.tagName === 'SELECT') el.addEventListener('change', saveTaskDetail);
       }
     });
 
@@ -3996,27 +4075,97 @@
       }
     });
 
-    // 修改记录弹窗事件
-    document.getElementById('changeLogBtn').addEventListener('click', openChangeLog);
-    document.getElementById('changeLogOverlay').addEventListener('click', event => {
-      if (event.target === document.getElementById('changeLogOverlay') || event.target.matches('[data-cl-close]')) {
-        closeChangeLog();
-        return;
-      }
-      const chip = event.target.closest('[data-cl-filter]');
-      if (chip) {
-        _clFilterMode = chip.dataset.clFilter;
-        document.querySelectorAll('.cl-filter-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        renderChangeLog();
-      }
-    });
-
     // 初始渲染
     renderTaskList();
     renderHomeRecent();
     renderHomeMetrics();
     renderHomeProjectList();
+
+    // 深色模式
+    const darkBtn = document.getElementById('darkModeBtn');
+    if (localStorage.getItem('workbench_dark') === '1') {
+      document.body.classList.add('dark');
+      darkBtn.textContent = '☀️';
+    }
+    darkBtn?.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('workbench_dark', isDark ? '1' : '0');
+      darkBtn.textContent = isDark ? '☀️' : '🌙';
+    });
+
+    // 导出数据
+    document.getElementById('exportBtn')?.addEventListener('click', () => {
+      const state = getDesktopState();
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workbench-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 导入数据
+    document.getElementById('importBtn')?.addEventListener('click', () => {
+      document.getElementById('importFileInput')?.click();
+    });
+    document.getElementById('importFileInput')?.addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.tasks) || !Array.isArray(data.projects)) {
+            alert('文件格式不正确：需要包含 tasks 和 projects 数组');
+            return;
+          }
+          if (!confirm(`即将导入 ${data.tasks.length} 条事项和 ${data.projects.length} 个项目，将覆盖当前数据。确认继续？`)) return;
+          applySharedState(data);
+          alert('导入成功');
+        } catch (e) {
+          alert('导入失败：' + e.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    });
+
+    // 设置面板
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const syncDot = document.getElementById('syncDot');
+    const syncText = document.getElementById('syncText');
+
+    function updateSyncStatus() {
+      if (gistSyncConfig) {
+        syncDot?.classList.add('active');
+        syncText && (syncText.textContent = '云端已连接');
+      } else {
+        syncDot?.classList.remove('active');
+        syncText && (syncText.textContent = '本地模式');
+      }
+    }
+    updateSyncStatus();
+
+    document.getElementById('settingsBtn')?.addEventListener('click', () => {
+      document.getElementById('settingsGistUrl').value = localStorage.getItem('workbench_gist_url') || '';
+      document.getElementById('settingsToken').value = localStorage.getItem('workbench_gist_token') || '';
+      settingsOverlay?.classList.add('show');
+    });
+    document.getElementById('settingsClose')?.addEventListener('click', () => settingsOverlay?.classList.remove('show'));
+    document.getElementById('settingsCancel')?.addEventListener('click', () => settingsOverlay?.classList.remove('show'));
+    settingsOverlay?.addEventListener('click', (e) => {
+      if (e.target === settingsOverlay) settingsOverlay.classList.remove('show');
+    });
+    document.getElementById('settingsSave')?.addEventListener('click', () => {
+      const url = document.getElementById('settingsGistUrl').value.trim();
+      const token = document.getElementById('settingsToken').value.trim();
+      if (url) localStorage.setItem('workbench_gist_url', url); else localStorage.removeItem('workbench_gist_url');
+      if (token) localStorage.setItem('workbench_gist_token', token); else localStorage.removeItem('workbench_gist_token');
+      settingsOverlay?.classList.remove('show');
+      location.reload();
+    });
   });
 </script>
 
@@ -4069,7 +4218,12 @@
 <div class="overlay" id="progressLogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
   <div class="modal" style="background:var(--card);border-radius:14px;width:90%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);">
-      <h3 style="margin:0;font-size:16px;" id="progressLogTitle">进度记录</h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <h3 style="margin:0;font-size:16px;" id="progressLogTitle">进度记录</h3>
+        <button id="progressLogSortBtn" type="button" style="background:var(--primary-soft);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--primary);display:flex;align-items:center;gap:4px;white-space:nowrap;">
+          <span id="progressLogSortLabel">↑ 时间正序</span>
+        </button>
+      </div>
       <button data-progress-close style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">×</button>
     </div>
     <div style="padding:16px 20px;overflow-y:auto;flex:1;" id="progressLogBody">
@@ -4094,23 +4248,37 @@
   </div>
 </div>
 
-<!-- 修改记录弹窗 -->
-<div class="cl-overlay" id="changeLogOverlay">
-  <div class="cl-modal">
-    <div class="cl-modal-header">
-      <h3 class="cl-modal-title">修改记录</h3>
-      <button class="cl-modal-close" data-cl-close type="button">&times;</button>
+<!-- 设置面板 -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <span class="settings-title">设置</span>
+      <button class="attach-modal-close" type="button" id="settingsClose">&times;</button>
     </div>
-    <div class="cl-filters">
-      <span class="cl-filter-chip active" data-cl-filter="all">全部</span>
-      <span class="cl-filter-chip" data-cl-filter="create">新增</span>
-      <span class="cl-filter-chip" data-cl-filter="update">编辑</span>
-      <span class="cl-filter-chip" data-cl-filter="delete">删除</span>
-      <span class="cl-filter-chip" data-cl-filter="toggle">状态切换</span>
+    <div class="settings-body">
+      <div class="settings-field">
+        <label>GitHub Gist API URL</label>
+        <input type="text" id="settingsGistUrl" placeholder="https://api.github.com/gists/你的GistID">
+        <div class="settings-hint">用于云端同步数据的 Gist 地址。留空则仅使用本地存储。</div>
+      </div>
+      <div class="settings-field">
+        <label>GitHub Token</label>
+        <input type="password" id="settingsToken" placeholder="ghp_你的Token">
+        <div class="settings-hint">需要 gist 权限的 Personal Access Token。Token 仅保存在本地浏览器中，不会出现在源码里。</div>
+      </div>
+      <div class="settings-hint" style="padding:8px 12px;background:var(--bg);border-radius:8px;margin-top:8px;">
+        <strong>安全提示：</strong>之前的版本中 Token 硬编码在 HTML 源码中，已被移除。请前往 GitHub Settings → Developer settings → Personal access tokens 重新生成 Token，旧 Token 应立即吊销。
+      </div>
     </div>
-    <div class="cl-list" id="changeLogList"></div>
+    <div class="settings-actions">
+      <button class="secondary-btn" type="button" id="settingsCancel">取消</button>
+      <button class="primary-btn" type="button" id="settingsSave">保存</button>
+    </div>
   </div>
 </div>
+
+<!-- 隐藏的文件导入输入 -->
+<input type="file" id="importFileInput" accept=".json" style="display:none;">
 
 </body>
 </html>
