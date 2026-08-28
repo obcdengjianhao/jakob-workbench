@@ -22,6 +22,130 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
     --shadow-hover: 0 4px 12px rgba(0,0,0,0.08), 0 12px 24px rgba(0,0,0,0.06);
   }
+  body.dark {
+    --bg: #14161a;
+    --card: #1e2026;
+    --text: #e8e8e8;
+    --text-secondary: #9ca3af;
+    --border: rgba(255,255,255,0.1);
+    --primary: #7c6ff5;
+    --primary-soft: #252440;
+    --primary-text: #c4c0ff;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.4), 0 12px 24px rgba(0,0,0,0.3);
+  }
+  body.dark .attach-file-item { background: #252830; }
+  body.dark .attach-preview { background: #252830; }
+  body.dark .attach-preview-head { background: #1e2026; }
+  body.dark .search-input,
+  body.dark .pd-edit-field,
+  body.dark .pd-select { background: #252830; color: var(--text); }
+  body.dark .formula-table th { background: #252830; }
+  body.dark .status-select { background: var(--card); color: var(--text); }
+  body.dark .task-action-btn { background: var(--card); }
+
+  /* 工具栏按钮 */
+  .toolbar-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .toolbar-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  /* 设置面板 */
+  .settings-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .settings-overlay.show { display: flex; }
+  .settings-modal {
+    background: var(--card);
+    border-radius: 16px;
+    width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-title { font-size: 16px; font-weight: 700; }
+  .settings-body { padding: 20px; }
+  .settings-field { margin-bottom: 16px; }
+  .settings-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .settings-field input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .settings-field input:focus { outline: none; border-color: var(--primary); }
+  .settings-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+  }
+
+  /* 同步状态指示 */
+  .sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg);
+  }
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+  }
+  .sync-dot.active { background: var(--success); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
@@ -1292,10 +1416,9 @@
     .topbar-inner {
       height: auto;
       padding: 12px 16px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
     }
     .brand {
       padding: 0;
@@ -1306,12 +1429,13 @@
     .nav-tabs {
       flex-direction: row;
       flex-wrap: wrap;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 6px;
     }
     .nav-tabs button {
       text-align: center;
       padding: 8px 12px;
+      font-size: 13px;
     }
     .nav-tabs button.active {
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -1319,15 +1443,33 @@
     }
     .container {
       margin-left: 0;
-      padding: 18px;
+      padding: 16px;
     }
+    .pd-info-grid { grid-template-columns: 1fr; }
+    .pd-phase-timeline { flex-wrap: wrap; gap: 12px; }
+    .pd-phase-step { min-width: 80px; }
+    .pd-phase-line { display: none !important; }
+    .settings-modal { max-width: 95vw; }
+    .detail-modal { width: 95%; max-width: none; }
+    #projectTable { font-size: 12px; }
+    #projectTable th, #projectTable td { padding: 8px 6px; }
   }
   @media (max-width: 600px) {
     .metrics-row { grid-template-columns: 1fr; }
     .quick-links { grid-template-columns: repeat(2, 1fr); }
-    .container { padding: 16px; }
-    .topbar-inner { flex-direction: column; align-items: stretch; }
-    .nav-tabs { justify-content: center; }
+    .container { padding: 12px; }
+    .topbar-inner { padding: 10px 12px; gap: 8px; }
+    .nav-tabs button { padding: 6px 10px; font-size: 12px; }
+    .toolbar-btn { width: 32px; height: 32px; font-size: 14px; }
+    .card { padding: 14px; }
+    .metric-card { padding: 14px; }
+    .metric-value { font-size: 22px; }
+    .pd-header { padding: 16px 18px 12px; }
+    .pd-body { padding: 16px 18px; gap: 16px; }
+    .pd-name { font-size: 18px; }
+    .pd-add-progress { flex-direction: column; }
+    .pd-add-progress input[type="date"] { width: 100%; }
+    .pd-add-progress input[type="text"] { min-width: 0; }
   }
 
   .add-task-form {
@@ -1531,6 +1673,18 @@
       <button data-tab="projects">项目管理</button>
       <button data-tab="formulas">配方管理</button>
     </nav>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;">
+      <div style="display:flex;gap:6px;">
+        <button class="toolbar-btn" id="darkModeBtn" title="深色/浅色模式" type="button">🌙</button>
+        <button class="toolbar-btn" id="exportBtn" title="导出数据" type="button">📥</button>
+        <button class="toolbar-btn" id="importBtn" title="导入数据" type="button">📤</button>
+        <button class="toolbar-btn" id="settingsBtn" title="设置" type="button">⚙️</button>
+      </div>
+      <div class="sync-status" id="syncStatus">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">本地模式</span>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1686,23 +1840,28 @@
 <!-- ==================== 配方管理 ==================== -->
 <section id="formulas" class="tab-content">
 
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>配方管理</div>
-    <div class="section-note">这里保留基础配方、定制配方、试验记录、感官数据和原料信息的入口，后续可逐步完善。</div>
-    <div class="formula-grid">
-      <div class="formula-card">
-        <div class="formula-name">基础配方定位</div>
-        <div class="formula-code">从成熟配方库中匹配最接近的基础配方，减少从零开发。</div>
-      </div>
-      <div class="formula-card">
-        <div class="formula-name">试验与感官记录</div>
-        <div class="formula-code">按版本沉淀小试、中试、复测与感官评价数据。</div>
-      </div>
-      <div class="formula-card">
-        <div class="formula-name">原料与成本关注</div>
-        <div class="formula-code">关联原料、供应商、成本和资质到具体配方。</div>
-      </div>
+  <div class="card" style="overflow-x:auto;">
+    <div class="card-title-row">
+      <span><span class="dot" style="background:var(--warning)"></span>配方管理 <span class="muted" id="formulaCount"></span></span>
+      <button class="card-add-btn" id="addFormulaBtn" type="button" aria-label="新增配方">+</button>
     </div>
+    <div class="editable-note">记录和管理产品配方信息，支持版本追踪和状态管理。</div>
+    <input type="search" class="search-input" id="formulaSearchInput" placeholder="搜索配方..." autocomplete="off">
+    <table class="formula-table" id="formulaTable">
+      <thead>
+        <tr>
+          <th>配方名称</th>
+          <th>产品类别</th>
+          <th>版本</th>
+          <th>状态</th>
+          <th>关键原料</th>
+          <th>备注</th>
+          <th>最后更新</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="formulaTableBody"></tbody>
+    </table>
   </div>
 
 </section>
@@ -1736,11 +1895,13 @@
   const projectFields = ['name', 'priority', 'category', 'phase', 'status', 'next', 'risk'];
   const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
   const sharedStorageKey = 'formulaWorkbenchSharedData';
-  const _dt = ['ghp_aj41', 'hF97J8KK9', 'xioNXkhF', 'LKzKAInx', 'W11CmMp'];
-  const gistSyncConfig = window.location.protocol === 'file:' ? null : {
-    apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
-    token: _dt.join('')
-  };
+  const gistSyncConfig = (() => {
+    if (window.location.protocol === 'file:') return null;
+    const token = localStorage.getItem('workbench_gist_token') || '';
+    const apiUrl = localStorage.getItem('workbench_gist_url') || '';
+    if (!token || !apiUrl) return null;
+    return { apiUrl, token };
+  })();
   let desktopTasks = [];
   let isApplyingSharedState = false;
 
@@ -2957,6 +3118,14 @@
         const sb = normalizeStatus(b.cells[4]?.textContent.trim() || '');
         return (statusOrder[sa] || 0) - (statusOrder[sb] || 0);
       });
+    } else if (_projectSortMode === 'progress') {
+      rows.sort((a, b) => {
+        const la = decodeProgressLog(a.querySelector('.progress-cell')?.dataset.progressLog);
+        const lb = decodeProgressLog(b.querySelector('.progress-cell')?.dataset.progressLog);
+        const da = la.length ? Math.max(...la.map(e => new Date(e.date || 0).getTime())) : 0;
+        const db = lb.length ? Math.max(...lb.map(e => new Date(e.date || 0).getTime())) : 0;
+        return db - da;
+      });
     }
     rows.forEach(row => tbody.appendChild(row));
   }
@@ -3210,17 +3379,19 @@
 
   function renderProgressLogList() {
     if (!progressLogContext) return;
-    const log = decodeProgressLog(progressLogContext.dataset.progressLog);
+    const raw = decodeProgressLog(progressLogContext.dataset.progressLog);
+    const log = raw.map((entry, originalIndex) => ({ entry, originalIndex }))
+      .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
     const listEl = document.getElementById('progressLogList');
     if (!log.length) {
       listEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无进度记录</div>';
       return;
     }
-    listEl.innerHTML = log.map((entry, i) => `
+    listEl.innerHTML = log.map(({ entry, originalIndex }) => `
       <div style="padding:10px 0;border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-weight:600;font-size:13px;">${escapeHtml(formatProgressDate(entry.date))}</span>
-          <button class="progress-entry-del" type="button" data-del-index="${i}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
+          <button class="progress-entry-del" type="button" data-del-index="${originalIndex}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
         </div>
         <div style="font-size:13px;margin-top:4px;">${escapeHtml(entry.progress)}</div>
         ${entry.remark ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：${escapeHtml(entry.remark)}</div>` : ''}
@@ -3247,7 +3418,7 @@
 
   function updateProgressCellDisplay(cell) {
     const log = decodeProgressLog(cell.dataset.progressLog);
-    const latest = log.length ? log[log.length - 1] : null;
+    const latest = log.length ? log.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0] : null;
     const btn = cell.querySelector('[data-progress-open]');
     if (!btn) return;
     const display = latest
@@ -3338,7 +3509,9 @@
     const statusColor = status === '完结' ? 'var(--success)' : status === '暂停' ? 'var(--warning)' : 'var(--info)';
     const riskColor = project.risk && project.risk !== '/' ? 'var(--danger)' : 'var(--success)';
     const attachments = normalizeAttachments(project.attachments);
-    const progressLog = Array.isArray(project.progressLog) ? project.progressLog : [];
+    const progressLog = (Array.isArray(project.progressLog) ? project.progressLog : [])
+      .map((entry, originalIndex) => ({ entry, originalIndex }))
+      .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
 
     const content = document.getElementById('projectDetailContent');
     content.innerHTML = `
@@ -3424,13 +3597,13 @@
         <div class="pd-section">
           <div class="pd-section-title">进度记录</div>
           <div class="pd-progress-list" id="pdProgressList">
-            ${progressLog.length ? progressLog.map((entry, i) => `
+            ${progressLog.length ? progressLog.map(({ entry, originalIndex }) => `
               <div class="pd-progress-entry">
                 <div class="pd-progress-date">${escapeHtml(formatProgressDate(entry.date))}</div>
                 <div class="pd-progress-content">
                   ${escapeHtml(entry.progress)}
                   ${entry.remark ? `<div class="pd-progress-remark">备注：${escapeHtml(entry.remark)}</div>` : ''}
-                  <button class="row-delete-btn" type="button" data-pd-del-progress="${i}" style="margin-top:4px;font-size:12px;">删除</button>
+                  <button class="row-delete-btn" type="button" data-pd-del-progress="${originalIndex}" style="margin-top:4px;font-size:12px;">删除</button>
                 </div>
               </div>
             `).join('') : '<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">暂无进度记录</div>'}
@@ -3581,11 +3754,119 @@
     }, true);
   }
 
+  // 配方管理
+  const formulaStorageKey = 'workbench_formulas';
+  let formulaList = [];
+  let _formulaSearchQuery = '';
+
+  function loadFormulas() {
+    try {
+      const raw = localStorage.getItem(formulaStorageKey);
+      formulaList = raw ? JSON.parse(raw) : [];
+    } catch { formulaList = []; }
+    if (!Array.isArray(formulaList)) formulaList = [];
+  }
+
+  function saveFormulas() {
+    localStorage.setItem(formulaStorageKey, JSON.stringify(formulaList));
+  }
+
+  function renderFormulaTable() {
+    const tbody = document.getElementById('formulaTableBody');
+    if (!tbody) return;
+    const countEl = document.getElementById('formulaCount');
+    let filtered = formulaList;
+    if (_formulaSearchQuery) {
+      const q = _formulaSearchQuery.toLowerCase();
+      filtered = formulaList.filter(f =>
+        (f.name || '').toLowerCase().includes(q) ||
+        (f.category || '').toLowerCase().includes(q) ||
+        (f.materials || '').toLowerCase().includes(q)
+      );
+    }
+    if (countEl) countEl.textContent = filtered.length ? `${filtered.length} 条` : '';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px;">暂无配方记录，点击右上角 + 添加</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map((f, i) => {
+      const realIndex = formulaList.indexOf(f);
+      const statusColor = f.status === '已定稿' ? 'var(--success)' : f.status === '试验中' ? 'var(--warning)' : 'var(--info)';
+      return `
+        <tr>
+          <td style="color:var(--primary);cursor:pointer;" data-formula-edit="${realIndex}">${escapeHtml(f.name || '未命名')}</td>
+          <td>${escapeHtml(f.category || '-')}</td>
+          <td>${escapeHtml(f.version || 'v1.0')}</td>
+          <td><span style="color:${statusColor};font-weight:600;">${escapeHtml(f.status || '草稿')}</span></td>
+          <td>${escapeHtml(f.materials || '-')}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.note || '-')}</td>
+          <td style="font-size:12px;color:var(--text-secondary);">${escapeHtml(f.updatedAt || '-')}</td>
+          <td><button class="row-delete-btn" type="button" data-formula-delete="${realIndex}">删除</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openFormulaEditor(index) {
+    const formula = index >= 0 ? formulaList[index] : { name: '', category: '', version: 'v1.0', status: '草稿', materials: '', note: '', updatedAt: new Date().toLocaleString('zh-CN', { hour12: false }) };
+    const name = prompt('配方名称', formula.name);
+    if (name === null) return;
+    const category = prompt('产品类别（如：料酒、酱油、醋等）', formula.category);
+    if (category === null) return;
+    const version = prompt('版本号', formula.version);
+    if (version === null) return;
+    const status = prompt('状态（草稿/试验中/已定稿）', formula.status);
+    if (status === null) return;
+    const materials = prompt('关键原料（逗号分隔）', formula.materials);
+    if (materials === null) return;
+    const note = prompt('备注', formula.note);
+    if (note === null) return;
+
+    const data = { name: name.trim() || '未命名', category: category.trim(), version: version.trim() || 'v1.0', status: status.trim() || '草稿', materials: materials.trim(), note: note.trim(), updatedAt: new Date().toLocaleString('zh-CN', { hour12: false }) };
+    if (index >= 0) {
+      formulaList[index] = data;
+    } else {
+      formulaList.push(data);
+    }
+    saveFormulas();
+    renderFormulaTable();
+  }
+
+  function initFormulaManager() {
+    loadFormulas();
+    renderFormulaTable();
+    document.getElementById('addFormulaBtn')?.addEventListener('click', () => openFormulaEditor(-1));
+    document.getElementById('formulaSearchInput')?.addEventListener('input', (e) => {
+      clearTimeout(window._formulaSearchTimer);
+      window._formulaSearchTimer = setTimeout(() => {
+        _formulaSearchQuery = e.target.value.trim();
+        renderFormulaTable();
+      }, 200);
+    });
+    document.getElementById('formulaTableBody')?.addEventListener('click', (e) => {
+      const editTarget = e.target.closest('[data-formula-edit]');
+      if (editTarget) {
+        openFormulaEditor(Number(editTarget.dataset.formulaEdit));
+        return;
+      }
+      const delTarget = e.target.closest('[data-formula-delete]');
+      if (delTarget) {
+        const idx = Number(delTarget.dataset.formulaDelete);
+        if (!isNaN(idx) && formulaList[idx] && confirm(`确认删除配方「${formulaList[idx].name}」？`)) {
+          formulaList.splice(idx, 1);
+          saveFormulas();
+          renderFormulaTable();
+        }
+      }
+    });
+  }
+
   window.addEventListener('load', () => {
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
     autoDesktopSync();
+    initFormulaManager();
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
@@ -3634,8 +3915,9 @@
       }
 
       // 事项详情
-      if (event.target.matches('[data-task-detail]')) {
-        openTaskDetail(Number(event.target.dataset.taskDetail));
+      const _detailTarget = event.target.closest('[data-task-detail]');
+      if (_detailTarget) {
+        openTaskDetail(Number(_detailTarget.dataset.taskDetail));
       }
 
       // 事项删除
@@ -3772,6 +4054,92 @@
     renderHomeRecent();
     renderHomeMetrics();
     renderHomeProjectList();
+
+    // 深色模式
+    const darkBtn = document.getElementById('darkModeBtn');
+    if (localStorage.getItem('workbench_dark') === '1') {
+      document.body.classList.add('dark');
+      darkBtn.textContent = '☀️';
+    }
+    darkBtn?.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('workbench_dark', isDark ? '1' : '0');
+      darkBtn.textContent = isDark ? '☀️' : '🌙';
+    });
+
+    // 导出数据
+    document.getElementById('exportBtn')?.addEventListener('click', () => {
+      const state = getDesktopState();
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workbench-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 导入数据
+    document.getElementById('importBtn')?.addEventListener('click', () => {
+      document.getElementById('importFileInput')?.click();
+    });
+    document.getElementById('importFileInput')?.addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.tasks) || !Array.isArray(data.projects)) {
+            alert('文件格式不正确：需要包含 tasks 和 projects 数组');
+            return;
+          }
+          if (!confirm(`即将导入 ${data.tasks.length} 条事项和 ${data.projects.length} 个项目，将覆盖当前数据。确认继续？`)) return;
+          applySharedState(data);
+          alert('导入成功');
+        } catch (e) {
+          alert('导入失败：' + e.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    });
+
+    // 设置面板
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const syncDot = document.getElementById('syncDot');
+    const syncText = document.getElementById('syncText');
+
+    function updateSyncStatus() {
+      if (gistSyncConfig) {
+        syncDot?.classList.add('active');
+        syncText && (syncText.textContent = '云端已连接');
+      } else {
+        syncDot?.classList.remove('active');
+        syncText && (syncText.textContent = '本地模式');
+      }
+    }
+    updateSyncStatus();
+
+    document.getElementById('settingsBtn')?.addEventListener('click', () => {
+      document.getElementById('settingsGistUrl').value = localStorage.getItem('workbench_gist_url') || '';
+      document.getElementById('settingsToken').value = localStorage.getItem('workbench_gist_token') || '';
+      settingsOverlay?.classList.add('show');
+    });
+    document.getElementById('settingsClose')?.addEventListener('click', () => settingsOverlay?.classList.remove('show'));
+    document.getElementById('settingsCancel')?.addEventListener('click', () => settingsOverlay?.classList.remove('show'));
+    settingsOverlay?.addEventListener('click', (e) => {
+      if (e.target === settingsOverlay) settingsOverlay.classList.remove('show');
+    });
+    document.getElementById('settingsSave')?.addEventListener('click', () => {
+      const url = document.getElementById('settingsGistUrl').value.trim();
+      const token = document.getElementById('settingsToken').value.trim();
+      if (url) localStorage.setItem('workbench_gist_url', url); else localStorage.removeItem('workbench_gist_url');
+      if (token) localStorage.setItem('workbench_gist_token', token); else localStorage.removeItem('workbench_gist_token');
+      settingsOverlay?.classList.remove('show');
+      location.reload();
+    });
   });
 </script>
 
@@ -3848,6 +4216,38 @@
     <div id="projectDetailContent"></div>
   </div>
 </div>
+
+<!-- 设置面板 -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <div class="settings-header">
+      <span class="settings-title">设置</span>
+      <button class="attach-modal-close" type="button" id="settingsClose">&times;</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-field">
+        <label>GitHub Gist API URL</label>
+        <input type="text" id="settingsGistUrl" placeholder="https://api.github.com/gists/你的GistID">
+        <div class="settings-hint">用于云端同步数据的 Gist 地址。留空则仅使用本地存储。</div>
+      </div>
+      <div class="settings-field">
+        <label>GitHub Token</label>
+        <input type="password" id="settingsToken" placeholder="ghp_你的Token">
+        <div class="settings-hint">需要 gist 权限的 Personal Access Token。Token 仅保存在本地浏览器中，不会出现在源码里。</div>
+      </div>
+      <div class="settings-hint" style="padding:8px 12px;background:var(--bg);border-radius:8px;margin-top:8px;">
+        <strong>安全提示：</strong>之前的版本中 Token 硬编码在 HTML 源码中，已被移除。请前往 GitHub Settings → Developer settings → Personal access tokens 重新生成 Token，旧 Token 应立即吊销。
+      </div>
+    </div>
+    <div class="settings-actions">
+      <button class="secondary-btn" type="button" id="settingsCancel">取消</button>
+      <button class="primary-btn" type="button" id="settingsSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 隐藏的文件导入输入 -->
+<input type="file" id="importFileInput" accept=".json" style="display:none;">
 
 </body>
 </html>
