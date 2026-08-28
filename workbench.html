@@ -1951,7 +1951,7 @@
   function getLatestProgress(project) {
     const log = Array.isArray(project.progressLog) ? project.progressLog : [];
     if (!log.length) return null;
-    return log[log.length - 1];
+    return log.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
   }
   function formatProgressDate(dateStr) {
     if (!dateStr) return '暂无';
