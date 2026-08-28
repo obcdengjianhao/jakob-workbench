@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jakob的工作台</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Jakob的工作台 v3.2</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -1936,7 +1939,8 @@
   }
 
   function encodeProgressLog(log) {
-    return encodeURIComponent(JSON.stringify(log || []));
+    const sorted = (log || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    return encodeURIComponent(JSON.stringify(sorted));
   }
   function decodeProgressLog(value) {
     try {
@@ -3363,6 +3367,8 @@
 
   function openProgressLogModal(cell, projectName) {
     progressLogContext = cell;
+    const existingLog = decodeProgressLog(cell.dataset.progressLog);
+    cell.dataset.progressLog = encodeProgressLog(existingLog);
     document.getElementById('progressLogTitle').textContent = `进度记录 - ${projectName}`;
     document.getElementById('progressLogDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('progressLogText').value = '';
