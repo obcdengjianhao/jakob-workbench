@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Jakob的工作台 v3.2</title>
+<title>Jakob的工作台 v3.3</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -3373,6 +3373,7 @@
     document.getElementById('progressLogDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('progressLogText').value = '';
     document.getElementById('progressLogRemark').value = '';
+    updateSortButtonLabel();
     renderProgressLogList();
     const overlay = document.getElementById('progressLogOverlay');
     overlay.style.display = 'flex';
@@ -3383,11 +3384,26 @@
     progressLogContext = null;
   }
 
+  let progressLogSortDesc = localStorage.getItem('progressLogSortDesc') === '1';
+  function toggleProgressLogSort() {
+    progressLogSortDesc = !progressLogSortDesc;
+    localStorage.setItem('progressLogSortDesc', progressLogSortDesc ? '1' : '0');
+    updateSortButtonLabel();
+    renderProgressLogList();
+  }
+  function updateSortButtonLabel() {
+    const label = document.getElementById('progressLogSortLabel');
+    if (label) label.textContent = progressLogSortDesc ? '↓ 时间倒序' : '↑ 时间正序';
+  }
+
   function renderProgressLogList() {
     if (!progressLogContext) return;
     const raw = decodeProgressLog(progressLogContext.dataset.progressLog);
     const log = raw.map((entry, originalIndex) => ({ entry, originalIndex }))
-      .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
+      .sort((a, b) => {
+        const cmp = new Date(a.entry.date) - new Date(b.entry.date);
+        return progressLogSortDesc ? -cmp : cmp;
+      });
     const listEl = document.getElementById('progressLogList');
     if (!log.length) {
       listEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无进度记录</div>';
@@ -3447,6 +3463,10 @@
     const addBtn = document.getElementById('progressLogAddBtn');
     if (addBtn) {
       addBtn.addEventListener('click', addProgressLogEntry);
+    }
+    const sortBtn = document.getElementById('progressLogSortBtn');
+    if (sortBtn) {
+      sortBtn.addEventListener('click', toggleProgressLogSort);
     }
     overlay.addEventListener('click', (event) => {
       const delBtn = event.target.closest('.progress-entry-del');
@@ -4198,7 +4218,12 @@
 <div class="overlay" id="progressLogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
   <div class="modal" style="background:var(--card);border-radius:14px;width:90%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);">
-      <h3 style="margin:0;font-size:16px;" id="progressLogTitle">进度记录</h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <h3 style="margin:0;font-size:16px;" id="progressLogTitle">进度记录</h3>
+        <button id="progressLogSortBtn" type="button" style="background:var(--primary-soft);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--primary);display:flex;align-items:center;gap:4px;white-space:nowrap;">
+          <span id="progressLogSortLabel">↑ 时间正序</span>
+        </button>
+      </div>
       <button data-progress-close style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">×</button>
     </div>
     <div style="padding:16px 20px;overflow-y:auto;flex:1;" id="progressLogBody">
