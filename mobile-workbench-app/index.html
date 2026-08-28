@@ -29,6 +29,56 @@
       --shadow: 0 8px 24px rgba(15, 23, 42, .08);
       --radius: 18px;
     }
+    body.dark {
+      --bg: #14161a;
+      --card: #1e2026;
+      --text: #e8e8e8;
+      --muted: #9ca3af;
+      --border: rgba(255,255,255,.1);
+      --primary: #7c6ff5;
+      --primary-soft: #252440;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --info: #60a5fa;
+      --shadow: 0 8px 24px rgba(0,0,0,.3);
+    }
+    body.dark .search-input, body.dark .pd-field, body.dark .add-field { background: #252830; color: var(--text); }
+    body.dark .attach-modal, body.dark .add-modal { background: var(--card); }
+    body.dark .toast { background: #2a2d35; }
+
+    .settings-screen { padding: 16px; }
+    .settings-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--card); border-radius: 12px; margin-bottom: 10px;
+    }
+    .settings-item-label { font-size: 14px; font-weight: 600; }
+    .settings-item-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .toggle-switch {
+      width: 44px; height: 24px; border-radius: 12px; background: #d1d5db;
+      position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--primary); }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%; background: #fff;
+      transition: transform .2s;
+    }
+    .toggle-switch.on::after { transform: translateX(20px); }
+    .settings-input {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 13px; background: var(--bg); color: var(--text);
+      font-family: inherit; box-sizing: border-box; margin-top: 4px;
+    }
+    .settings-input:focus { outline: none; border-color: var(--primary); }
+    .sync-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; padding: 2px 10px; border-radius: 999px;
+      background: var(--primary-soft); color: var(--muted);
+    }
+    .sync-badge.active { color: var(--success); }
+    .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+    .sync-badge.active .dot { background: var(--success); }
 
     * { box-sizing: border-box; }
 
@@ -691,7 +741,7 @@
       transform: translateX(-50%);
       width: min(520px, 100%);
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 4px;
       padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
       background: rgba(255, 255, 255, .94);
@@ -715,6 +765,7 @@
 
     .nav-btn span:first-child { font-size: 20px; line-height: 1; }
     .nav-btn.active { background: var(--primary-soft); color: var(--primary); }
+    body.dark .bottom-nav { background: rgba(30, 32, 38, .94); }
 
     .toast {
       position: fixed;
@@ -998,6 +1049,55 @@
         <div class="meta">沉淀原料名称、供应商、成本、资质和配方影响。</div>
       </div>
     </section>
+
+    <section class="screen settings-screen" id="more">
+      <h2 style="font-size:18px;font-weight:700;margin:0 0 16px;">设置</h2>
+
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label">深色模式</div>
+          <div class="settings-item-desc">夜间使用更护眼</div>
+        </div>
+        <div class="toggle-switch" id="darkToggle"></div>
+      </div>
+
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label">导出数据</div>
+          <div class="settings-item-desc">备份所有事项和项目数据</div>
+        </div>
+        <button class="btn primary" id="exportBtn" style="padding:8px 16px;border-radius:8px;font-size:13px;">导出</button>
+      </div>
+
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label">导入数据</div>
+          <div class="settings-item-desc">从 JSON 备份文件恢复</div>
+        </div>
+        <button class="btn secondary" id="importBtn" style="padding:8px 16px;border-radius:8px;font-size:13px;">导入</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;">
+      </div>
+
+      <div class="sync-badge" id="syncBadge" style="margin-bottom:12px;">
+        <span class="dot"></span>
+        <span id="syncBadgeText">本地模式</span>
+      </div>
+
+      <div class="settings-item" style="flex-direction:column;align-items:stretch;">
+        <div>
+          <div class="settings-item-label">云同步设置</div>
+          <div class="settings-item-desc">配置 GitHub Gist 实现多端数据同步</div>
+        </div>
+        <input type="text" class="settings-input" id="settingsGistUrl" placeholder="Gist API URL" style="margin-top:10px;">
+        <input type="password" class="settings-input" id="settingsToken" placeholder="GitHub Token (需要 gist 权限)" style="margin-top:6px;">
+        <button class="btn primary" id="saveSyncBtn" style="padding:10px;border-radius:8px;font-size:13px;margin-top:10px;">保存同步设置</button>
+      </div>
+
+      <div class="settings-item" style="background:var(--primary-soft);flex-direction:column;align-items:flex-start;gap:6px;">
+        <div class="settings-item-label">安全提示</div>
+        <div class="settings-item-desc" style="line-height:1.6;">Token 仅保存在本地浏览器，不会出现在源码中。旧版 Token 已从代码中移除，请在 GitHub 吊销旧 Token。</div>
+      </div>
+    </section>
   </main>
 
   <nav class="bottom-nav">
@@ -1005,6 +1105,7 @@
     <button class="nav-btn" data-screen="tasks"><span>📝</span><span>事项</span></button>
     <button class="nav-btn" data-screen="projects"><span>📌</span><span>项目</span></button>
     <button class="nav-btn" data-screen="formulas"><span>🧪</span><span>配方</span></button>
+    <button class="nav-btn" data-screen="more"><span>⚙️</span><span>更多</span></button>
   </nav>
   <div class="toast" id="toast"></div>
 
@@ -1069,11 +1170,13 @@
     }
 
     const storageKey = 'formulaWorkbenchSharedData';
-    const _t = ['ghp_aj41', 'hF97J8KK9', 'xioNXkhF', 'LKzKAInx', 'W11CmMp'];
-    const gistSyncConfig = window.location.protocol === 'file:' ? null : {
-      apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
-      token: _t.join('')
-    };
+    const gistSyncConfig = (() => {
+      if (window.location.protocol === 'file:') return null;
+      const token = localStorage.getItem('workbench_gist_token') || '';
+      const apiUrl = localStorage.getItem('workbench_gist_url') || '';
+      if (!token || !apiUrl) return null;
+      return { apiUrl, token };
+    })();
 
     const seed = {
       tasks: [
@@ -1840,7 +1943,9 @@
       const currentPhaseIndex = Math.max(0, phaseOptions.indexOf(project.phase));
       const status = project.status || '进行';
       const statusColor = status === '完结' ? '#1DC981' : status === '暂停' ? '#EFAA17' : '#22A5F7';
-      const progressLog = project.progressLog || [];
+      const progressLog = (project.progressLog || [])
+        .map((entry, originalIndex) => ({ entry, originalIndex }))
+        .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
       const attachments = project.attachments || [];
 
       document.getElementById('pdTitle').textContent = project.name || '项目详情';
@@ -1909,13 +2014,13 @@
         <div class="pd-section">
           <div class="pd-section-title">进度记录</div>
           <div id="pdProgressList">
-            ${progressLog.length ? progressLog.map((entry, i) => `
+            ${progressLog.length ? progressLog.map(({ entry, originalIndex }) => `
               <div class="pd-progress-entry">
                 <div class="pd-progress-date">${escapeHtml(formatProgressDate(entry.date))}</div>
                 <div class="pd-progress-content">
                   ${escapeHtml(entry.progress)}
                   ${entry.remark ? '<div class="pd-progress-remark">备注：' + escapeHtml(entry.remark) + '</div>' : ''}
-                  <button class="btn secondary" data-pd-del-progress="${i}" style="padding:4px 8px;font-size:11px;margin-top:4px;">删除</button>
+                  <button class="btn secondary" data-pd-del-progress="${originalIndex}" style="padding:4px 8px;font-size:11px;margin-top:4px;">删除</button>
                 </div>
               </div>
             `).join('') : '<div style="font-size:13px;color:#52525B;text-align:center;padding:12px 0;">暂无进度记录</div>'}
@@ -2310,6 +2415,92 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) syncFromCloud();
     });
+
+    // === 设置页面 ===
+    (function setupSettings() {
+      // 深色模式
+      const darkToggle = document.getElementById('darkToggle');
+      if (localStorage.getItem('workbench_dark') === '1') {
+        document.body.classList.add('dark');
+        darkToggle?.classList.add('on');
+      }
+      darkToggle?.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        localStorage.setItem('workbench_dark', isDark ? '1' : '0');
+        darkToggle.classList.toggle('on', isDark);
+      });
+
+      // 导出
+      document.getElementById('exportBtn')?.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `workbench-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('数据已导出');
+      });
+
+      // 导入
+      document.getElementById('importBtn')?.addEventListener('click', () => {
+        document.getElementById('importFileInput')?.click();
+      });
+      document.getElementById('importFileInput')?.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (!Array.isArray(data.tasks) || !Array.isArray(data.projects)) {
+              showToast('文件格式不正确');
+              return;
+            }
+            if (!confirm(`即将导入 ${data.tasks.length} 条事项和 ${data.projects.length} 个项目，将覆盖当前数据。确认？`)) return;
+            state = data;
+            saveState();
+            render();
+            showToast('导入成功');
+          } catch (e) {
+            showToast('导入失败：' + e.message);
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      });
+
+      // 同步状态
+      function updateSyncBadge() {
+        const badge = document.getElementById('syncBadge');
+        const text = document.getElementById('syncBadgeText');
+        if (gistSyncConfig) {
+          badge?.classList.add('active');
+          text && (text.textContent = '云端已连接');
+        } else {
+          badge?.classList.remove('active');
+          text && (text.textContent = '本地模式');
+        }
+      }
+      updateSyncBadge();
+
+      // 保存同步设置
+      const gistUrlInput = document.getElementById('settingsGistUrl');
+      const tokenInput = document.getElementById('settingsToken');
+      if (gistUrlInput) gistUrlInput.value = localStorage.getItem('workbench_gist_url') || '';
+      if (tokenInput) tokenInput.value = localStorage.getItem('workbench_gist_token') || '';
+      document.getElementById('saveSyncBtn')?.addEventListener('click', () => {
+        const url = gistUrlInput.value.trim();
+        const token = tokenInput.value.trim();
+        if (url) localStorage.setItem('workbench_gist_url', url);
+        else localStorage.removeItem('workbench_gist_url');
+        if (token) localStorage.setItem('workbench_gist_token', token);
+        else localStorage.removeItem('workbench_gist_token');
+        showToast('设置已保存，即将刷新...');
+        setTimeout(() => location.reload(), 1000);
+      });
+    })();
 
     // === 事项详情弹窗 ===
     let tdTaskIndex = -1;
