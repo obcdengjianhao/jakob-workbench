@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Jakob的工作台 v4.0</title>
+<title>Jakob的工作台 v4.1</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -2492,7 +2492,7 @@
     container.innerHTML = projects.map(p => {
       const latest = getLatestProgress(p);
       return `
-        <div class="list-item" style="flex-direction:column;align-items:stretch;gap:4px;">
+        <div class="list-item home-project-item" data-project-name="${escapeHtml(p.name)}" style="flex-direction:column;align-items:stretch;gap:4px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background=''">
           <div style="display:flex;justify-content:space-between;font-size:14px;">
             <span>${escapeHtml(p.priority !== '普通' ? p.priority + ' ' : '')}${escapeHtml(p.name)}</span>
             <span style="color:var(--text-secondary);font-size:12px;">${escapeHtml(p.phase)}</span>
@@ -2501,6 +2501,18 @@
         </div>
       `;
     }).join('');
+    container.querySelectorAll('.home-project-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const name = item.dataset.projectName;
+        const table = document.getElementById('projectTable');
+        if (!table) return;
+        const row = Array.from(table.querySelectorAll('tbody tr')).find(tr => {
+          const cells = tr.querySelectorAll('td');
+          return cells.length > 0 && cells[0].innerText.trim() === name;
+        });
+        if (row) openProjectDetail(row);
+      });
+    });
   }
 
   function openTaskDetail(index) {
@@ -3435,15 +3447,18 @@
   }
 
   let progressLogContext = null;
+  let _editingProgressIndex = -1;
 
   function openProgressLogModal(cell, projectName) {
     progressLogContext = cell;
+    _editingProgressIndex = -1;
     const existingLog = decodeProgressLog(cell.dataset.progressLog);
     cell.dataset.progressLog = encodeProgressLog(existingLog);
     document.getElementById('progressLogTitle').textContent = `进度记录 - ${projectName}`;
     document.getElementById('progressLogDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('progressLogText').value = '';
     document.getElementById('progressLogRemark').value = '';
+    document.getElementById('progressLogAddBtn').textContent = '添加进度';
     updateSortButtonLabel();
     renderProgressLogList();
     const overlay = document.getElementById('progressLogOverlay');
@@ -3481,10 +3496,13 @@
       return;
     }
     listEl.innerHTML = log.map(({ entry, originalIndex }) => `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);"${_editingProgressIndex === originalIndex ? ' data-editing="1"' : ''}>
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-weight:600;font-size:13px;">${escapeHtml(formatProgressDate(entry.date))}</span>
-          <button class="progress-entry-del" type="button" data-del-index="${originalIndex}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
+          <div style="display:flex;gap:8px;">
+            <button class="progress-entry-edit" type="button" data-edit-index="${originalIndex}" style="background:none;border:none;color:var(--info);cursor:pointer;font-size:12px;">编辑</button>
+            <button class="progress-entry-del" type="button" data-del-index="${originalIndex}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">删除</button>
+          </div>
         </div>
         <div style="font-size:13px;margin-top:4px;">${escapeHtml(entry.progress)}</div>
         ${entry.remark ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">备注：${escapeHtml(entry.remark)}</div>` : ''}
@@ -3499,7 +3517,13 @@
     const remark = document.getElementById('progressLogRemark').value.trim();
     if (!progress) { alert('请输入进展描述'); return; }
     const log = decodeProgressLog(progressLogContext.dataset.progressLog);
-    log.push({ date, progress, remark });
+    if (_editingProgressIndex >= 0 && _editingProgressIndex < log.length) {
+      log[_editingProgressIndex] = { date, progress, remark };
+      _editingProgressIndex = -1;
+      document.getElementById('progressLogAddBtn').textContent = '添加进度';
+    } else {
+      log.push({ date, progress, remark });
+    }
     progressLogContext.dataset.progressLog = encodeProgressLog(log);
     updateProgressCellDisplay(progressLogContext);
     renderProgressLogList();
@@ -3541,23 +3565,42 @@
     }
     overlay.addEventListener('click', (event) => {
       const delBtn = event.target.closest('.progress-entry-del');
+      const editBtn = event.target.closest('.progress-entry-edit');
       if (delBtn && progressLogContext) {
         const index = Number(delBtn.dataset.delIndex);
         const log = decodeProgressLog(progressLogContext.dataset.progressLog);
         log.splice(index, 1);
+        if (_editingProgressIndex === index) _editingProgressIndex = -1;
+        else if (_editingProgressIndex > index) _editingProgressIndex--;
         progressLogContext.dataset.progressLog = encodeProgressLog(log);
         updateProgressCellDisplay(progressLogContext);
         renderProgressLogList();
+        document.getElementById('progressLogAddBtn').textContent = '添加进度';
         saveDesktopState();
+      }
+      if (editBtn && progressLogContext) {
+        const index = Number(editBtn.dataset.editIndex);
+        const log = decodeProgressLog(progressLogContext.dataset.progressLog);
+        const entry = log[index];
+        if (entry) {
+          _editingProgressIndex = index;
+          document.getElementById('progressLogDate').value = entry.date;
+          document.getElementById('progressLogText').value = entry.progress;
+          document.getElementById('progressLogRemark').value = entry.remark || '';
+          document.getElementById('progressLogAddBtn').textContent = '更新进度';
+          renderProgressLogList();
+        }
       }
     });
   }
 
   let projectDetailRow = null;
   let projectDetailSourceTab = null;
+  let _editingPdProgressIndex = -1;
 
   function openProjectDetail(row) {
     projectDetailRow = row;
+    _editingPdProgressIndex = -1;
     projectDetailSourceTab = document.querySelector('.nav-tabs button.active')?.dataset.tab || 'overview';
     const project = getProjectFromRow(row);
     renderProjectDetail(project);
@@ -3695,12 +3738,15 @@
           <div class="pd-section-title">进度记录</div>
           <div class="pd-progress-list" id="pdProgressList">
             ${progressLog.length ? progressLog.map(({ entry, originalIndex }) => `
-              <div class="pd-progress-entry">
+              <div class="pd-progress-entry"${_editingPdProgressIndex === originalIndex ? ' style="background:var(--hover);border-radius:8px;padding:8px;"' : ''}>
                 <div class="pd-progress-date">${escapeHtml(formatProgressDate(entry.date))}</div>
                 <div class="pd-progress-content">
                   ${escapeHtml(entry.progress)}
                   ${entry.remark ? `<div class="pd-progress-remark">备注：${escapeHtml(entry.remark)}</div>` : ''}
-                  <button class="row-delete-btn" type="button" data-pd-del-progress="${originalIndex}" style="margin-top:4px;font-size:12px;">删除</button>
+                  <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button class="row-delete-btn" type="button" data-pd-edit-progress="${originalIndex}" style="font-size:12px;color:var(--info);background:none;border:none;cursor:pointer;">编辑</button>
+                    <button class="row-delete-btn" type="button" data-pd-del-progress="${originalIndex}" style="font-size:12px;">删除</button>
+                  </div>
                 </div>
               </div>
             `).join('') : '<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">暂无进度记录</div>'}
@@ -3709,7 +3755,7 @@
             <input type="date" id="pdProgressDate" value="${new Date().toISOString().slice(0,10)}">
             <input type="text" id="pdProgressText" placeholder="最新进展描述">
             <input type="text" id="pdProgressRemark" placeholder="备注（选填）" style="width:200px;flex:none;">
-            <button class="primary-btn" type="button" data-pd-add-progress style="padding:8px 16px;border-radius:8px;">添加</button>
+            <button class="primary-btn" type="button" data-pd-add-progress style="padding:8px 16px;border-radius:8px;">${_editingPdProgressIndex >= 0 ? '更新' : '添加'}</button>
           </div>
         </div>
 
@@ -3795,7 +3841,7 @@
         closeProjectDetail();
         return;
       }
-      // Add progress
+      // Add/Edit progress
       if (event.target.matches('[data-pd-add-progress]')) {
         const date = document.getElementById('pdProgressDate').value;
         const progress = document.getElementById('pdProgressText').value.trim();
@@ -3805,7 +3851,12 @@
         const progressCell = projectDetailRow.querySelector('.progress-cell');
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
-          log.push({ date, progress, remark });
+          if (_editingPdProgressIndex >= 0 && _editingPdProgressIndex < log.length) {
+            log[_editingPdProgressIndex] = { date, progress, remark };
+            _editingPdProgressIndex = -1;
+          } else {
+            log.push({ date, progress, remark });
+          }
           progressCell.dataset.progressLog = encodeProgressLog(log);
         }
         // Re-render detail to show new entry
@@ -3821,10 +3872,31 @@
         if (progressCell) {
           const log = decodeProgressLog(progressCell.dataset.progressLog);
           log.splice(idx, 1);
+          if (_editingPdProgressIndex === idx) _editingPdProgressIndex = -1;
+          else if (_editingPdProgressIndex > idx) _editingPdProgressIndex--;
           progressCell.dataset.progressLog = encodeProgressLog(log);
         }
         const project = getProjectFromRow(projectDetailRow);
         renderProjectDetail(project);
+        return;
+      }
+      // Edit progress
+      const editPdBtn = event.target.closest('[data-pd-edit-progress]');
+      if (editPdBtn && projectDetailRow) {
+        const idx = Number(editPdBtn.dataset.pdEditProgress);
+        const progressCell = projectDetailRow.querySelector('.progress-cell');
+        if (progressCell) {
+          const log = decodeProgressLog(progressCell.dataset.progressLog);
+          const entry = log[idx];
+          if (entry) {
+            _editingPdProgressIndex = idx;
+            const project = getProjectFromRow(projectDetailRow);
+            renderProjectDetail(project);
+            document.getElementById('pdProgressDate').value = entry.date;
+            document.getElementById('pdProgressText').value = entry.progress;
+            document.getElementById('pdProgressRemark').value = entry.remark || '';
+          }
+        }
         return;
       }
       // Open attachment manager
