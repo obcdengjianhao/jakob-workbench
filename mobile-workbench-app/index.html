@@ -1322,7 +1322,7 @@
           throw e;
         }
       }
-      if (!_isSyncing && gistSyncConfig) {
+      if (gistSyncConfig) {
         clearTimeout(_pushTimer);
         _pushTimer = setTimeout(() => pushToCloud(), 2000);
       }
@@ -1388,6 +1388,12 @@
 
     async function syncFromCloud() {
       if (!gistSyncConfig || _isSyncing) return;
+      // 如果有待推送的修改，先推送再拉取
+      if (_pushTimer) {
+        clearTimeout(_pushTimer);
+        _pushTimer = null;
+        await pushToCloud();
+      }
       if (!navigator.onLine) { setMobileSyncStatus('offline', '离线'); return; }
       _isSyncing = true;
       setMobileSyncStatus('syncing', '同步中');
@@ -1466,71 +1472,63 @@
     function mergeStates(localState, remoteState) {
       const localTasks = localState.tasks || [];
       const remoteTasks = remoteState.tasks || [];
-      const taskMap = new Map();
+      const localTaskKeys = new Set();
+      const taskList = [];
 
-      remoteTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (key) taskMap.set(key, { ...t });
-      });
       localTasks.forEach(t => {
         const key = (t.title || '').trim();
-        if (!key) return;
-        const existing = taskMap.get(key);
-        if (!existing) {
-          taskMap.set(key, { ...t });
-        } else if (t.done && !existing.done) {
-          taskMap.set(key, { ...t });
-        }
+        if (key) localTaskKeys.add(key);
+        taskList.push(t);
+      });
+      remoteTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (key && !localTaskKeys.has(key)) taskList.push(t);
       });
 
       const localProjects = localState.projects || [];
       const remoteProjects = remoteState.projects || [];
-      const projectMap = new Map();
+      const localProjectKeys = new Set();
+      const projectList = [];
 
-      remoteProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (key) projectMap.set(key, { ...p });
-      });
       localProjects.forEach(p => {
         const key = (p.name || '').trim();
-        if (!key) return;
-        const existing = projectMap.get(key);
-        if (!existing) {
-          projectMap.set(key, { ...p });
-        } else {
-          const merged = { ...existing };
-          ['category', 'phase', 'status', 'priority', 'next', 'risk', 'background'].forEach(field => {
-            const localVal = (p[field] || '').trim();
-            const remoteVal = (existing[field] || '').trim();
-            if (localVal && (!remoteVal || remoteVal === '/' || remoteVal === '补充本周重点或下一步')) {
-              merged[field] = localVal;
-            }
-          });
-          const existingLogs = Array.isArray(existing.progressLog) ? existing.progressLog : [];
-          const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
-          const logSet = new Set();
-          const mergedLogs = [];
-          [...existingLogs, ...localLogs].forEach(log => {
-            const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
-            if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
-          });
-          merged.progressLog = mergedLogs;
-          const existingAttach = Array.isArray(existing.attachments) ? existing.attachments : [];
-          const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
-          const attachSet = new Set();
-          const mergedAttach = [];
-          [...existingAttach, ...localAttach].forEach(att => {
-            const sig = (att.name || '') + '|' + (att.size || 0);
-            if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
-          });
-          merged.attachments = mergedAttach;
-          projectMap.set(key, merged);
+        if (key) localProjectKeys.add(key);
+        projectList.push(p);
+      });
+      remoteProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (key && !localProjectKeys.has(key)) {
+          projectList.push(p);
+        } else if (key) {
+          // 双方都有：合并进度记录和附件（本地字段优先）
+          const localP = projectList.find(pp => (pp.name || '').trim() === key);
+          if (localP) {
+            const localLogs = Array.isArray(localP.progressLog) ? localP.progressLog : [];
+            const remoteLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
+            const logSet = new Set();
+            const mergedLogs = [];
+            [...localLogs, ...remoteLogs].forEach(log => {
+              const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
+              if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
+            });
+            localP.progressLog = mergedLogs;
+            const localAttach = Array.isArray(localP.attachments) ? localP.attachments : [];
+            const remoteAttach = Array.isArray(p.attachments) ? p.attachments : [];
+            const attachSet = new Set();
+            const mergedAttach = [];
+            [...localAttach, ...remoteAttach].forEach(att => {
+              const sig = (att.name || '') + '|' + (att.size || 0);
+              if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
+            });
+            localP.attachments = mergedAttach;
+          }
         }
       });
 
       return {
-        tasks: Array.from(taskMap.values()),
-        projects: Array.from(projectMap.values())
+        tasks: taskList,
+        projects: projectList,
+        updatedAt: new Date().toISOString()
       };
     }
 
