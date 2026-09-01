@@ -1323,7 +1323,8 @@
         }
       }
       if (gistSyncConfig) {
-        pushToCloud();
+        clearTimeout(_pushTimer);
+        _pushTimer = setTimeout(() => pushToCloud(), 500);
       }
     }
 
