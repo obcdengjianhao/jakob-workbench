@@ -1323,8 +1323,7 @@
         }
       }
       if (gistSyncConfig) {
-        clearTimeout(_pushTimer);
-        _pushTimer = setTimeout(() => pushToCloud(), 2000);
+        pushToCloud();
       }
     }
 
@@ -1388,12 +1387,6 @@
 
     async function syncFromCloud() {
       if (!gistSyncConfig || _isSyncing) return;
-      // 如果有待推送的修改，先推送再拉取
-      if (_pushTimer) {
-        clearTimeout(_pushTimer);
-        _pushTimer = null;
-        await pushToCloud();
-      }
       if (!navigator.onLine) { setMobileSyncStatus('offline', '离线'); return; }
       _isSyncing = true;
       setMobileSyncStatus('syncing', '同步中');
@@ -1472,55 +1465,60 @@
     function mergeStates(localState, remoteState) {
       const localTasks = localState.tasks || [];
       const remoteTasks = remoteState.tasks || [];
-      const localTaskKeys = new Set();
+      const remoteTaskKeys = new Set();
       const taskList = [];
 
-      localTasks.forEach(t => {
-        const key = (t.title || '').trim();
-        if (key) localTaskKeys.add(key);
-        taskList.push(t);
-      });
+      // 云端任务全部保留
       remoteTasks.forEach(t => {
         const key = (t.title || '').trim();
-        if (key && !localTaskKeys.has(key)) taskList.push(t);
+        if (key) remoteTaskKeys.add(key);
+        taskList.push(t);
+      });
+      // 仅添加本地独有的任务
+      localTasks.forEach(t => {
+        const key = (t.title || '').trim();
+        if (key && !remoteTaskKeys.has(key)) taskList.push(t);
       });
 
       const localProjects = localState.projects || [];
       const remoteProjects = remoteState.projects || [];
-      const localProjectKeys = new Set();
+      const remoteProjectKeys = new Set();
       const projectList = [];
 
-      localProjects.forEach(p => {
-        const key = (p.name || '').trim();
-        if (key) localProjectKeys.add(key);
-        projectList.push(p);
-      });
+      // 云端项目全部保留
       remoteProjects.forEach(p => {
         const key = (p.name || '').trim();
-        if (key && !localProjectKeys.has(key)) {
+        if (key) remoteProjectKeys.add(key);
+        projectList.push(p);
+      });
+      // 仅添加本地独有的项目，或合并进度记录
+      localProjects.forEach(p => {
+        const key = (p.name || '').trim();
+        if (!key) return;
+        if (!remoteProjectKeys.has(key)) {
           projectList.push(p);
-        } else if (key) {
-          // 双方都有：合并进度记录和附件（本地字段优先）
-          const localP = projectList.find(pp => (pp.name || '').trim() === key);
-          if (localP) {
-            const localLogs = Array.isArray(localP.progressLog) ? localP.progressLog : [];
-            const remoteLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
+        } else {
+          // 双方都有：合并进度记录和附件（云端字段优先）
+          const remoteP = projectList.find(pp => (pp.name || '').trim() === key);
+          if (remoteP) {
+            const remoteLogs = Array.isArray(remoteP.progressLog) ? remoteP.progressLog : [];
+            const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
             const logSet = new Set();
             const mergedLogs = [];
-            [...localLogs, ...remoteLogs].forEach(log => {
+            [...remoteLogs, ...localLogs].forEach(log => {
               const sig = (log.date || '') + '|' + (log.progress || '') + '|' + (log.remark || '');
               if (!logSet.has(sig)) { logSet.add(sig); mergedLogs.push(log); }
             });
-            localP.progressLog = mergedLogs;
-            const localAttach = Array.isArray(localP.attachments) ? localP.attachments : [];
-            const remoteAttach = Array.isArray(p.attachments) ? p.attachments : [];
+            remoteP.progressLog = mergedLogs;
+            const remoteAttach = Array.isArray(remoteP.attachments) ? remoteP.attachments : [];
+            const localAttach = Array.isArray(p.attachments) ? p.attachments : [];
             const attachSet = new Set();
             const mergedAttach = [];
-            [...localAttach, ...remoteAttach].forEach(att => {
+            [...remoteAttach, ...localAttach].forEach(att => {
               const sig = (att.name || '') + '|' + (att.size || 0);
               if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
             });
-            localP.attachments = mergedAttach;
+            remoteP.attachments = mergedAttach;
           }
         }
       });
@@ -2484,11 +2482,6 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) syncFromCloud();
     });
-
-    // 30秒轮询
-    _mPollTimer = setInterval(() => {
-      if (gistSyncConfig && !document.hidden && navigator.onLine) syncFromCloud();
-    }, 30000);
 
     // === 设置页面 ===
     (function setupSettings() {
