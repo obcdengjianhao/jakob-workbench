@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jakob-workbench-mobile-v29';
+const CACHE_NAME = 'jakob-workbench-mobile-v30';
 const APP_SHELL = [
   './',
   './index.html',
@@ -43,27 +43,16 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
 
-  // 导航请求 - 缓存优先，秒开页面，后台静默更新
+  // 导航请求 - 网络优先，确保用户看到最新内容
   if (event.request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) {
-          // 有缓存，立即返回，后台尝试更新
-          fetch(event.request).then(response => {
-            if (response && response.ok) {
-              const copy = response.clone();
-              caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-        // 无缓存（首次打开），尝试网络，失败则用index.html兜底
-        return fetch(event.request).then(response => {
+      fetch(event.request).then(response => {
+        if (response && response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-          return response;
-        }).catch(() => caches.match('./index.html'));
-      })
+        }
+        return response;
+      }).catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
     );
     return;
   }
