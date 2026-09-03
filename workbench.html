@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Jakob的工作台 v5.2</title>
+<title>Jakob的工作台 v5.3</title>
 <style>
   :root {
     --bg: #f5f6fa;
@@ -3656,7 +3656,7 @@
       <div class="pd-header">
         <div>
           <div class="pd-title-row">
-            <span class="pd-name" contenteditable="true" data-pd-field="name" style="outline:none;">${escapeHtml(project.name)}</span>
+            <span class="pd-name" contenteditable="true" data-pd-field="name" style="outline:none;cursor:text;border-bottom:1px dashed var(--text-secondary);padding-bottom:2px;" title="点击可编辑项目名称">${escapeHtml(project.name)}</span>
             <span class="pd-status-badge" style="background:${statusColor}20;color:${statusColor};">${escapeHtml(status)}</span>
             <span class="pd-tag" style="background:var(--primary-soft);color:var(--primary);">${escapeHtml(project.priority || '普通')}</span>
           </div>
@@ -3782,6 +3782,10 @@
     if (!projectDetailRow) return;
     const content = document.getElementById('projectDetailContent');
 
+    // 记录旧名称（用于 localStorage 中查找项目）
+    const oldNameCell = projectDetailRow.querySelector('td');
+    const oldName = oldNameCell ? oldNameCell.textContent.trim() : '';
+
     // Save text fields
     content.querySelectorAll('[data-pd-field]').forEach(el => {
       const field = el.dataset.pdField;
@@ -3799,17 +3803,19 @@
       }
     });
 
-    // Save background to localStorage
+    // Save background to localStorage (用旧名称查找)
     const bgField = content.querySelector('[data-pd-field="background"]');
     if (bgField && projectDetailRow) {
-      const nameCell = projectDetailRow.querySelector('td');
-      const projectName = nameCell ? nameCell.textContent.trim() : '';
-      if (projectName) {
+      if (oldName) {
         const cached = loadCachedSharedState();
         if (cached) {
-          const proj = cached.projects.find(p => p.name === projectName);
+          const proj = cached.projects.find(p => p.name === oldName);
           if (proj) {
             proj.background = bgField.value.trim();
+            // 如果名称变了，更新 localStorage 中的项目名
+            const newNameCell = projectDetailRow.querySelector('td');
+            const newName = newNameCell ? newNameCell.textContent.trim() : oldName;
+            if (newName !== oldName) proj.name = newName;
             localStorage.setItem(sharedStorageKey, JSON.stringify(cached));
           }
         }
@@ -3827,6 +3833,8 @@
     // Re-apply visuals and refresh
     updateProjectTableVisuals();
     refreshProjectDashboard();
+    // 持久化到本地和云端
+    saveDesktopState();
   }
 
   function setupProjectDetail() {
