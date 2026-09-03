@@ -2015,10 +2015,16 @@
         .sort((a, b) => new Date(a.entry.date) - new Date(b.entry.date));
       const attachments = project.attachments || [];
 
-      document.getElementById('pdTitle').textContent = project.name || '项目详情';
+      document.getElementById('pdTitle').textContent = '项目详情';
       document.getElementById('pdBody').innerHTML = `
+        <!-- 项目名称（可编辑） -->
+        <div class="pd-section">
+          <div class="pd-section-title">项目名称</div>
+          <div class="pd-field" contenteditable="true" data-pd-field="name" style="min-height:44px;font-size:18px;font-weight:600;border-bottom:1px dashed #52525B;padding-bottom:4px;cursor:text;" title="点击可编辑项目名称">${escapeHtml(project.name || '未命名项目')}</div>
+        </div>
+
         <!-- 状态概览 -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
           <span class="pd-badge" style="background:${statusColor}20;color:${statusColor};">${escapeHtml(status)}</span>
           <span class="pd-badge" style="background:#F2F7FF;color:#4B3FE3;">${escapeHtml(project.priority || '普通')}</span>
           <span class="pd-badge" style="background:rgba(0,0,0,.05);color:#52525B;">${escapeHtml(project.category || '未分类')}</span>
@@ -2855,13 +2861,16 @@
   document.getElementById('projectDetailOverlay').addEventListener('change', event => {
     if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
       state.projects[pdProjectIndex][event.target.dataset.pdField] = event.target.value;
+      saveState();
     }
   });
 
   document.getElementById('projectDetailOverlay').addEventListener('blur', event => {
     if (event.target.matches('[data-pd-field]') && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
       const field = event.target.dataset.pdField;
-      state.projects[pdProjectIndex][field] = event.target.tagName === 'SELECT' ? event.target.value : event.target.value.trim();
+      const el = event.target;
+      const value = el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value.trim() : el.innerText.trim();
+      state.projects[pdProjectIndex][field] = value;
       saveState();
     }
   }, true);
