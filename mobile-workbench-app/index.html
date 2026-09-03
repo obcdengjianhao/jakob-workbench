@@ -98,6 +98,34 @@
       padding: max(18px, env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
     }
 
+    #pullRefresh {
+      position: fixed;
+      top: 0; left: 50%;
+      transform: translateX(-50%) translateY(-60px);
+      width: 40px; height: 40px;
+      z-index: 9998;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s ease, opacity .2s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #pullRefresh.show { opacity: 1; }
+    #pullRefresh .pr-icon {
+      width: 28px; height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+    #pullRefresh.refreshing .pr-icon {
+      animation: pr-spin .7s linear infinite;
+    }
+    @keyframes pr-spin { to { transform: rotate(360deg); } }
+    #pullRefresh .pr-text {
+      position: absolute; top: 42px;
+      font-size: 11px; color: var(--muted); white-space: nowrap;
+    }
+
     .top {
       display: flex;
       justify-content: space-between;
@@ -941,6 +969,11 @@
   </style>
 </head>
 <body>
+  <!-- 下拉刷新指示器 -->
+  <div id="pullRefresh">
+    <div class="pr-icon"></div>
+    <div class="pr-text">下拉刷新</div>
+  </div>
   <!-- PWA安装引导横幅 -->
   <div id="pwaInstallBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#4B3FE3,#6C5CE7);color:#fff;padding:12px 16px;box-shadow:0 2px 12px rgba(75,63,227,.3);align-items:center;gap:12px;">
     <div style="flex:1;display:flex;align-items:center;gap:10px;">
@@ -2489,6 +2522,53 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) syncFromCloud();
     });
+
+    // === 下拉刷新 ===
+    (function() {
+      const pr = document.getElementById('pullRefresh');
+      const prText = pr.querySelector('.pr-text');
+      const prIcon = pr.querySelector('.pr-icon');
+      let startY = 0, pulling = false, pullDist = 0;
+      const threshold = 70;
+
+      document.addEventListener('touchstart', (e) => {
+        if (window.scrollY > 0 || _isSyncing) return;
+        startY = e.touches[0].clientY;
+        pulling = true;
+        pullDist = 0;
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        pullDist = e.touches[0].clientY - startY;
+        if (pullDist <= 0) { pr.classList.remove('show'); return; }
+        const dist = Math.min(pullDist * 0.4, 80);
+        pr.classList.add('show');
+        pr.style.transform = `translateX(-50%) translateY(${dist - 60}px)`;
+        prIcon.style.transform = pullDist >= threshold ? 'rotate(180deg)' : 'rotate(0deg)';
+        prText.textContent = pullDist >= threshold ? '松开刷新' : '下拉刷新';
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        if (!pulling) return;
+        pulling = false;
+        if (pullDist >= threshold) {
+          pr.classList.add('refreshing');
+          pr.style.transform = 'translateX(-50%) translateY(10px)';
+          prText.textContent = '同步中...';
+          syncFromCloud().finally(() => {
+            pr.classList.remove('refreshing');
+            pr.style.transform = 'translateX(-50%) translateY(-60px)';
+            pr.classList.remove('show');
+            prText.textContent = '下拉刷新';
+          });
+        } else {
+          pr.style.transform = 'translateX(-50%) translateY(-60px)';
+          setTimeout(() => pr.classList.remove('show'), 200);
+        }
+        pullDist = 0;
+      }, { passive: true });
+    })();
 
     // === 设置页面 ===
     (function setupSettings() {
