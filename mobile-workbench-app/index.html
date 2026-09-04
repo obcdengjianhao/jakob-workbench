@@ -100,7 +100,7 @@
 
     #pullRefresh {
       position: fixed;
-      top: 0; left: 50%;
+      top: max(52px, env(safe-area-inset-top)); left: 50%;
       transform: translateX(-50%) translateY(-60px);
       width: 40px; height: 40px;
       z-index: 9998;
