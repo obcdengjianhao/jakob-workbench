@@ -1233,14 +1233,15 @@
   .prompt-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
   .prompt-item {
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 12px 14px;
+    padding: 14px 16px;
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s;
+    background: var(--card);
   }
   .prompt-item:hover {
     border-color: var(--primary);
@@ -1250,68 +1251,75 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
   .prompt-item-title {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 15px;
     color: var(--primary);
   }
   .prompt-item-cat {
-    font-size: 12px;
-    color: var(--text-secondary);
+    font-size: 11px;
+    color: var(--primary);
     background: var(--primary-soft);
     padding: 2px 8px;
     border-radius: 4px;
+    font-weight: 600;
   }
   .prompt-item-preview {
-    font-size: 12px;
-    color: var(--text-secondary);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     max-width: 100%;
   }
   .prompt-item-date {
     font-size: 11px;
     color: var(--text-secondary);
-    margin-top: 4px;
+    margin-top: 6px;
+    opacity: 0.7;
   }
 
   /* Prompt 编辑弹窗 */
   .prompt-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.45);
     z-index: 10000;
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
   }
   .prompt-modal-overlay.show {
     display: flex;
   }
   .prompt-modal {
-    background: var(--surface);
+    background: var(--card);
     border-radius: 12px;
     width: 100%;
-    max-width: 640px;
-    max-height: 85vh;
+    max-width: 880px;
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   }
   .prompt-modal-head {
-    padding: 16px 20px;
+    padding: 14px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
   }
   .prompt-modal-head h3 {
     margin: 0;
     font-size: 16px;
+    color: var(--text);
   }
   .prompt-modal-body {
     padding: 16px 20px;
@@ -1319,32 +1327,40 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
   .prompt-modal-body label {
     font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-weight: 700;
+    color: var(--text);
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
   }
   .prompt-modal-body input,
   .prompt-modal-body textarea {
     width: 100%;
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 13px;
     font-family: inherit;
-    background: var(--surface);
-    color: var(--text-primary);
+    background: var(--bg);
+    color: var(--text);
     box-sizing: border-box;
   }
+  .prompt-modal-body input:focus,
+  .prompt-modal-body textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--card);
+  }
   .prompt-modal-body textarea {
-    min-height: 240px;
+    min-height: 400px;
     resize: vertical;
-    font-family: 'Consolas', 'Monaco', monospace;
-    line-height: 1.5;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
   }
   .prompt-modal-foot {
     padding: 12px 20px;
@@ -1352,6 +1368,8 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+    flex-shrink: 0;
+    align-items: center;
   }
   .table-actions {
     display: flex;
@@ -4276,7 +4294,7 @@
     }
     container.innerHTML = filtered.map(p => {
       const realIndex = _promptList.indexOf(p);
-      const preview = (p.content || '').substring(0, 80) + (p.content.length > 80 ? '...' : '');
+      const preview = (p.content || '').substring(0, 300) + (p.content.length > 300 ? '...' : '');
       return `
         <div class="prompt-item" data-prompt-edit="${realIndex}">
           <div class="prompt-item-head">
