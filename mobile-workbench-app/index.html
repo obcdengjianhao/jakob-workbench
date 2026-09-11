@@ -1091,22 +1091,57 @@
     <section class="screen" id="formulas">
       <div class="card">
         <div class="card-title">配方管理</div>
-        <div class="empty">这里保留基础配方、定制配方、试验记录、感官数据和原料信息的入口。后续可以继续扩展为可编辑配方库。</div>
+        <div class="empty" style="margin-bottom:12px;">管理产品配方信息和配方体系 Prompt。</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:600;">配方列表</span>
+          <button id="mAddFormulaBtn" type="button" style="border:none;background:var(--primary);color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">+ 新增</button>
+        </div>
+        <input type="search" id="mFormulaSearch" placeholder="搜索配方..." autocomplete="off" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+        <div id="mFormulaList" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
-      <div class="formula-card">
-        <div class="title">基础配方定位</div>
-        <div class="meta">先根据客户需求定位基础配方，再微调甜度、风味、成本、质构和工艺参数。</div>
-      </div>
-      <div class="formula-card">
-        <div class="title">试验与感官记录</div>
-        <div class="meta">集中记录小试、中试、复测、异常、口感、风味、色泽和稳定性。</div>
-      </div>
-      <div class="formula-card">
-        <div class="title">原料与成本关注</div>
-        <div class="meta">沉淀原料名称、供应商、成本、资质和配方影响。</div>
+      <div class="card" style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:600;">配方 Prompt 管理</span>
+          <button id="mAddPromptBtn" type="button" style="border:none;background:var(--primary);color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">+ 新增</button>
+        </div>
+        <div class="empty" style="margin-bottom:8px;">管理配方体系的 Prompt，随时查看与更新。</div>
+        <input type="search" id="mPromptSearch" placeholder="搜索 Prompt..." autocomplete="off" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+        <div id="mPromptList" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </section>
+
+    <!-- Prompt 编辑弹窗（移动端） -->
+    <div id="mPromptOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:none;align-items:flex-end;justify-content:center;">
+      <div id="mPromptSheet" style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <h3 id="mPromptModalTitle" style="margin:0;font-size:16px;">新增 Prompt</h3>
+          <button id="mPromptClose" type="button" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted);">&times;</button>
+        </div>
+        <div style="padding:14px 16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Prompt 名称</label>
+            <input type="text" id="mPromptTitle" placeholder="如：基础配方生成 Prompt" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">分类</label>
+            <input type="text" id="mPromptCat" placeholder="如：基础配方、定制配方" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Prompt 内容</label>
+            <textarea id="mPromptContent" placeholder="在此输入或粘贴 Prompt 内容..." style="width:100%;min-height:200px;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;font-family:monospace;line-height:1.5;resize:vertical;box-sizing:border-box;"></textarea>
+          </div>
+        </div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;">
+          <button id="mPromptDelete" type="button" style="padding:8px 16px;border:1px solid var(--danger,#e53e3e);border-radius:6px;background:transparent;color:var(--danger,#e53e3e);cursor:pointer;display:none;">删除</button>
+          <button id="mPromptCopy" type="button" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-primary);cursor:pointer;">复制</button>
+          <div style="display:flex;gap:8px;margin-left:auto;">
+            <button id="mPromptCancel" type="button" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-primary);cursor:pointer;">取消</button>
+            <button id="mPromptSave" type="button" style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer;font-weight:600;">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <section class="screen settings-screen" id="more">
       <h2 style="font-size:18px;font-weight:700;margin:0 0 16px;">设置</h2>
@@ -1325,7 +1360,8 @@
     function normalizeState(data) {
       return {
         tasks: Array.isArray(data?.tasks) ? data.tasks.map(normalizeTask) : [],
-        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : []
+        projects: Array.isArray(data?.projects) ? data.projects.map(normalizeProject) : [],
+        prompts: Array.isArray(data?.prompts) ? data.prompts : []
       };
     }
 
@@ -1468,6 +1504,7 @@
         const payload = JSON.stringify({
           tasks: state.tasks,
           projects: state.projects,
+          prompts: state.prompts || [],
           updatedAt: new Date().toISOString()
         });
         const body = JSON.stringify({
@@ -1557,9 +1594,25 @@
         }
       });
 
+      // 合并 prompts（云端优先，本地仅补充云端没有的）
+      const remotePrompts = remoteState.prompts || [];
+      const localPrompts = localState.prompts || [];
+      const remotePromptIds = new Set();
+      const promptList = [];
+      remotePrompts.forEach(p => {
+        const id = p.id || p.title || '';
+        if (id) remotePromptIds.add(id);
+        promptList.push(p);
+      });
+      localPrompts.forEach(p => {
+        const id = p.id || p.title || '';
+        if (id && !remotePromptIds.has(id)) promptList.push(p);
+      });
+
       return {
         tasks: taskList,
         projects: projectList,
+        prompts: promptList,
         updatedAt: new Date().toISOString()
       };
     }
@@ -1837,6 +1890,122 @@
       renderHome();
       renderTasks();
       renderProjects();
+      renderMobileFormulas();
+      renderMobilePrompts();
+    }
+
+    // === 移动端配方管理 ===
+    function renderMobileFormulas() {
+      const list = state.formulas || [];
+      const container = document.getElementById('mFormulaList');
+      if (!container) return;
+      const q = (document.getElementById('mFormulaSearch')?.value || '').toLowerCase();
+      let filtered = list;
+      if (q) {
+        filtered = list.filter(f =>
+          (f.name || '').toLowerCase().includes(q) ||
+          (f.category || '').toLowerCase().includes(q) ||
+          (f.materials || '').toLowerCase().includes(q)
+        );
+      }
+      if (!filtered.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px;">暂无配方，点击 + 新增</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(f => {
+        const realIdx = list.indexOf(f);
+        const statusColor = f.status === '已定稿' ? 'var(--success)' : f.status === '试验中' ? 'var(--warning)' : 'var(--info)';
+        return `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;" data-m-formula-edit="${realIdx}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-weight:600;font-size:13px;color:var(--primary);">${escapeHtml(f.name || '未命名')}</span>
+              <span style="font-size:11px;font-weight:600;color:${statusColor};">${escapeHtml(f.status || '草稿')}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);">${escapeHtml(f.category || '-')} · ${escapeHtml(f.version || 'v1.0')}</div>
+            ${f.materials ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${escapeHtml(f.materials)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // === 移动端 Prompt 管理 ===
+    let _mEditingPromptIdx = -1;
+
+    function renderMobilePrompts() {
+      const list = state.prompts || [];
+      const container = document.getElementById('mPromptList');
+      if (!container) return;
+      const q = (document.getElementById('mPromptSearch')?.value || '').toLowerCase();
+      let filtered = list;
+      if (q) {
+        filtered = list.filter(p =>
+          (p.title || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q) ||
+          (p.content || '').toLowerCase().includes(q)
+        );
+      }
+      if (!filtered.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px;">暂无 Prompt，点击 + 新增</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(p => {
+        const realIdx = list.indexOf(p);
+        const preview = (p.content || '').substring(0, 60) + (p.content.length > 60 ? '...' : '');
+        return `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;" data-m-prompt-edit="${realIdx}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-weight:600;font-size:13px;color:var(--primary);">${escapeHtml(p.title || '未命名')}</span>
+              ${p.category ? `<span style="font-size:10px;background:rgba(75,63,227,0.1);color:var(--primary);padding:2px 6px;border-radius:4px;">${escapeHtml(p.category)}</span>` : ''}
+            </div>
+            <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">${escapeHtml(p.updatedAt || '')}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openMobilePromptEditor(index) {
+      const list = state.prompts || [];
+      const prompt = index >= 0 ? list[index] : { title: '', category: '', content: '' };
+      _mEditingPromptIdx = index;
+      document.getElementById('mPromptModalTitle').textContent = index >= 0 ? '编辑 Prompt' : '新增 Prompt';
+      document.getElementById('mPromptTitle').value = prompt.title || '';
+      document.getElementById('mPromptCat').value = prompt.category || '';
+      document.getElementById('mPromptContent').value = prompt.content || '';
+      const delBtn = document.getElementById('mPromptDelete');
+      if (delBtn) delBtn.style.display = index >= 0 ? '' : 'none';
+      document.getElementById('mPromptOverlay').style.display = 'flex';
+    }
+
+    function closeMobilePromptEditor() {
+      document.getElementById('mPromptOverlay').style.display = 'none';
+      _mEditingPromptIdx = -1;
+    }
+
+    function saveMobilePrompt() {
+      const title = document.getElementById('mPromptTitle').value.trim();
+      const category = document.getElementById('mPromptCat').value.trim();
+      const content = document.getElementById('mPromptContent').value;
+      if (!title) { showToast('请输入 Prompt 名称'); return; }
+      const now = new Date().toLocaleString('zh-CN', { hour12: false });
+      if (!Array.isArray(state.prompts)) state.prompts = [];
+      if (_mEditingPromptIdx >= 0 && state.prompts[_mEditingPromptIdx]) {
+        state.prompts[_mEditingPromptIdx] = { ...state.prompts[_mEditingPromptIdx], title, category, content, updatedAt: now };
+      } else {
+        state.prompts.push({ id: 'p_' + Date.now(), title, category, content, updatedAt: now });
+      }
+      saveState();
+      renderMobilePrompts();
+      closeMobilePromptEditor();
+    }
+
+    function deleteMobilePrompt(index) {
+      if (!Array.isArray(state.prompts) || !state.prompts[index]) return;
+      if (confirm(`确认删除 Prompt「${state.prompts[index].title}」？`)) {
+        state.prompts.splice(index, 1);
+        saveState();
+        renderMobilePrompts();
+      }
     }
 
     function renderHeader() {
@@ -2190,6 +2359,59 @@
         projectSearchQuery = event.target.value.trim();
         renderProjects();
       }, 200);
+    });
+
+    // 配方搜索（防抖）
+    let _formulaSearchTimer = null;
+    document.getElementById('mFormulaSearch')?.addEventListener('input', event => {
+      clearTimeout(_formulaSearchTimer);
+      _formulaSearchTimer = setTimeout(() => renderMobileFormulas(), 200);
+    });
+
+    // Prompt 搜索（防抖）
+    let _promptSearchTimer = null;
+    document.getElementById('mPromptSearch')?.addEventListener('input', event => {
+      clearTimeout(_promptSearchTimer);
+      _promptSearchTimer = setTimeout(() => renderMobilePrompts(), 200);
+    });
+
+    // Prompt 新增按钮
+    document.getElementById('mAddPromptBtn')?.addEventListener('click', () => openMobilePromptEditor(-1));
+
+    // Prompt 列表点击 → 编辑
+    document.getElementById('mPromptList')?.addEventListener('click', event => {
+      const item = event.target.closest('[data-m-prompt-edit]');
+      if (!item) return;
+      const idx = Number(item.dataset.mPromptEdit);
+      if (!Number.isNaN(idx) && (state.prompts || [])[idx]) {
+        openMobilePromptEditor(idx);
+      }
+    });
+
+    // Prompt 弹窗事件
+    document.getElementById('mPromptOverlay')?.addEventListener('click', event => {
+      if (event.target === document.getElementById('mPromptOverlay')) closeMobilePromptEditor();
+    });
+    document.getElementById('mPromptClose')?.addEventListener('click', closeMobilePromptEditor);
+    document.getElementById('mPromptCancel')?.addEventListener('click', closeMobilePromptEditor);
+    document.getElementById('mPromptSave')?.addEventListener('click', saveMobilePrompt);
+    document.getElementById('mPromptDelete')?.addEventListener('click', () => {
+      if (_mEditingPromptIdx >= 0) {
+        deleteMobilePrompt(_mEditingPromptIdx);
+        closeMobilePromptEditor();
+      }
+    });
+    document.getElementById('mPromptCopy')?.addEventListener('click', () => {
+      const text = document.getElementById('mPromptContent').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已复制到剪贴板');
+      }).catch(() => {
+        const ta = document.getElementById('mPromptContent');
+        ta.select();
+        document.execCommand('copy');
+        showToast('已复制');
+      });
     });
 
     document.getElementById('homeProjects').addEventListener('click', event => {
