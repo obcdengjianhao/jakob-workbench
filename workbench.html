@@ -1225,6 +1225,134 @@
     background: #fff;
     box-shadow: inset 0 0 0 2px rgba(75,63,227,0.25);
   }
+
+  /* Prompt 管理 */
+  .prompt-card {
+    margin-top: 16px;
+  }
+  .prompt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .prompt-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .prompt-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 1px 6px rgba(75,63,227,0.10);
+  }
+  .prompt-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .prompt-item-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--primary);
+  }
+  .prompt-item-cat {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--primary-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .prompt-item-preview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .prompt-item-date {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* Prompt 编辑弹窗 */
+  .prompt-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .prompt-modal-overlay.show {
+    display: flex;
+  }
+  .prompt-modal {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .prompt-modal-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .prompt-modal-head h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .prompt-modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .prompt-modal-body label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .prompt-modal-body input,
+  .prompt-modal-body textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+  }
+  .prompt-modal-body textarea {
+    min-height: 240px;
+    resize: vertical;
+    font-family: 'Consolas', 'Monaco', monospace;
+    line-height: 1.5;
+  }
+  .prompt-modal-foot {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
   .table-actions {
     display: flex;
     gap: 8px;
@@ -1871,6 +1999,47 @@
     </table>
   </div>
 
+  <!-- Prompt 管理 -->
+  <div class="card prompt-card" style="overflow-x:auto;">
+    <div class="card-title-row">
+      <span><span class="dot" style="background:var(--info)"></span>配方 Prompt 管理 <span class="muted" id="promptCount"></span></span>
+      <button class="card-add-btn" id="addPromptBtn" type="button" aria-label="新增Prompt">+</button>
+    </div>
+    <div class="editable-note">管理配方体系的 Prompt，支持在移动端和电脑端随时查看与更新。</div>
+    <input type="search" class="search-input" id="promptSearchInput" placeholder="搜索 Prompt..." autocomplete="off" style="margin-top:8px;">
+    <div class="prompt-list" id="promptList"></div>
+  </div>
+
+  <!-- Prompt 编辑弹窗 -->
+  <div class="prompt-modal-overlay" id="promptModalOverlay">
+    <div class="prompt-modal">
+      <div class="prompt-modal-head">
+        <h3 id="promptModalTitle">新增 Prompt</h3>
+        <button type="button" id="promptModalClose" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--text-secondary);">&times;</button>
+      </div>
+      <div class="prompt-modal-body">
+        <div>
+          <label>Prompt 名称</label>
+          <input type="text" id="promptTitleInput" placeholder="如：基础配方生成 Prompt">
+        </div>
+        <div>
+          <label>分类</label>
+          <input type="text" id="promptCatInput" placeholder="如：基础配方、定制配方、感官评估">
+        </div>
+        <div>
+          <label>Prompt 内容</label>
+          <textarea id="promptContentInput" placeholder="在此输入或粘贴 Prompt 内容..."></textarea>
+        </div>
+      </div>
+      <div class="prompt-modal-foot">
+        <button type="button" id="promptModalCopy" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-primary);cursor:pointer;">复制内容</button>
+        <div style="flex:1;"></div>
+        <button type="button" id="promptModalCancel" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-primary);cursor:pointer;">取消</button>
+        <button type="button" id="promptModalSave" style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer;font-weight:600;">保存</button>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 </div>
@@ -1985,7 +2154,8 @@
   function normalizeSharedState(state) {
     return {
       tasks: Array.isArray(state?.tasks) ? state.tasks.map(normalizeTaskData) : [],
-      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : [])
+      projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : []),
+      prompts: Array.isArray(state?.prompts) ? state.prompts : []
     };
   }
 
@@ -2575,8 +2745,16 @@
   function getDesktopState() {
     return {
       tasks: desktopTasks.length ? desktopTasks : extractDesktopTasksFromDom(),
-      projects: sortProjectsByPriority(getProjectRows())
+      projects: sortProjectsByPriority(getProjectRows()),
+      prompts: getDesktopPrompts()
     };
+  }
+
+  function getDesktopPrompts() {
+    try {
+      const raw = localStorage.getItem('workbench_prompts');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
   }
 
   function saveDesktopState() {
@@ -2613,6 +2791,11 @@
     updateProjectTableVisuals();
     renderDesktopTasks(state.tasks);
     refreshProjectDashboard();
+    // 应用 prompts
+    if (Array.isArray(state.prompts)) {
+      localStorage.setItem('workbench_prompts', JSON.stringify(state.prompts));
+      if (typeof renderPromptList === 'function') renderPromptList();
+    }
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
     isApplyingSharedState = false;
   }
@@ -2681,9 +2864,25 @@
       }
     });
 
+    // 合并 prompts（云端优先，本地仅补充云端没有的）
+    const remotePrompts = remoteState.prompts || [];
+    const localPrompts = localState.prompts || getDesktopPrompts();
+    const remotePromptIds = new Set();
+    const promptList = [];
+    remotePrompts.forEach(p => {
+      const id = p.id || p.title || '';
+      if (id) remotePromptIds.add(id);
+      promptList.push(p);
+    });
+    localPrompts.forEach(p => {
+      const id = p.id || p.title || '';
+      if (id && !remotePromptIds.has(id)) promptList.push(p);
+    });
+
     return {
       tasks: taskList,
       projects: projectList,
+      prompts: promptList,
       updatedAt: new Date().toISOString()
     };
   }
@@ -2800,6 +2999,7 @@
       const payload = JSON.stringify({
         tasks: state.tasks,
         projects: state.projects,
+        prompts: state.prompts,
         updatedAt: new Date().toISOString()
       });
       await patchGist(payload);
@@ -4036,12 +4236,153 @@
     });
   }
 
+  // === Prompt 管理 ===
+  const promptStorageKey = 'workbench_prompts';
+  let _promptList = [];
+  let _promptSearchQuery = '';
+  let _editingPromptIndex = -1;
+
+  function loadPromptList() {
+    try {
+      const raw = localStorage.getItem(promptStorageKey);
+      _promptList = raw ? JSON.parse(raw) : [];
+    } catch { _promptList = []; }
+    if (!Array.isArray(_promptList)) _promptList = [];
+  }
+
+  function savePromptList() {
+    localStorage.setItem(promptStorageKey, JSON.stringify(_promptList));
+    saveDesktopState();
+  }
+
+  function renderPromptList() {
+    loadPromptList();
+    const container = document.getElementById('promptList');
+    if (!container) return;
+    const countEl = document.getElementById('promptCount');
+    let filtered = _promptList;
+    if (_promptSearchQuery) {
+      const q = _promptSearchQuery.toLowerCase();
+      filtered = _promptList.filter(p =>
+        (p.title || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q) ||
+        (p.content || '').toLowerCase().includes(q)
+      );
+    }
+    if (countEl) countEl.textContent = filtered.length ? `${filtered.length} 条` : '';
+    if (!filtered.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无 Prompt，点击右上角 + 添加</div>';
+      return;
+    }
+    container.innerHTML = filtered.map(p => {
+      const realIndex = _promptList.indexOf(p);
+      const preview = (p.content || '').substring(0, 80) + (p.content.length > 80 ? '...' : '');
+      return `
+        <div class="prompt-item" data-prompt-edit="${realIndex}">
+          <div class="prompt-item-head">
+            <span class="prompt-item-title">${escapeHtml(p.title || '未命名')}</span>
+            ${p.category ? `<span class="prompt-item-cat">${escapeHtml(p.category)}</span>` : ''}
+          </div>
+          <div class="prompt-item-preview">${escapeHtml(preview)}</div>
+          <div class="prompt-item-date">${escapeHtml(p.updatedAt || '')}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openPromptEditor(index) {
+    loadPromptList();
+    const prompt = index >= 0 ? _promptList[index] : { title: '', category: '', content: '' };
+    _editingPromptIndex = index;
+    document.getElementById('promptModalTitle').textContent = index >= 0 ? '编辑 Prompt' : '新增 Prompt';
+    document.getElementById('promptTitleInput').value = prompt.title || '';
+    document.getElementById('promptCatInput').value = prompt.category || '';
+    document.getElementById('promptContentInput').value = prompt.content || '';
+    document.getElementById('promptModalOverlay').classList.add('show');
+  }
+
+  function closePromptEditor() {
+    document.getElementById('promptModalOverlay').classList.remove('show');
+    _editingPromptIndex = -1;
+  }
+
+  function savePromptFromEditor() {
+    const title = document.getElementById('promptTitleInput').value.trim();
+    const category = document.getElementById('promptCatInput').value.trim();
+    const content = document.getElementById('promptContentInput').value;
+    if (!title) { alert('请输入 Prompt 名称'); return; }
+    const now = new Date().toLocaleString('zh-CN', { hour12: false });
+    if (_editingPromptIndex >= 0 && _promptList[_editingPromptIndex]) {
+      _promptList[_editingPromptIndex] = { ..._promptList[_editingPromptIndex], title, category, content, updatedAt: now };
+    } else {
+      _promptList.push({ id: 'p_' + Date.now(), title, category, content, updatedAt: now });
+    }
+    savePromptList();
+    renderPromptList();
+    closePromptEditor();
+  }
+
+  function deletePrompt(index) {
+    loadPromptList();
+    if (_promptList[index] && confirm(`确认删除 Prompt「${_promptList[index].title}」？`)) {
+      _promptList.splice(index, 1);
+      savePromptList();
+      renderPromptList();
+    }
+  }
+
+  function initPromptManager() {
+    loadPromptList();
+    renderPromptList();
+    document.getElementById('addPromptBtn')?.addEventListener('click', () => openPromptEditor(-1));
+    document.getElementById('promptModalClose')?.addEventListener('click', closePromptEditor);
+    document.getElementById('promptModalCancel')?.addEventListener('click', closePromptEditor);
+    document.getElementById('promptModalSave')?.addEventListener('click', savePromptFromEditor);
+    document.getElementById('promptModalCopy')?.addEventListener('click', () => {
+      const text = document.getElementById('promptContentInput').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('promptModalCopy');
+        const orig = btn.textContent;
+        btn.textContent = '已复制';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      }).catch(() => {
+        document.getElementById('promptContentInput').select();
+        document.execCommand('copy');
+      });
+    });
+    document.getElementById('promptModalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closePromptEditor();
+    });
+    document.getElementById('promptSearchInput')?.addEventListener('input', (e) => {
+      clearTimeout(window._promptSearchTimer);
+      window._promptSearchTimer = setTimeout(() => {
+        _promptSearchQuery = e.target.value.trim();
+        renderPromptList();
+      }, 200);
+    });
+    document.getElementById('promptList')?.addEventListener('click', (e) => {
+      const editTarget = e.target.closest('[data-prompt-edit]');
+      if (editTarget) {
+        const idx = Number(editTarget.dataset.promptEdit);
+        if (!isNaN(idx) && _promptList[idx]) {
+          if (e.shiftKey || e.ctrlKey) {
+            deletePrompt(idx);
+          } else {
+            openPromptEditor(idx);
+          }
+        }
+      }
+    });
+  }
+
   window.addEventListener('load', () => {
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
     autoDesktopSync();
     initFormulaManager();
+    initPromptManager();
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
