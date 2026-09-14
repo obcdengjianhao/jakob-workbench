@@ -966,6 +966,190 @@
     .add-modal-body .field { width: 100%; box-sizing: border-box; }
     .add-modal-actions { display: flex; gap: 8px; margin-top: 8px; }
     .add-modal-actions button { flex: 1; }
+
+    /* 验收标准卡片 */
+    .ac-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .ac-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .ac-material {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+    .ac-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .ac-status.pending { background: #fef3c7; color: #92400e; }
+    .ac-status.approved { background: #d1fae5; color: #065f46; }
+    .ac-status.rejected { background: #fee2e2; color: #991b1b; }
+    body.dark .ac-status.pending { background: rgba(251,191,36,.15); color: #fbbf24; }
+    body.dark .ac-status.approved { background: rgba(52,211,153,.15); color: #34d399; }
+    body.dark .ac-status.rejected { background: rgba(248,113,113,.15); color: #f87171; }
+    .ac-test-item {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .ac-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .ac-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .ac-info-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .ac-info-value {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .ac-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .ac-actions button {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .ac-actions button.danger {
+      color: var(--danger);
+      border-color: rgba(217,71,63,.3);
+    }
+
+    /* 版本历史弹窗 */
+    .vh-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .vh-overlay.show { display: flex; }
+    .vh-modal {
+      background: var(--card);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .vh-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .vh-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .vh-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .vh-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    .vh-item {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+    }
+    .vh-item.current {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .vh-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .vh-item-time {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .vh-current-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+    .vh-item-stats {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .vh-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .vh-item-actions button {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .vh-item-actions button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .vh-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -1171,9 +1355,21 @@
         <input type="file" id="importFileInput" accept=".json" style="display:none;">
       </div>
 
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label">更改历史</div>
+          <div class="settings-item-desc">查看数据快照，可恢复到历史版本</div>
+        </div>
+        <button class="btn secondary" id="versionHistoryBtn" style="padding:8px 16px;border-radius:8px;font-size:13px;">查看</button>
+      </div>
+
       <div class="settings-item" style="background:var(--primary-soft);flex-direction:column;align-items:flex-start;gap:6px;">
         <div class="settings-item-label">云同步</div>
         <div class="settings-item-desc" style="line-height:1.6;">数据自动同步至云端，多端实时共享。顶部状态栏显示同步状态。</div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 4px;">
+        Jakob的工作台 · v5.4
       </div>
     </section>
   </main>
@@ -1204,6 +1400,17 @@
         <button class="add-modal-close" data-add-close type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="add-modal-body" id="addModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 版本历史弹窗 -->
+  <div class="vh-overlay" id="versionHistoryOverlay">
+    <div class="vh-modal">
+      <div class="vh-header">
+        <span class="vh-title">更改历史</span>
+        <button class="vh-close" id="vhCloseBtn" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="vh-list" id="vhList"></div>
     </div>
   </div>
 
@@ -1301,6 +1508,16 @@
           date: String(e.date || ''),
           progress: String(e.progress || ''),
           remark: String(e.remark || '')
+        })) : [],
+        acceptanceCriteria: Array.isArray(normalized.acceptanceCriteria) ? normalized.acceptanceCriteria.map(a => ({
+          material: String(a.material || ''),
+          testItem: String(a.testItem || ''),
+          standard: String(a.standard || ''),
+          method: String(a.method || ''),
+          status: ['pending', 'approved', 'rejected'].includes(a.status) ? a.status : 'pending',
+          testDate: String(a.testDate || ''),
+          result: String(a.result || ''),
+          createdAt: a.createdAt || Date.now()
         })) : []
       };
     }
@@ -1476,7 +1693,12 @@
         const remoteData = JSON.parse(content);
         if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) { setMobileSyncStatus('error', '格式错误'); return; }
 
-        const merged = mergeStates(state, normalizeState(remoteData));
+        const normalizedRemote = normalizeState(remoteData);
+        // 保留云端版本历史（normalizeState 不包含此字段）
+        if (Array.isArray(remoteData.versionHistory)) {
+          normalizedRemote.versionHistory = remoteData.versionHistory;
+        }
+        const merged = mergeStates(state, normalizedRemote);
         const localJson = JSON.stringify(state);
         const mergedJson = JSON.stringify(merged);
         state = merged;
@@ -1501,10 +1723,13 @@
       setMobileSyncStatus('syncing', '同步中');
       try {
         saveMobileVersionSnapshot();
+        const versionHistoryKey = 'workbench_mobile_version_history';
+        const versionHistory = JSON.parse(localStorage.getItem(versionHistoryKey) || '[]').slice(0, 10);
         const payload = JSON.stringify({
           tasks: state.tasks,
           projects: state.projects,
           prompts: state.prompts || [],
+          versionHistory: versionHistory,
           updatedAt: new Date().toISOString()
         });
         const body = JSON.stringify({
@@ -1590,6 +1815,20 @@
               if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
             });
             remoteP.attachments = mergedAttach;
+            // 合并验收标准（按 material+testItem 去重，云端优先）
+            const remoteAC = Array.isArray(remoteP.acceptanceCriteria) ? remoteP.acceptanceCriteria : [];
+            const localAC = Array.isArray(p.acceptanceCriteria) ? p.acceptanceCriteria : [];
+            const acSet = new Set();
+            const mergedAC = [];
+            remoteAC.forEach(a => {
+              const sig = (a.material || '').trim() + '|' + (a.testItem || '').trim();
+              if (sig) { acSet.add(sig); mergedAC.push(a); }
+            });
+            localAC.forEach(a => {
+              const sig = (a.material || '').trim() + '|' + (a.testItem || '').trim();
+              if (sig && !acSet.has(sig)) { acSet.add(sig); mergedAC.push(a); }
+            });
+            remoteP.acceptanceCriteria = mergedAC;
           }
         }
       });
@@ -1609,10 +1848,27 @@
         if (id && !remotePromptIds.has(id)) promptList.push(p);
       });
 
+      // 合并版本历史（按 timestamp 去重，保留最新 20 条）
+      const localVH = Array.isArray(localState.versionHistory) ? localState.versionHistory : [];
+      const remoteVH = Array.isArray(remoteState.versionHistory) ? remoteState.versionHistory : [];
+      const vhTsSet = new Set();
+      const mergedVH = [];
+      [...remoteVH, ...localVH].forEach(v => {
+        if (v && v.timestamp && !vhTsSet.has(v.timestamp)) {
+          vhTsSet.add(v.timestamp);
+          mergedVH.push(v);
+        }
+      });
+      mergedVH.sort((a, b) => b.timestamp - a.timestamp);
+      if (mergedVH.length > 20) mergedVH.length = 20;
+      // 同步到本地 localStorage
+      try { localStorage.setItem('workbench_mobile_version_history', JSON.stringify(mergedVH.slice(0, 10))); } catch (e) {}
+
       return {
         tasks: taskList,
         projects: projectList,
         prompts: promptList,
+        versionHistory: mergedVH,
         updatedAt: new Date().toISOString()
       };
     }
@@ -2320,7 +2576,238 @@
           `).join('') : '<div style="font-size:13px;color:#52525B;text-align:center;padding:12px 0;">暂无附件</div>'}
           <button class="btn secondary" data-pd-open-attach style="padding:8px 14px;border-radius:8px;font-size:13px;margin-top:6px;">管理附件</button>
         </div>
+
+        <!-- 原材料验收标准 -->
+        <div class="pd-section">
+          <div class="pd-section-title">原材料验收标准（${(project.acceptanceCriteria || []).length}）</div>
+          <div id="pdAcceptanceList">
+            ${(project.acceptanceCriteria || []).length ? project.acceptanceCriteria.map((ac, idx) => {
+              const statusLabel = ac.status === 'approved' ? '合格' : ac.status === 'rejected' ? '不合格' : '待检测';
+              const statusClass = ac.status || 'pending';
+              return `
+                <div class="ac-card">
+                  <div class="ac-card-header">
+                    <div class="ac-material">${escapeHtml(ac.material || '未命名原材料')}</div>
+                    <span class="ac-status ${statusClass}">${escapeHtml(statusLabel)}</span>
+                  </div>
+                  <div class="ac-test-item">检测项目：${escapeHtml(ac.testItem || '-')}</div>
+                  <div class="ac-info-grid">
+                    <div class="ac-info-item">
+                      <div class="ac-info-label">验收标准</div>
+                      <div class="ac-info-value">${escapeHtml(ac.standard || '-')}</div>
+                    </div>
+                    <div class="ac-info-item">
+                      <div class="ac-info-label">检测方法</div>
+                      <div class="ac-info-value">${escapeHtml(ac.method || '-')}</div>
+                    </div>
+                    <div class="ac-info-item">
+                      <div class="ac-info-label">检测日期</div>
+                      <div class="ac-info-value">${escapeHtml(ac.testDate || '-')}</div>
+                    </div>
+                    <div class="ac-info-item">
+                      <div class="ac-info-label">检测结果</div>
+                      <div class="ac-info-value">${escapeHtml(ac.result || '-')}</div>
+                    </div>
+                  </div>
+                  <div class="ac-actions">
+                    <button data-pd-edit-ac="${idx}">编辑</button>
+                    <button class="danger" data-pd-del-ac="${idx}">删除</button>
+                  </div>
+                </div>
+              `;
+            }).join('') : '<div style="font-size:13px;color:#52525B;text-align:center;padding:12px 0;">暂无验收标准</div>'}
+          </div>
+          <button class="btn primary" data-pd-add-ac style="padding:10px;border-radius:8px;font-size:13px;margin-top:6px;">+ 添加验收标准</button>
+        </div>
       `;
+    }
+
+    // === 验收标准编辑 ===
+    let _acEditingIndex = -1; // -1 表示新增，>=0 表示编辑索引
+
+    function openAcceptanceCriteriaEditor(acIndex) {
+      if (pdProjectIndex < 0 || !state.projects[pdProjectIndex]) return;
+      _acEditingIndex = acIndex;
+      const project = state.projects[pdProjectIndex];
+      const ac = acIndex >= 0 ? (project.acceptanceCriteria || [])[acIndex] : null;
+      const isEdit = acIndex >= 0;
+
+      document.getElementById('addModalTitle').textContent = isEdit ? '编辑验收标准' : '新增验收标准';
+      document.getElementById('addModalBody').innerHTML = `
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">原材料名称</label>
+          <input class="pd-field" id="acMaterial" value="${escapeHtml(ac?.material || '')}" placeholder="如：PP原料" style="min-height:38px;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">检测项目</label>
+          <input class="pd-field" id="acTestItem" value="${escapeHtml(ac?.testItem || '')}" placeholder="如：熔融指数" style="min-height:38px;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">验收标准</label>
+          <input class="pd-field" id="acStandard" value="${escapeHtml(ac?.standard || '')}" placeholder="如：≥10g/10min" style="min-height:38px;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">检测方法</label>
+          <input class="pd-field" id="acMethod" value="${escapeHtml(ac?.method || '')}" placeholder="如：GB/T 3682" style="min-height:38px;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">状态</label>
+          <select class="pd-select" id="acStatus" style="width:100%;min-height:38px;">
+            <option value="pending" ${ac?.status === 'pending' ? 'selected' : ''}>待检测</option>
+            <option value="approved" ${ac?.status === 'approved' ? 'selected' : ''}>合格</option>
+            <option value="rejected" ${ac?.status === 'rejected' ? 'selected' : ''}>不合格</option>
+          </select>
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">检测日期</label>
+          <input class="pd-field" id="acTestDate" type="date" value="${escapeHtml(ac?.testDate || new Date().toISOString().slice(0,10))}" style="min-height:38px;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:#52525B;margin-bottom:4px;display:block;">检测结果</label>
+          <input class="pd-field" id="acResult" value="${escapeHtml(ac?.result || '')}" placeholder="填写检测结果数值或描述" style="min-height:38px;">
+        </div>
+        <div class="add-modal-actions">
+          <button class="btn secondary" type="button" id="acCancelBtn">取消</button>
+          <button class="btn primary" type="button" id="acSaveBtn">保存</button>
+        </div>
+      `;
+      document.getElementById('addOverlay').style.display = 'flex';
+
+      document.getElementById('acCancelBtn').onclick = closeAcceptanceCriteriaEditor;
+      document.getElementById('acSaveBtn').onclick = saveAcceptanceCriteria;
+    }
+
+    function closeAcceptanceCriteriaEditor() {
+      document.getElementById('addOverlay').style.display = 'none';
+      _acEditingIndex = -1;
+    }
+
+    function saveAcceptanceCriteria() {
+      if (pdProjectIndex < 0 || !state.projects[pdProjectIndex]) return;
+      const material = document.getElementById('acMaterial').value.trim();
+      const testItem = document.getElementById('acTestItem').value.trim();
+      if (!material) { showToast('请输入原材料名称'); return; }
+      if (!testItem) { showToast('请输入检测项目'); return; }
+
+      const project = state.projects[pdProjectIndex];
+      if (!Array.isArray(project.acceptanceCriteria)) project.acceptanceCriteria = [];
+
+      const acData = {
+        material: material,
+        testItem: testItem,
+        standard: document.getElementById('acStandard').value.trim(),
+        method: document.getElementById('acMethod').value.trim(),
+        status: document.getElementById('acStatus').value,
+        testDate: document.getElementById('acTestDate').value,
+        result: document.getElementById('acResult').value.trim(),
+        createdAt: _acEditingIndex >= 0 ? (project.acceptanceCriteria[_acEditingIndex]?.createdAt || Date.now()) : Date.now()
+      };
+
+      if (_acEditingIndex >= 0) {
+        project.acceptanceCriteria[_acEditingIndex] = acData;
+      } else {
+        project.acceptanceCriteria.push(acData);
+      }
+
+      saveState();
+      renderProjectDetail(project);
+      closeAcceptanceCriteriaEditor();
+      showToast('保存成功');
+    }
+
+    // === 版本历史 ===
+    function openVersionHistoryModal() {
+      renderVersionHistoryList();
+      document.getElementById('versionHistoryOverlay').classList.add('show');
+    }
+
+    function closeVersionHistoryModal() {
+      document.getElementById('versionHistoryOverlay').classList.remove('show');
+    }
+
+    function formatVersionTime(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      if (isToday) {
+        return `今天 ${hh}:${mi}`;
+      }
+      if (y === now.getFullYear()) {
+        return `${m}-${day} ${hh}:${mi}`;
+      }
+      return `${y}-${m}-${day} ${hh}:${mi}`;
+    }
+
+    function getVersionStats(data) {
+      const tasks = data?.tasks?.length || 0;
+      const projects = data?.projects?.length || 0;
+      const prompts = data?.prompts?.length || 0;
+      let acCount = 0;
+      if (Array.isArray(data?.projects)) {
+        data.projects.forEach(p => {
+          if (Array.isArray(p.acceptanceCriteria)) acCount += p.acceptanceCriteria.length;
+        });
+      }
+      return `${tasks}项事项 · ${projects}个项目 · ${acCount}条验收标准 · ${prompts}个配方`;
+    }
+
+    function renderVersionHistoryList() {
+      const key = 'workbench_mobile_version_history';
+      let history = [];
+      try {
+        history = JSON.parse(localStorage.getItem(key) || '[]');
+      } catch (e) { history = []; }
+
+      const listEl = document.getElementById('vhList');
+      if (!history.length) {
+        listEl.innerHTML = '<div class="vh-empty">暂无历史版本<br><span style="font-size:11px;">数据变更后会自动生成快照</span></div>';
+        return;
+      }
+
+      const currentTs = history.length > 0 ? history[0].timestamp : 0;
+      listEl.innerHTML = history.map((item, idx) => {
+        const isCurrent = idx === 0;
+        return `
+          <div class="vh-item ${isCurrent ? 'current' : ''}">
+            <div class="vh-item-header">
+              <div class="vh-item-time">${escapeHtml(formatVersionTime(item.timestamp))}</div>
+              ${isCurrent ? '<span class="vh-current-badge">当前</span>' : ''}
+            </div>
+            <div class="vh-item-stats">${escapeHtml(getVersionStats(item.data))}</div>
+            <div class="vh-item-actions">
+              ${isCurrent ? '' : `<button class="primary" data-vh-restore="${idx}">恢复此版本</button>`}
+              ${isCurrent ? '<button style="flex:1;opacity:.5;" disabled>当前版本</button>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function restoreFromVersion(index) {
+      const key = 'workbench_mobile_version_history';
+      let history = [];
+      try {
+        history = JSON.parse(localStorage.getItem(key) || '[]');
+      } catch (e) { history = []; }
+      if (!history[index]) { showToast('版本不存在'); return; }
+
+      if (!confirm(`确定要恢复到 ${formatVersionTime(history[index].timestamp)} 的版本吗？\n恢复前将自动保存当前版本。`)) return;
+
+      // 先保存当前版本
+      saveMobileVersionSnapshot();
+      // 用历史数据替换 state
+      state = normalizeState(history[index].data);
+      saveState();
+      // 重新渲染所有页面
+      render();
+      // 关闭弹窗
+      closeVersionHistoryModal();
+      showToast('已恢复到历史版本');
     }
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -2847,6 +3334,11 @@
         event.target.value = '';
       });
 
+      // 更改历史
+      document.getElementById('versionHistoryBtn')?.addEventListener('click', () => {
+        openVersionHistoryModal();
+      });
+
       updateMobileSyncStatus();
     })();
 
@@ -3158,6 +3650,34 @@
       }
       return;
     }
+    // 添加验收标准
+    if (event.target.matches('[data-pd-add-ac]')) {
+      if (pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+        openAcceptanceCriteriaEditor(-1);
+      }
+      return;
+    }
+    // 编辑验收标准
+    const editAcBtn = event.target.closest('[data-pd-edit-ac]');
+    if (editAcBtn && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+      const idx = Number(editAcBtn.dataset.pdEditAc);
+      if (!Number.isNaN(idx)) openAcceptanceCriteriaEditor(idx);
+      return;
+    }
+    // 删除验收标准
+    const delAcBtn = event.target.closest('[data-pd-del-ac]');
+    if (delAcBtn && pdProjectIndex >= 0 && state.projects[pdProjectIndex]) {
+      const idx = Number(delAcBtn.dataset.pdDelAc);
+      if (Number.isNaN(idx)) return;
+      if (!confirm('确认删除该验收标准？')) return;
+      if (state.projects[pdProjectIndex].acceptanceCriteria) {
+        state.projects[pdProjectIndex].acceptanceCriteria.splice(idx, 1);
+        saveState();
+        renderProjectDetail(state.projects[pdProjectIndex]);
+        showToast('已删除');
+      }
+      return;
+    }
   });
 
   document.getElementById('projectDetailOverlay').addEventListener('change', event => {
@@ -3176,6 +3696,39 @@
       saveState();
     }
   }, true);
+
+  // 版本历史弹窗事件处理
+  document.getElementById('vhCloseBtn')?.addEventListener('click', closeVersionHistoryModal);
+  document.getElementById('versionHistoryOverlay')?.addEventListener('click', event => {
+    if (event.target === document.getElementById('versionHistoryOverlay')) {
+      closeVersionHistoryModal();
+    }
+    const restoreBtn = event.target.closest('[data-vh-restore]');
+    if (restoreBtn) {
+      const idx = Number(restoreBtn.dataset.vhRestore);
+      if (!Number.isNaN(idx)) restoreFromVersion(idx);
+    }
+  });
+
+  // 新增弹窗关闭按钮 - 验收标准编辑时使用
+  document.querySelector('[data-add-close]')?.addEventListener('click', () => {
+    // 如果正在编辑验收标准，关闭它
+    if (document.getElementById('acMaterial')) {
+      closeAcceptanceCriteriaEditor();
+    } else {
+      document.getElementById('addOverlay').style.display = 'none';
+    }
+  });
+  document.getElementById('addOverlay')?.addEventListener('click', event => {
+    if (event.target === document.getElementById('addOverlay')) {
+      if (document.getElementById('acMaterial')) {
+        closeAcceptanceCriteriaEditor();
+      } else {
+        document.getElementById('addOverlay').style.display = 'none';
+      }
+    }
+  });
 </script>
 </body>
 </html>
+
