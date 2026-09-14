@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -1031,7 +1031,7 @@
     border-top: 1px solid var(--border);
   }
 
-  /* 鐗堟湰鍘嗗彶寮圭獥 */
+  /* 版本历史弹窗 */
   .vh-header {
     display: flex;
     justify-content: space-between;
@@ -1981,6 +1981,7 @@
         <span class="sync-dot" id="syncDot"></span>
         <span id="syncText">本地模式</span>
       </div>
+        <button class="toolbar-btn" id="syncSettingBtn" title="同步设置" type="button" style="width:auto;padding:0 8px;font-size:13px;">⚙</button>
         <button class="toolbar-btn" id="versionHistoryBtn" title="更改历史" type="button" style="width:auto;padding:0 10px;font-size:12px;gap:4px;display:inline-flex;">
           <span>馃晲</span><span>更改历史</span>
         </button>
@@ -2237,14 +2238,42 @@
   const projectFields = ['name', 'priority', 'category', 'phase', 'status', 'next', 'risk'];
   const priorityOptions = ['普通', '⭐', '⭐⭐', '⭐⭐⭐'];
   const sharedStorageKey = 'formulaWorkbenchSharedData';
-  const gistSyncConfig = (() => {
-    if (window.location.protocol === 'file:') return null;
-    const _t = ['ghp_aj41','hF97J8KK','9xioNXkh','FLKzKAIn','xW11CmMp'].join('');
-    return {
-      apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
-      token: _t
-    };
+  // === 同步凭证：只存在本机 localStorage，绝不写进源码（页面是公开部署的）===
+  const GIST_TOKEN_KEY = 'workbench_gist_token';
+  const GIST_API_URL = 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c';
+  const GIST_LAST_SYNC_KEY = 'workbench_last_sync_time';
+
+  function readGistToken() {
+    try { return (localStorage.getItem(GIST_TOKEN_KEY) || '').trim(); } catch { return ''; }
+  }
+  function writeGistToken(value) {
+    try {
+      if (value && value.trim()) localStorage.setItem(GIST_TOKEN_KEY, value.trim());
+      else localStorage.removeItem(GIST_TOKEN_KEY);
+    } catch { /* 忽略存储异常 */ }
+  }
+  // 支持通过一次性链接注入凭证：workbench.html#gist=<token>
+  (function consumeTokenFromHash() {
+    try {
+      const match = (window.location.hash || '').match(/[#&]gist=([^&]+)/);
+      if (match && match[1]) {
+        writeGistToken(decodeURIComponent(match[1]));
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch { /* 忽略 */ }
   })();
+
+  function buildGistSyncConfig() {
+    if (window.location.protocol === 'file:') return null;
+    const token = readGistToken();
+    if (!token) return null;
+    return { apiUrl: GIST_API_URL, token: token };
+  }
+  let gistSyncConfig = buildGistSyncConfig();
+  function refreshGistSyncConfig() {
+    gistSyncConfig = buildGistSyncConfig();
+    return gistSyncConfig;
+  }
   let desktopTasks = [];
   let isApplyingSharedState = false;
 
@@ -2337,11 +2366,15 @@
   }
 
   function normalizeSharedState(state) {
-    return {
+    const normalized = {
       tasks: Array.isArray(state?.tasks) ? state.tasks.map(normalizeTaskData) : [],
       projects: sortProjectsByPriority(Array.isArray(state?.projects) ? state.projects.map(normalizeProjectData) : []),
       prompts: Array.isArray(state?.prompts) ? state.prompts : []
     };
+    // 透传附加字段，避免上层（applySharedState）再取时已被丢弃
+    if (Array.isArray(state?.versionHistory)) normalized.versionHistory = state.versionHistory;
+    if (state?.updatedAt) normalized.updatedAt = state.updatedAt;
+    return normalized;
   }
 
   function normalizeStatus(value) {
@@ -2469,19 +2502,46 @@
     }
   }
 
+  // 附件以 base64 存进 localStorage 并同步到 Gist，容量很紧，必须设上限
+  const MAX_ATTACHMENT_BYTES = 1024 * 1024;        // 单个附件 1MB
+  const MAX_ATTACHMENT_TOTAL = 2 * 1024 * 1024;    // 单条目附件合计 2MB
+  const GIST_SAFE_BYTES = 700 * 1024;              // 附件超过这个量，Gist 读取可能被截断
+
   async function copyFilesToWorkspace(ctx, rawFiles) {
     if (!ctx || !rawFiles?.length) return [];
     const results = [];
+    const rejected = [];
+    let total = 0;
+    try {
+      (getAttachmentsFromContext(ctx) || []).forEach(f => { total += Number(f.size) || 0; });
+    } catch { /* 取不到就按 0 算 */ }
     for (const file of Array.from(rawFiles)) {
+      const size = file.size || 0;
+      if (size > MAX_ATTACHMENT_BYTES) {
+        rejected.push(`${file.name}（${formatFileSize(size)}，单个超过 1MB）`);
+        continue;
+      }
+      if (total + size > MAX_ATTACHMENT_TOTAL) {
+        rejected.push(`${file.name}（该条目附件总量将超过 2MB）`);
+        continue;
+      }
       const dataUrl = await fileToDataUrl(file);
+      total += size;
       results.push({
         name: file.name,
         type: file.type || '',
-        size: file.size || 0,
+        size: size,
         dataUrl,
         uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
         category: '未分类'
       });
+    }
+    if (rejected.length) {
+      alert('以下附件未添加：\n· ' + rejected.join('\n· ') +
+        '\n\n附件是以 base64 存在本地并同步到 Gist 的，容量有限。大文件建议存网盘后把链接放进备注。');
+    }
+    if (total > GIST_SAFE_BYTES) {
+      alert('注意：该条目附件已超过 700KB，同步到 Gist 后可能读取不完整。建议改用网盘链接。');
     }
     return results;
   }
@@ -2942,10 +3002,33 @@
     } catch { return []; }
   }
 
+  // 安全写入本地：配额溢出时自动丢弃最旧的历史快照并重试，失败要给得出提示
+  function safeWriteSharedState(state) {
+    const payload = JSON.stringify(state);
+    try {
+      localStorage.setItem(sharedStorageKey, payload);
+      return true;
+    } catch (err) {
+      const isQuota = err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014);
+      if (isQuota) {
+        try {
+          localStorage.removeItem('workbench_version_history');
+          localStorage.setItem(sharedStorageKey, payload);
+          setSyncStatus('error', '存储已满，已清理历史快照');
+          return true;
+        } catch (err2) { /* 仍然失败 */ }
+        setSyncStatus('error', '存储已满，请删除附件');
+        return false;
+      }
+      setSyncStatus('error', '本地保存失败');
+      return false;
+    }
+  }
+
   function saveDesktopState() {
     if (isApplyingSharedState) return;
     const state = getDesktopState();
-    localStorage.setItem(sharedStorageKey, JSON.stringify(state));
+    safeWriteSharedState(state);
     if (gistSyncConfig) {
       clearTimeout(_desktopPushTimer);
       _desktopPushTimer = setTimeout(() => pushDesktopToCloud(), 500);
@@ -2978,13 +3061,18 @@
     refreshProjectDashboard();
     // 应用 prompts
     if (Array.isArray(state.prompts)) {
-      localStorage.setItem('workbench_prompts', JSON.stringify(state.prompts));
+      try {
+        localStorage.setItem('workbench_prompts', JSON.stringify(state.prompts));
+      } catch { setSyncStatus('error', 'Prompt 保存失败'); }
       if (typeof renderPromptList === 'function') renderPromptList();
     }
-    localStorage.setItem(sharedStorageKey, JSON.stringify(state));
-    // 淇濆瓨鐗堟湰鍘嗗彶
-    if (Array.isArray(state.versionHistory)) {
-      localStorage.setItem('workbench_version_history', JSON.stringify(state.versionHistory.slice(0, 10)));
+    // 只持久化核心三块，版本历史不进主状态，避免体积膨胀
+    safeWriteSharedState({ tasks: state.tasks, projects: state.projects, prompts: state.prompts });
+    // 保存版本历史
+    if (Array.isArray(state.versionHistory) && state.versionHistory.length) {
+      try {
+        localStorage.setItem('workbench_version_history', JSON.stringify(state.versionHistory.slice(0, 5)));
+      } catch { /* 配额不足时静默跳过，历史快照不是关键数据 */ }
     }
     isApplyingSharedState = false;
   }
@@ -3079,22 +3167,12 @@
       if (id && !remotePromptIds.has(id)) promptList.push(p);
     });
 
-    // 鍚堝苟鐗堟湰鍘嗗彶锛堟寜 timestamp 鍘婚噸锛屼繚鐣欐渶鏂?0鏉★級
-    const localVH = Array.isArray(localState.versionHistory) ? localState.versionHistory : [];
-    const remoteVH = Array.isArray(remoteState.versionHistory) ? remoteState.versionHistory : [];
-    const vhMap = new Map();
-    [...remoteVH, ...localVH].forEach(v => {
-      if (v && v.timestamp) vhMap.set(v.timestamp, v);
-    });
-    const mergedVH = Array.from(vhMap.values())
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 20);
-
     return {
       tasks: taskList,
       projects: projectList,
       prompts: promptList,
-      versionHistory: mergedVH,
+      // 版本历史只在本地保留，不再写回云端：全量快照会让 Gist 体积放大十倍
+      versionHistory: [],
       updatedAt: new Date().toISOString()
     };
   }
@@ -3147,8 +3225,20 @@
 
   // === 同步状态管理（顶层作用域，确保pushDesktopToCloud/autoDesktopSync可访问）===
   let _isOnline = navigator.onLine;
-  let _lastSyncTime = null;
   let _pollTimer = null;
+
+  // 上次同步时间持久化，刷新后也能看到真实状态
+  function readLastSyncTime() {
+    try {
+      const raw = localStorage.getItem(GIST_LAST_SYNC_KEY);
+      const num = raw ? Number(raw) : 0;
+      return num > 0 ? num : null;
+    } catch { return null; }
+  }
+  function persistLastSyncTime(ts) {
+    try { localStorage.setItem(GIST_LAST_SYNC_KEY, String(ts)); } catch { /* 忽略 */ }
+  }
+  let _lastSyncTime = readLastSyncTime();
 
   function setSyncStatus(status, text) {
     const dot = document.getElementById('syncDot');
@@ -3173,20 +3263,98 @@
   }
 
   function updateSyncStatus() {
-    if (!gistSyncConfig) { setSyncStatus('', '本地模式'); return; }
+    if (window.location.protocol === 'file:') { setSyncStatus('', '本地模式'); return; }
+    if (!readGistToken()) { setSyncStatus('', '未配置同步'); return; }
     if (!_isOnline) { setSyncStatus('offline', '离线模式'); return; }
     setSyncStatus('connected', formatSyncTime());
+  }
+
+  // === 同步设置弹窗 ===
+  function openSyncSetting() {
+    const overlay = document.getElementById('syncSettingOverlay');
+    const input = document.getElementById('syncTokenInput');
+    const hint = document.getElementById('syncSettingHint');
+    if (!overlay) return;
+    if (input) input.value = readGistToken();
+    if (hint) hint.textContent = '';
+    overlay.style.display = 'flex';
+  }
+  function closeSyncSetting() {
+    const overlay = document.getElementById('syncSettingOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+  function setupSyncSettingModal() {
+    const btn = document.getElementById('syncSettingBtn');
+    const closeBtn = document.getElementById('syncSettingClose');
+    const saveBtn = document.getElementById('syncTokenSave');
+    const clearBtn = document.getElementById('syncTokenClear');
+    const copyBtn = document.getElementById('syncTokenCopyLink');
+    const input = document.getElementById('syncTokenInput');
+    const hint = document.getElementById('syncSettingHint');
+    const overlay = document.getElementById('syncSettingOverlay');
+    if (!overlay) return;
+    if (btn) btn.addEventListener('click', openSyncSetting);
+    if (closeBtn) closeBtn.addEventListener('click', closeSyncSetting);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSyncSetting(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.style.display === 'flex') closeSyncSetting();
+    });
+    if (saveBtn) saveBtn.addEventListener('click', () => {
+      const value = (input?.value || '').trim();
+      if (!value) { if (hint) hint.textContent = '请先粘贴 Token'; return; }
+      if (!/^gh[pousr]_[A-Za-z0-9]{20,}$/.test(value) && !/^github_pat_[A-Za-z0-9_]{20,}$/.test(value)) {
+        if (hint) hint.textContent = 'Token 格式看起来不对，应以 ghp_ / github_pat_ 开头';
+        return;
+      }
+      writeGistToken(value);
+      refreshGistSyncConfig();
+      updateSyncStatus();
+      if (hint) hint.textContent = '已保存到本机，正在同步…';
+      if (gistSyncConfig) autoDesktopSync();
+      setTimeout(closeSyncSetting, 600);
+    });
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      writeGistToken('');
+      refreshGistSyncConfig();
+      updateSyncStatus();
+      if (input) input.value = '';
+      if (hint) hint.textContent = '已清除，当前为本地模式';
+    });
+    if (copyBtn) copyBtn.addEventListener('click', async () => {
+      const token = (input?.value || '').trim() || readGistToken();
+      if (!token) { if (hint) hint.textContent = '请先填写 Token 再生成链接'; return; }
+      const link = window.location.origin + window.location.pathname + '#gist=' + encodeURIComponent(token);
+      try {
+        await navigator.clipboard.writeText(link);
+        if (hint) hint.textContent = '已复制，用手机浏览器打开即可自动配置（链接含凭证，别外传）';
+      } catch {
+        if (hint) hint.textContent = '复制失败，链接：' + link;
+      }
+    });
   }
 
   function saveVersionSnapshot() {
     try {
       const state = getDesktopState();
       const key = 'workbench_version_history';
-      const history = JSON.parse(localStorage.getItem(key) || '[]');
+      let history = [];
+      try { history = JSON.parse(localStorage.getItem(key) || '[]'); } catch { history = []; }
+      if (!Array.isArray(history)) history = [];
       history.unshift({ timestamp: Date.now(), data: state });
-      if (history.length > 10) history.length = 10;
-      localStorage.setItem(key, JSON.stringify(history));
-    } catch (e) { /* ignore quota errors */ }
+      // 全量快照很占空间，本地最多留 5 条
+      if (history.length > 5) history.length = 5;
+      try {
+        localStorage.setItem(key, JSON.stringify(history));
+      } catch (quotaErr) {
+        // 配额不足：逐步丢弃最旧快照重试，别让历史快照挤掉主数据
+        let saved = false;
+        for (let i = 0; i < 4 && history.length > 1; i++) {
+          history.pop();
+          try { localStorage.setItem(key, JSON.stringify(history)); saved = true; break; } catch { /* 继续丢弃 */ }
+        }
+        if (!saved) localStorage.removeItem(key);
+      }
+    } catch (e) { /* 历史快照失败不影响主流程 */ }
   }
 
   // 网络监听
@@ -3207,17 +3375,42 @@
     setSyncStatus('syncing', '同步中...');
     try {
       saveVersionSnapshot();
-      const state = getDesktopState();
-      const versionHistory = JSON.parse(localStorage.getItem('workbench_version_history') || '[]').slice(0, 10);
-      const payload = JSON.stringify({
-        tasks: state.tasks,
-        projects: state.projects,
-        prompts: state.prompts,
-        versionHistory: versionHistory,
+      const localData = getDesktopState();
+      let toWrite = {
+        tasks: localData.tasks,
+        projects: localData.projects,
+        prompts: localData.prompts,
+        versionHistory: [],
         updatedAt: new Date().toISOString()
-      });
-      await patchGist(payload);
+      };
+      // 先读后写：先用远端数据合并，再推。否则本地旧状态会整体覆盖另一端的改动
+      try {
+        const response = await fetchGist();
+        if (response && response.ok) {
+          const gistData = await response.json();
+          const content = gistData?.files?.['state.json']?.content;
+          if (content) {
+            const remoteData = JSON.parse(content);
+            if (Array.isArray(remoteData.tasks) && Array.isArray(remoteData.projects)) {
+              const merged = mergeDesktopStates(localData, remoteData);
+              toWrite = {
+                tasks: merged.tasks,
+                projects: merged.projects,
+                prompts: merged.prompts,
+                versionHistory: [],
+                updatedAt: new Date().toISOString()
+              };
+            }
+          }
+        }
+      } catch (readErr) {
+        // 读不到远端时宁可不推，也不要盲覆盖
+        setSyncStatus('error', '同步失败：读不到云端');
+        return;
+      }
+      await patchGist(JSON.stringify(toWrite));
       _lastSyncTime = Date.now();
+      persistLastSyncTime(_lastSyncTime);
       setSyncStatus('connected', formatSyncTime());
     } catch (e) {
       setSyncStatus('error', '同步失败');
@@ -3245,12 +3438,15 @@
       const merged = mergeDesktopStates(localData, remoteData);
       applySharedState(merged);
 
-      const localJson = JSON.stringify(localData);
-      const mergedJson = JSON.stringify(merged);
-      if (localJson !== mergedJson) {
+      // 只比较核心三块：否则 versionHistory / updatedAt 的差异会让每次打开都无条件回写
+      const coreSnapshot = (s) => JSON.stringify({
+        tasks: s.tasks || [], projects: s.projects || [], prompts: s.prompts || []
+      });
+      if (coreSnapshot(localData) !== coreSnapshot(merged)) {
         await patchGist(JSON.stringify(merged));
       }
       _lastSyncTime = Date.now();
+      persistLastSyncTime(_lastSyncTime);
       setSyncStatus('connected', formatSyncTime());
     } catch (e) {
       setSyncStatus('error', '同步失败');
@@ -4838,7 +5034,9 @@
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
-  setupVersionHistory();
+    setupVersionHistory();
+    setupSyncSettingModal();
+    updateSyncStatus();
     autoDesktopSync();
     initFormulaManager();
     initPromptManager();
@@ -4846,6 +5044,12 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && gistSyncConfig) autoDesktopSync();
     });
+
+    // 电脑端也加低频轮询，跨端改动不用再手动切页面才看得到
+    clearInterval(_pollTimer);
+    _pollTimer = setInterval(() => {
+      if (!document.hidden && gistSyncConfig && navigator.onLine) autoDesktopSync();
+    }, 60000);
 
     // 新增事项
     function addNewTask() {
@@ -5159,6 +5363,32 @@
 
 
 <!-- 版本历史弹窗 -->
+<div class="overlay" id="syncSettingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border-radius:var(--radius);width:min(520px,100%);padding:22px 24px;position:relative;">
+    <button class="pd-close" type="button" id="syncSettingClose">&times;</button>
+    <h3 style="margin:0 0 6px;font-size:16px;">同步设置</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 14px;">
+      工作台靠 GitHub Gist 在电脑和手机之间同步。Token 只保存在这台设备的浏览器里，不会写进源码。
+    </p>
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">GitHub Token（只需 gist 权限）</label>
+    <input type="password" id="syncTokenInput" placeholder="ghp_..." autocomplete="off"
+      style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+      <button type="button" id="syncTokenSave" style="flex:1;min-width:110px;padding:9px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:13px;cursor:pointer;">保存并同步</button>
+      <button type="button" id="syncTokenClear" style="padding:9px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);font-size:13px;cursor:pointer;">清除</button>
+      <button type="button" id="syncTokenCopyLink" style="padding:9px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);font-size:13px;cursor:pointer;">复制手机配置链接</button>
+    </div>
+    <p id="syncSettingHint" style="font-size:12px;color:var(--text-secondary);margin:12px 0 0;min-height:18px;"></p>
+    <details style="margin-top:12px;font-size:12px;color:var(--text-secondary);">
+      <summary style="cursor:pointer;">如何生成 Token</summary>
+      <ol style="margin:8px 0 0 18px;line-height:1.8;">
+        <li>打开 GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b></li>
+        <li>只勾选 <b>Gists: Read and write</b> 这一项权限，不要给仓库权限</li>
+        <li>生成后复制，粘贴到上面输入框</li>
+      </ol>
+    </details>
+  </div>
+</div>
 <div class="overlay" id="versionHistoryOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
   <div style="background:var(--card);border-radius:16px;width:100%;max-width:700px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);">
     <div class="vh-header">
