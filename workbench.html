@@ -50,6 +50,10 @@
   body.dark .formula-table th { background: #252830; }
   body.dark .status-select { background: var(--card); color: var(--text); }
   body.dark .task-action-btn { background: var(--card); }
+  body.dark .pd-ac-card { background: #252830; }
+  body.dark .vh-item { background: #252830; }
+  body.dark .vh-restore-btn { background: var(--card); }
+  body.dark #acStatus { background: #252830; color: var(--text); }
 
   /* 工具栏按钮 */
   .toolbar-btn {
@@ -963,6 +967,146 @@
     border-radius: 8px;
     font-size: 13px;
   }
+
+  /* 鍘熸潗鏂欓獙鏀舵爣鍑?*/
+  .pd-ac-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pd-ac-card {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .pd-ac-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .pd-ac-material {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pd-ac-testitem {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .pd-ac-status {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .pd-ac-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .pd-ac-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .pd-ac-field-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .pd-ac-field-value {
+    font-size: 13px;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .pd-ac-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* 鐗堟湰鍘嗗彶寮圭獥 */
+  .vh-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .vh-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .vh-body {
+    padding: 16px 22px 22px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .vh-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+  }
+  .vh-item.current {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .vh-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .vh-item-time {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .vh-item-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .vh-item-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--primary);
+    color: #fff;
+    margin-left: 8px;
+  }
+  .vh-restore-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .vh-restore-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .vh-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 30px 0;
+  }
   .pd-status-badge {
     display: inline-flex;
     align-items: center;
@@ -1833,9 +1977,13 @@
         <button class="toolbar-btn" id="exportBtn" title="导出数据" type="button">📥</button>
         <button class="toolbar-btn" id="importBtn" title="导入数据" type="button">📤</button>
       </div>
-      <div class="sync-status" id="syncStatus">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><div class="sync-status" id="syncStatus">
         <span class="sync-dot" id="syncDot"></span>
         <span id="syncText">本地模式</span>
+      </div>
+        <button class="toolbar-btn" id="versionHistoryBtn" title="更改历史" type="button" style="width:auto;padding:0 10px;font-size:12px;gap:4px;display:inline-flex;">
+          <span>馃晲</span><span>更改历史</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2141,6 +2289,25 @@
         date: String(e.date || ''),
         progress: String(e.progress || ''),
         remark: String(e.remark || '')
+      })) : [];
+    } catch { return []; }
+  }
+  function encodeAcceptanceCriteria(criteria) {
+    const sorted = (criteria || []).slice().sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    return encodeURIComponent(JSON.stringify(sorted));
+  }
+  function decodeAcceptanceCriteria(value) {
+    try {
+      const arr = JSON.parse(decodeURIComponent(value || '%5B%5D'));
+      return Array.isArray(arr) ? arr.map(e => ({
+        material: String(e.material || ''),
+        testItem: String(e.testItem || ''),
+        standard: String(e.standard || ''),
+        method: String(e.method || ''),
+        status: String(e.status || 'pending'),
+        testDate: String(e.testDate || ''),
+        result: String(e.result || ''),
+        createdAt: String(e.createdAt || '')
       })) : [];
     } catch { return []; }
   }
@@ -2742,7 +2909,7 @@
     tbody.innerHTML = sortProjectsByPriority(projects).map(project => {
       const latest = getLatestProgress(project);
       return `
-      <tr>
+      <tr data-acceptance-criteria="${escapeHtml(encodeAcceptanceCriteria(project.acceptanceCriteria))}">
         <td class="project-name-cell" data-project-detail style="cursor:pointer;color:var(--primary);">${escapeHtml(project.name)}</td>
         <td>${escapeHtml(project.priority)}</td>
         <td>${escapeHtml(project.category)}</td>
@@ -2815,6 +2982,10 @@
       if (typeof renderPromptList === 'function') renderPromptList();
     }
     localStorage.setItem(sharedStorageKey, JSON.stringify(state));
+    // 淇濆瓨鐗堟湰鍘嗗彶
+    if (Array.isArray(state.versionHistory)) {
+      localStorage.setItem('workbench_version_history', JSON.stringify(state.versionHistory.slice(0, 10)));
+    }
     isApplyingSharedState = false;
   }
 
@@ -2878,6 +3049,17 @@
             if (!attachSet.has(sig)) { attachSet.add(sig); mergedAttach.push(att); }
           });
           remoteP.attachments = mergedAttach;
+          // 合并原材料验收标准（按 material+testItem 去重，云端优先）
+          const remoteAC = Array.isArray(remoteP.acceptanceCriteria) ? remoteP.acceptanceCriteria : [];
+          const localAC = Array.isArray(p.acceptanceCriteria) ? p.acceptanceCriteria : [];
+          const acSet = new Set();
+          const mergedAC = [];
+          [...remoteAC, ...localAC].forEach(ac => {
+            const sig = (ac.material || '') + '|' + (ac.testItem || '');
+            if (sig && !acSet.has(sig)) { acSet.add(sig); mergedAC.push(ac); }
+          });
+          remoteP.acceptanceCriteria = mergedAC;
+
         }
       }
     });
@@ -2897,10 +3079,22 @@
       if (id && !remotePromptIds.has(id)) promptList.push(p);
     });
 
+    // 鍚堝苟鐗堟湰鍘嗗彶锛堟寜 timestamp 鍘婚噸锛屼繚鐣欐渶鏂?0鏉★級
+    const localVH = Array.isArray(localState.versionHistory) ? localState.versionHistory : [];
+    const remoteVH = Array.isArray(remoteState.versionHistory) ? remoteState.versionHistory : [];
+    const vhMap = new Map();
+    [...remoteVH, ...localVH].forEach(v => {
+      if (v && v.timestamp) vhMap.set(v.timestamp, v);
+    });
+    const mergedVH = Array.from(vhMap.values())
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 20);
+
     return {
       tasks: taskList,
       projects: projectList,
       prompts: promptList,
+      versionHistory: mergedVH,
       updatedAt: new Date().toISOString()
     };
   }
@@ -3014,10 +3208,12 @@
     try {
       saveVersionSnapshot();
       const state = getDesktopState();
+      const versionHistory = JSON.parse(localStorage.getItem('workbench_version_history') || '[]').slice(0, 10);
       const payload = JSON.stringify({
         tasks: state.tasks,
         projects: state.projects,
         prompts: state.prompts,
+        versionHistory: versionHistory,
         updatedAt: new Date().toISOString()
       });
       await patchGist(payload);
@@ -3085,6 +3281,7 @@
       }, {});
       project.attachments = decodeAttachments(row.querySelector('.attachment-cell')?.dataset.attachments);
       project.progressLog = decodeProgressLog(row.querySelector('.progress-cell')?.dataset.progressLog);
+      project.acceptanceCriteria = decodeAcceptanceCriteria(row.dataset.acceptanceCriteria);
       // Merge background from cache
       const cachedProject = cachedMap[project.name];
       project.background = cachedProject ? (cachedProject.background || '') : '';
@@ -3813,6 +4010,7 @@
   let projectDetailRow = null;
   let projectDetailSourceTab = null;
   let _editingPdProgressIndex = -1;
+  let _editingAcIndex = -1;
 
   function openProjectDetail(row) {
     projectDetailRow = row;
@@ -3847,6 +4045,7 @@
     }, {});
     project.progressLog = decodeProgressLog(row.querySelector('.progress-cell')?.dataset.progressLog);
     project.attachments = decodeAttachments(row.querySelector('.attachment-cell')?.dataset.attachments);
+    project.acceptanceCriteria = decodeAcceptanceCriteria(row.dataset.acceptanceCriteria);
     // Merge background from cache
     const cached = loadCachedSharedState();
     if (cached) {
@@ -3975,6 +4174,53 @@
           </div>
         </div>
 
+        <!-- 原材料验收标准 -->
+        <div class="pd-section">
+          <div class="pd-section-title">原材料验收标准</div>
+          <div class="pd-ac-list" id="pdAcceptanceCriteriaList">
+            ${(project.acceptanceCriteria || []).length ? (project.acceptanceCriteria || []).map((ac, idx) => {
+              const statusMap = { pending: { label: '待检测', color: 'var(--warning)' }, approved: { label: '合格', color: 'var(--success)' }, rejected: { label: '不合格', color: 'var(--danger)' } };
+              const st = statusMap[ac.status] || statusMap.pending;
+              return `
+                <div class="pd-ac-card">
+                  <div class="pd-ac-header">
+                    <div>
+                      <div class="pd-ac-material">${escapeHtml(ac.material)}</div>
+                      <div class="pd-ac-testitem">${escapeHtml(ac.testItem)}</div>
+                    </div>
+                    <span class="pd-ac-status" style="background:${st.color}20;color:${st.color};">${st.label}</span>
+                  </div>
+                  <div class="pd-ac-grid">
+                    <div class="pd-ac-field">
+                      <div class="pd-ac-field-label">标准要求</div>
+                      <div class="pd-ac-field-value">${escapeHtml(ac.standard || '-')}</div>
+                    </div>
+                    <div class="pd-ac-field">
+                      <div class="pd-ac-field-label">检测方法</div>
+                      <div class="pd-ac-field-value">${escapeHtml(ac.method || '-')}</div>
+                    </div>
+                    <div class="pd-ac-field">
+                      <div class="pd-ac-field-label">检测日期</div>
+                      <div class="pd-ac-field-value">${escapeHtml(ac.testDate || '-')}</div>
+                    </div>
+                    <div class="pd-ac-field">
+                      <div class="pd-ac-field-label">检测结果</div>
+                      <div class="pd-ac-field-value">${escapeHtml(ac.result || '-')}</div>
+                    </div>
+                  </div>
+                  <div class="pd-ac-actions">
+                    <button class="row-delete-btn" type="button" data-pd-edit-ac="${idx}" style="font-size:12px;color:var(--info);background:none;border:none;cursor:pointer;">编辑</button>
+                    <button class="row-delete-btn" type="button" data-pd-del-ac="${idx}" style="font-size:12px;">删除</button>
+                  </div>
+                </div>
+              `;
+            }).join('') : '<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">暂无验收标准</div>'}
+          </div>
+          <div style="margin-top:12px;">
+            <button class="secondary-btn" type="button" data-pd-add-ac style="padding:8px 16px;border-radius:8px;font-size:13px;">+ 添加验收标准</button>
+          </div>
+        </div>
+
         <!-- 附件 -->
         <div class="pd-section">
           <div class="pd-section-title">附件（${attachments.length}）</div>
@@ -4055,6 +4301,169 @@
     saveDesktopState();
   }
 
+
+  // ====== 版本历史功能 ======
+  function openVersionHistoryModal() {
+    renderVersionHistoryList();
+    document.getElementById('versionHistoryOverlay').style.display = 'flex';
+  }
+
+  function closeVersionHistoryModal() {
+    document.getElementById('versionHistoryOverlay').style.display = 'none';
+  }
+
+  function renderVersionHistoryList() {
+    const listEl = document.getElementById('versionHistoryList');
+    if (!listEl) return;
+    try {
+      const history = JSON.parse(localStorage.getItem('workbench_version_history') || '[]');
+      if (!history.length) {
+        listEl.innerHTML = '<div class="vh-empty">暂无历史版本</div>';
+        return;
+      }
+      listEl.innerHTML = history.map((item, index) => {
+        const data = item.data || {};
+        const taskCount = (data.tasks || []).length;
+        const projectCount = (data.projects || []).length;
+        const promptCount = (data.prompts || []).length;
+        const timeStr = new Date(item.timestamp).toLocaleString('zh-CN', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        const isCurrent = index === 0;
+        return `
+          <div class="vh-item ${isCurrent ? 'current' : ''}">
+            <div class="vh-item-info">
+              <div>
+                <span class="vh-item-time">${escapeHtml(timeStr)}</span>
+                ${isCurrent ? '<span class="vh-item-badge">当前</span>' : ''}
+              </div>
+              <div class="vh-item-desc">${taskCount} 个任务 · ${projectCount} 个项目 · ${promptCount} 个 Prompt</div>
+            </div>
+            ${isCurrent ? '' : `<button class="vh-restore-btn" type="button" data-vh-restore="${index}">恢复</button>`}
+          </div>
+        `;
+      }).join('');
+      listEl.querySelectorAll('[data-vh-restore]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.vhRestore);
+          restoreFromVersion(idx);
+        });
+      });
+    } catch (e) {
+      listEl.innerHTML = '<div class="vh-empty">加载失败</div>';
+    }
+  }
+
+  function restoreFromVersion(index) {
+    if (!confirm('确定要恢复到此版本吗？当前数据会先保存为新版本。')) return;
+    try {
+      saveVersionSnapshot();
+      const history = JSON.parse(localStorage.getItem('workbench_version_history') || '[]');
+      if (history[index]) {
+        const targetData = history[index].data;
+        applySharedState(targetData);
+        saveVersionSnapshot();
+        alert('恢复成功！');
+        renderVersionHistoryList();
+      }
+    } catch (e) {
+      alert('恢复失败：' + e.message);
+    }
+  }
+
+  // ====== 原材料验收标准编辑弹窗 ======
+  function openAcceptanceCriteriaModal(ac) {
+    const overlay = document.getElementById('acceptanceCriteriaOverlay');
+    const titleEl = document.getElementById('acModalTitle');
+    if (ac) {
+      titleEl.textContent = '编辑验收标准';
+      document.getElementById('acMaterial').value = ac.material || '';
+      document.getElementById('acTestItem').value = ac.testItem || '';
+      document.getElementById('acStandard').value = ac.standard || '';
+      document.getElementById('acMethod').value = ac.method || '';
+      document.getElementById('acStatus').value = ac.status || 'pending';
+      document.getElementById('acTestDate').value = ac.testDate || '';
+      document.getElementById('acResult').value = ac.result || '';
+    } else {
+      titleEl.textContent = '添加验收标准';
+      document.getElementById('acMaterial').value = '';
+      document.getElementById('acTestItem').value = '';
+      document.getElementById('acStandard').value = '';
+      document.getElementById('acMethod').value = '';
+      document.getElementById('acStatus').value = 'pending';
+      document.getElementById('acTestDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('acResult').value = '';
+    }
+    overlay.style.display = 'flex';
+  }
+
+  function closeAcceptanceCriteriaModal() {
+    document.getElementById('acceptanceCriteriaOverlay').style.display = 'none';
+  }
+
+  function saveAcceptanceCriteria() {
+    const material = document.getElementById('acMaterial').value.trim();
+    const testItem = document.getElementById('acTestItem').value.trim();
+    if (!material || !testItem) {
+      alert('请填写原材料名称和检测项目');
+      return;
+    }
+    if (!projectDetailRow) return;
+
+    const acList = decodeAcceptanceCriteria(projectDetailRow.dataset.acceptanceCriteria);
+    const acData = {
+      material,
+      testItem,
+      standard: document.getElementById('acStandard').value.trim(),
+      method: document.getElementById('acMethod').value.trim(),
+      status: document.getElementById('acStatus').value,
+      testDate: document.getElementById('acTestDate').value,
+      result: document.getElementById('acResult').value.trim(),
+      createdAt: _editingAcIndex >= 0 && acList[_editingAcIndex]
+        ? acList[_editingAcIndex].createdAt
+        : new Date().toISOString()
+    };
+
+    if (_editingAcIndex >= 0 && _editingAcIndex < acList.length) {
+      acList[_editingAcIndex] = acData;
+    } else {
+      acList.push(acData);
+    }
+
+    projectDetailRow.dataset.acceptanceCriteria = encodeAcceptanceCriteria(acList);
+    _editingAcIndex = -1;
+    closeAcceptanceCriteriaModal();
+    const project = getProjectFromRow(projectDetailRow);
+    renderProjectDetail(project);
+    saveDesktopState();
+  }
+
+  function setupVersionHistory() {
+    const btn = document.getElementById('versionHistoryBtn');
+    if (btn) btn.addEventListener('click', openVersionHistoryModal);
+    const closeBtn = document.getElementById('versionHistoryClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeVersionHistoryModal);
+    const overlay = document.getElementById('versionHistoryOverlay');
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeVersionHistoryModal();
+      });
+    }
+    const acClose = document.getElementById('acceptanceCriteriaClose');
+    if (acClose) acClose.addEventListener('click', closeAcceptanceCriteriaModal);
+    const acCancel = document.getElementById('acCancelBtn');
+    if (acCancel) acCancel.addEventListener('click', closeAcceptanceCriteriaModal);
+    const acSave = document.getElementById('acSaveBtn');
+    if (acSave) acSave.addEventListener('click', saveAcceptanceCriteria);
+    const acOverlay = document.getElementById('acceptanceCriteriaOverlay');
+    if (acOverlay) {
+      acOverlay.addEventListener('click', (e) => {
+        if (e.target === acOverlay) closeAcceptanceCriteriaModal();
+      });
+    }
+  }
+
   function setupProjectDetail() {
     const overlay = document.getElementById('projectDetailOverlay');
     if (!overlay) return;
@@ -4121,6 +4530,37 @@
             document.getElementById('pdProgressRemark').value = entry.remark || '';
           }
         }
+        return;
+      }
+
+      // Add acceptance criteria
+      if (event.target.matches('[data-pd-add-ac]')) {
+        _editingAcIndex = -1;
+        openAcceptanceCriteriaModal();
+        return;
+      }
+      // Edit acceptance criteria
+      const editAcBtn = event.target.closest('[data-pd-edit-ac]');
+      if (editAcBtn && projectDetailRow) {
+        const idx = Number(editAcBtn.dataset.pdEditAc);
+        const acList = decodeAcceptanceCriteria(projectDetailRow.dataset.acceptanceCriteria);
+        if (acList[idx]) {
+          _editingAcIndex = idx;
+          openAcceptanceCriteriaModal(acList[idx]);
+        }
+        return;
+      }
+      // Delete acceptance criteria
+      const delAcBtn = event.target.closest('[data-pd-del-ac]');
+      if (delAcBtn && projectDetailRow) {
+        if (!confirm('确定删除这条验收标准吗？')) return;
+        const idx = Number(delAcBtn.dataset.pdDelAc);
+        const acList = decodeAcceptanceCriteria(projectDetailRow.dataset.acceptanceCriteria);
+        acList.splice(idx, 1);
+        projectDetailRow.dataset.acceptanceCriteria = encodeAcceptanceCriteria(acList);
+        const project = getProjectFromRow(projectDetailRow);
+        renderProjectDetail(project);
+        saveDesktopState();
         return;
       }
       // Open attachment manager
@@ -4398,6 +4838,7 @@
     setupEditableProjectTable();
     setupProgressLogModal();
     setupProjectDetail();
+  setupVersionHistory();
     autoDesktopSync();
     initFormulaManager();
     initPromptManager();
@@ -4716,6 +5157,69 @@
   </div>
 </div>
 
+
+<!-- 版本历史弹窗 -->
+<div class="overlay" id="versionHistoryOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
+  <div style="background:var(--card);border-radius:16px;width:100%;max-width:700px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+    <div class="vh-header">
+      <div class="vh-title">更改历史</div>
+      <button class="pd-close" type="button" id="versionHistoryClose">&times;</button>
+    </div>
+    <div class="vh-body" id="versionHistoryList">
+    </div>
+  </div>
+</div>
+
+<!-- 验收标准编辑弹窗 -->
+<div class="overlay" id="acceptanceCriteriaOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border-radius:16px;width:100%;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+    <div class="settings-header">
+      <div class="settings-title" id="acModalTitle">添加验收标准</div>
+      <button class="pd-close" type="button" id="acceptanceCriteriaClose" style="font-size:20px;">&times;</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-field">
+        <label>原材料名称 <span style="color:var(--danger);">*</span></label>
+        <input type="text" id="acMaterial" placeholder="例如：ABS塑料">
+      </div>
+      <div class="settings-field">
+        <label>检测项目 <span style="color:var(--danger);">*</span></label>
+        <input type="text" id="acTestItem" placeholder="例如：熔融指数">
+      </div>
+      <div class="settings-field">
+        <label>标准要求</label>
+        <input type="text" id="acStandard" placeholder="例如：≥10g/10min">
+      </div>
+      <div class="settings-field">
+        <label>检测方法</label>
+        <input type="text" id="acMethod" placeholder="例如：GB/T 3682-2000">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="settings-field">
+          <label>状态</label>
+          <select id="acStatus" class="pd-select" style="width:100%;">
+            <option value="pending">待检测</option>
+            <option value="approved">合格</option>
+            <option value="rejected">不合格</option>
+          </select>
+        </div>
+        <div class="settings-field">
+          <label>检测日期</label>
+          <input type="date" id="acTestDate">
+        </div>
+      </div>
+      <div class="settings-field">
+        <label>检测结果</label>
+        <input type="text" id="acResult" placeholder="例如：12.5g/10min">
+      </div>
+    </div>
+    <div class="settings-actions">
+      <button class="secondary-btn" type="button" id="acCancelBtn" style="padding:8px 20px;border-radius:8px;">取消</button>
+      <button class="primary-btn" type="button" id="acSaveBtn" style="padding:8px 20px;border-radius:8px;">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 项目详情页 -->
 <div class="overlay" id="projectDetailOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
   <div id="projectDetailCard" style="background:var(--card);border-radius:16px;width:100%;max-width:860px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);">
@@ -4729,3 +5233,4 @@
 
 </body>
 </html>
+
