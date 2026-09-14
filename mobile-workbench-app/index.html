@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -1455,14 +1455,42 @@
     }
 
     const storageKey = 'formulaWorkbenchSharedData';
-    const gistSyncConfig = (() => {
-      if (window.location.protocol === 'file:') return null;
-      const _t = ['ghp_aj41','hF97J8KK','9xioNXkh','FLKzKAIn','xW11CmMp'].join('');
-      return {
-        apiUrl: 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c',
-        token: _t
-      };
+    // === 同步凭证：只存在本机 localStorage，不写进源码（页面是公开部署的）===
+    const GIST_TOKEN_KEY = 'workbench_gist_token';
+    const GIST_API_URL = 'https://api.github.com/gists/d42c1d2f203b153db26fbdf10ac1096c';
+    const GIST_LAST_SYNC_KEY = 'workbench_last_sync_time';
+
+    function readGistToken() {
+      try { return (localStorage.getItem(GIST_TOKEN_KEY) || '').trim(); } catch { return ''; }
+    }
+    function writeGistToken(value) {
+      try {
+        if (value && value.trim()) localStorage.setItem(GIST_TOKEN_KEY, value.trim());
+        else localStorage.removeItem(GIST_TOKEN_KEY);
+      } catch { /* 忽略存储异常 */ }
+    }
+    // 支持一次性链接注入凭证：index.html#gist=<token>
+    (function consumeTokenFromHash() {
+      try {
+        const match = (window.location.hash || '').match(/[#&]gist=([^&]+)/);
+        if (match && match[1]) {
+          writeGistToken(decodeURIComponent(match[1]));
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } catch { /* 忽略 */ }
     })();
+
+    function buildGistSyncConfig() {
+      if (window.location.protocol === 'file:') return null;
+      const token = readGistToken();
+      if (!token) return null;
+      return { apiUrl: GIST_API_URL, token: token };
+    }
+    let gistSyncConfig = buildGistSyncConfig();
+    function refreshGistSyncConfig() {
+      gistSyncConfig = buildGistSyncConfig();
+      return gistSyncConfig;
+    }
 
     const seed = {
       tasks: [
@@ -1621,7 +1649,17 @@
 
     let _isPushing = false;
     let _mIsOnline = navigator.onLine;
-    let _mLastSyncTime = null;
+    // 上次同步时间持久化，刷新后也能看到真实状态
+    function readMobileLastSyncTime() {
+      try {
+        const num = Number(localStorage.getItem(GIST_LAST_SYNC_KEY));
+        return num > 0 ? num : null;
+      } catch { return null; }
+    }
+    function persistMobileLastSyncTime(ts) {
+      try { localStorage.setItem(GIST_LAST_SYNC_KEY, String(ts)); } catch { /* 忽略 */ }
+    }
+    let _mLastSyncTime = readMobileLastSyncTime();
     let _mPollTimer = null;
 
     function setMobileSyncStatus(status, text) {
@@ -1647,19 +1685,80 @@
     }
 
     function updateMobileSyncStatus() {
-      if (!gistSyncConfig) { setMobileSyncStatus('', '本地'); return; }
+      if (window.location.protocol === 'file:') { setMobileSyncStatus('', '本地'); return; }
+      if (!readGistToken()) { setMobileSyncStatus('', '未配置'); return; }
       if (!_mIsOnline) { setMobileSyncStatus('offline', '离线'); return; }
       setMobileSyncStatus('connected', formatMobileSyncTime());
+    }
+
+    async function fetchGistMobile() {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      try {
+        return await fetch(gistSyncConfig.apiUrl + '?t=' + Date.now(), {
+          headers: { 'Authorization': 'token ' + gistSyncConfig.token, 'Accept': 'application/vnd.github+json' },
+          cache: 'no-store',
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
 
     function saveMobileVersionSnapshot() {
       try {
         const key = 'workbench_mobile_version_history';
-        const history = JSON.parse(localStorage.getItem(key) || '[]');
+        let history = [];
+        try { history = JSON.parse(localStorage.getItem(key) || '[]'); } catch { history = []; }
+        if (!Array.isArray(history)) history = [];
         history.unshift({ timestamp: Date.now(), data: state });
-        if (history.length > 10) history.length = 10;
-        localStorage.setItem(key, JSON.stringify(history));
-      } catch (e) { /* ignore */ }
+        // 全量快照很占空间，本地最多留 5 条
+        if (history.length > 5) history.length = 5;
+        try {
+          localStorage.setItem(key, JSON.stringify(history));
+        } catch (quotaErr) {
+          let saved = false;
+          for (let i = 0; i < 4 && history.length > 1; i++) {
+            history.pop();
+            try { localStorage.setItem(key, JSON.stringify(history)); saved = true; break; } catch { /* 继续丢弃 */ }
+          }
+          if (!saved) localStorage.removeItem(key);
+        }
+      } catch (e) { /* 历史快照失败不影响主流程 */ }
+    }
+
+    // 点同步徽标即可配置 Token（只存本机，不写进源码）
+    function setupMobileSyncSetting() {
+      const badge = document.getElementById('mobileSyncBadge');
+      if (!badge) return;
+      badge.style.cursor = 'pointer';
+      badge.addEventListener('click', () => {
+        const current = readGistToken();
+        const input = window.prompt(
+          current ? '已配置 Token。粘贴新的可替换；留空并确认则清除。' : '粘贴 GitHub Token（只需 gist 读写权限）',
+          ''
+        );
+        if (input === null) return;
+        const value = (input || '').trim();
+        if (!value) {
+          if (current && window.confirm('清除当前 Token 并停用同步？')) {
+            writeGistToken('');
+            refreshGistSyncConfig();
+            updateMobileSyncStatus();
+            showToast('已停用同步');
+          }
+          return;
+        }
+        if (!/^gh[pousr]_[A-Za-z0-9]{20,}$/.test(value) && !/^github_pat_[A-Za-z0-9_]{20,}$/.test(value)) {
+          showToast('Token 格式不对，应以 ghp_ / github_pat_ 开头');
+          return;
+        }
+        writeGistToken(value);
+        refreshGistSyncConfig();
+        updateMobileSyncStatus();
+        showToast('已保存，正在同步');
+        if (gistSyncConfig) syncFromCloud();
+      });
     }
 
     window.addEventListener('online', () => {
@@ -1694,13 +1793,13 @@
         if (!Array.isArray(remoteData.tasks) || !Array.isArray(remoteData.projects)) { setMobileSyncStatus('error', '格式错误'); return; }
 
         const normalizedRemote = normalizeState(remoteData);
-        // 保留云端版本历史（normalizeState 不包含此字段）
-        if (Array.isArray(remoteData.versionHistory)) {
-          normalizedRemote.versionHistory = remoteData.versionHistory;
-        }
         const merged = mergeStates(state, normalizedRemote);
-        const localJson = JSON.stringify(state);
-        const mergedJson = JSON.stringify(merged);
+        // 只比较核心三块，避免附加字段差异导致每次都无条件回写
+        const coreSnapshot = (s) => JSON.stringify({
+          tasks: s.tasks || [], projects: s.projects || [], prompts: s.prompts || []
+        });
+        const localJson = coreSnapshot(state);
+        const mergedJson = coreSnapshot(merged);
         state = merged;
         saveState();
         render();
@@ -1708,6 +1807,7 @@
           await pushToCloud();
         }
         _mLastSyncTime = Date.now();
+        persistMobileLastSyncTime(_mLastSyncTime);
         setMobileSyncStatus('connected', formatMobileSyncTime());
       } catch (e) {
         setMobileSyncStatus('error', '失败');
@@ -1723,17 +1823,40 @@
       setMobileSyncStatus('syncing', '同步中');
       try {
         saveMobileVersionSnapshot();
-        const versionHistoryKey = 'workbench_mobile_version_history';
-        const versionHistory = JSON.parse(localStorage.getItem(versionHistoryKey) || '[]').slice(0, 10);
-        const payload = JSON.stringify({
+        let toWrite = {
           tasks: state.tasks,
           projects: state.projects,
           prompts: state.prompts || [],
-          versionHistory: versionHistory,
+          versionHistory: [],
           updatedAt: new Date().toISOString()
-        });
+        };
+        // 先读后写：先用云端数据合并，再推。否则本地旧状态会整体覆盖电脑端的改动
+        try {
+          const readRes = await fetchGistMobile();
+          if (readRes && readRes.ok) {
+            const gistData = await readRes.json();
+            const content = gistData?.files?.['state.json']?.content;
+            if (content) {
+              const remoteData = JSON.parse(content);
+              if (Array.isArray(remoteData.tasks) && Array.isArray(remoteData.projects)) {
+                const merged = mergeStates(state, normalizeState(remoteData));
+                toWrite = {
+                  tasks: merged.tasks,
+                  projects: merged.projects,
+                  prompts: merged.prompts || [],
+                  versionHistory: [],
+                  updatedAt: new Date().toISOString()
+                };
+              }
+            }
+          }
+        } catch (readErr) {
+          // 读不到云端时宁可不推，也不要盲覆盖
+          setMobileSyncStatus('error', '读不到云端');
+          return;
+        }
         const body = JSON.stringify({
-          files: { 'state.json': { content: payload } }
+          files: { 'state.json': { content: JSON.stringify(toWrite) } }
         });
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1750,6 +1873,7 @@
         clearTimeout(timeoutId);
         if (!response.ok) { setMobileSyncStatus('error', '失败'); return; }
         _mLastSyncTime = Date.now();
+        persistMobileLastSyncTime(_mLastSyncTime);
         setMobileSyncStatus('connected', formatMobileSyncTime());
       } catch (e) {
         setMobileSyncStatus('error', '失败');
@@ -1848,27 +1972,12 @@
         if (id && !remotePromptIds.has(id)) promptList.push(p);
       });
 
-      // 合并版本历史（按 timestamp 去重，保留最新 20 条）
-      const localVH = Array.isArray(localState.versionHistory) ? localState.versionHistory : [];
-      const remoteVH = Array.isArray(remoteState.versionHistory) ? remoteState.versionHistory : [];
-      const vhTsSet = new Set();
-      const mergedVH = [];
-      [...remoteVH, ...localVH].forEach(v => {
-        if (v && v.timestamp && !vhTsSet.has(v.timestamp)) {
-          vhTsSet.add(v.timestamp);
-          mergedVH.push(v);
-        }
-      });
-      mergedVH.sort((a, b) => b.timestamp - a.timestamp);
-      if (mergedVH.length > 20) mergedVH.length = 20;
-      // 同步到本地 localStorage
-      try { localStorage.setItem('workbench_mobile_version_history', JSON.stringify(mergedVH.slice(0, 10))); } catch (e) {}
-
       return {
         tasks: taskList,
         projects: projectList,
         prompts: promptList,
-        versionHistory: mergedVH,
+        // 版本历史只在本地保留，不再写回云端：全量快照会让 Gist 体积放大十倍
+        versionHistory: [],
         updatedAt: new Date().toISOString()
       };
     }
@@ -3225,6 +3334,7 @@
     })();
 
     render();
+    setupMobileSyncSetting();
     updateMobileSyncStatus();
     syncFromCloud();
 
