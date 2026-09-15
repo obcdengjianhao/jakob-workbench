@@ -2592,7 +2592,7 @@
   function renderAttachmentPreview(file, index) {
     if (!file) return '';
     const t = (file.type || '').toLowerCase();
-    const cachedUrl = file.dataUrl || '';
+    const cachedUrl = (file.dataUrl && String(file.dataUrl).startsWith('data:')) ? String(file.dataUrl) : '';
     const url = escapeHtml(cachedUrl);
     let body = '';
     if (!cachedUrl) {
@@ -2684,7 +2684,7 @@
                     ? `<input class="attach-file-name-input" data-attach-rename-input="${realIndex}" value="${escapeHtml(file.name)}">`
                     : (file.path && !file.dataUrl)
                       ? `<span class="attach-file-download">${escapeHtml(file.name)}</span>`
-                      : `<a class="attach-file-download" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`
+                      : `<a class="attach-file-download" href="${escapeHtml((file.dataUrl && String(file.dataUrl).startsWith('data:')) ? file.dataUrl : '#')}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`
                   }
                 </div>
                 <div class="attach-file-meta">${formatFileSize(file.size) || '未知大小'}${file.uploadedAt ? ` · ${escapeHtml(file.uploadedAt)}` : ''}</div>
@@ -2699,7 +2699,7 @@
                   <button class="attach-mini-btn primary" type="button" data-attach-preview="${realIndex}">浏览</button>
                   ${(file.path && !file.dataUrl)
                     ? `<button class="attach-mini-btn primary" type="button" data-attach-download="${realIndex}">下载</button>`
-                    : `<a class="attach-mini-btn primary" href="${escapeHtml(file.dataUrl)}" download="${escapeHtml(file.name)}" target="_blank">下载</a>`
+                    : `<a class="attach-mini-btn primary" href="${escapeHtml((file.dataUrl && String(file.dataUrl).startsWith('data:')) ? file.dataUrl : '#')}" download="${escapeHtml(file.name)}" target="_blank">下载</a>`
                   }
                   <button class="attach-mini-btn danger" type="button" data-attach-delete="${realIndex}">删除</button>
                 </div>
@@ -3423,10 +3423,15 @@
       signal: controller.signal
     }).then(response => {
       clearTimeout(timeoutId);
-      if (!response.ok) console.warn('推送失败: HTTP ' + response.status);
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) { const err = new Error('AUTH'); err.code = 'AUTH'; throw err; }
+        if (response.status === 429) { const err = new Error('RATELIMIT'); err.code = 'RATELIMIT'; throw err; }
+        const err = new Error('HTTP ' + response.status); err.code = 'HTTP'; throw err;
+      }
       return response;
     }).catch(e => {
       clearTimeout(timeoutId);
+      if (e && e.code) throw e;
       console.warn('推送云端失败:', e);
       throw e;
     });
@@ -3464,6 +3469,40 @@
     try { localStorage.setItem(GIST_LAST_SYNC_KEY, String(ts)); } catch { /* 忽略 */ }
   }
   let _lastSyncTime = readLastSyncTime();
+
+  // 同步健壮性：鉴权失效立即停止轮询；限流走指数退避
+  let _syncAuthBroken = false;
+  let _syncBackoffUntil = 0;
+  let _syncBackoffStep = 0;
+  function stopSyncPolling() {
+    _syncAuthBroken = true;
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+  function applySyncBackoff() {
+    _syncBackoffStep = Math.min(_syncBackoffStep + 1, 6);
+    const delay = Math.min(60000 * Math.pow(2, _syncBackoffStep - 1), 600000); // 60s,120s,...,最多10分钟
+    _syncBackoffUntil = Date.now() + delay;
+  }
+  function resetSyncBackoff() {
+    _syncBackoffStep = 0;
+    _syncBackoffUntil = 0;
+    _syncAuthBroken = false;
+  }
+  function setSyncAuthError(msg) {
+    stopSyncPolling();
+    setSyncStatus('error', msg);
+  }
+  function ensurePolling() {
+    if (_pollTimer || _syncAuthBroken) return;
+    _pollTimer = setInterval(() => {
+      if (_syncAuthBroken) return;
+      if (Date.now() < _syncBackoffUntil) return;
+      if (document.hidden) return;
+      if (!gistSyncConfig || isDesktopSyncing) return;
+      if (!navigator.onLine) { setSyncStatus('offline', '离线模式'); return; }
+      autoDesktopSync();
+    }, 60000);
+  }
 
   function setSyncStatus(status, text) {
     const dot = document.getElementById('syncDot');
@@ -3546,14 +3585,12 @@
       if (hint) hint.textContent = '已清除，当前为本地模式';
     });
     if (copyBtn) copyBtn.addEventListener('click', async () => {
-      const token = (input?.value || '').trim() || readGistToken();
-      if (!token) { if (hint) hint.textContent = '请先填写 Token 再生成链接'; return; }
-      const link = window.location.origin + window.location.pathname + '#gist=' + encodeURIComponent(token);
+      const url = window.location.origin + window.location.pathname;
       try {
-        await navigator.clipboard.writeText(link);
-        if (hint) hint.textContent = '已复制，用手机浏览器打开即可自动配置（链接含凭证，别外传）';
+        await navigator.clipboard.writeText(url);
+        if (hint) hint.textContent = '已复制手机端地址（不含 Token）。请在手机端同步设置里手动粘贴 Token 完成配置。';
       } catch {
-        if (hint) hint.textContent = '复制失败，链接：' + link;
+        if (hint) hint.textContent = '复制失败，地址：' + url;
       }
     });
   }
@@ -3638,9 +3675,13 @@
       await patchGist(JSON.stringify(toWrite));
       _lastSyncTime = Date.now();
       persistLastSyncTime(_lastSyncTime);
+      resetSyncBackoff();
+      ensurePolling();
       setSyncStatus('connected', formatSyncTime());
     } catch (e) {
-      setSyncStatus('error', '同步失败');
+      if (e && e.code === 'AUTH') setSyncAuthError('Token 无效/无权限，请在 ⚙ 重新配置');
+      else if (e && e.code === 'RATELIMIT') { applySyncBackoff(); setSyncStatus('error', '同步被限流，稍后自动重试'); }
+      else setSyncStatus('error', '同步失败');
     }
     finally {
       _isDesktopPushing = false;
@@ -3654,7 +3695,12 @@
     setSyncStatus('syncing', '同步中...');
     try {
       const response = await fetchGist();
-      if (!response.ok) { setSyncStatus('error', '同步失败'); return; }
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) { setSyncAuthError('Token 无效/无权限，请在 ⚙ 重新配置'); return; }
+        if (response.status === 429) { applySyncBackoff(); setSyncStatus('error', '同步被限流，稍后自动重试'); return; }
+        setSyncStatus('error', '同步失败（' + response.status + '）');
+        return;
+      }
       const gistData = await response.json();
       const content = gistData?.files?.['state.json']?.content;
       if (!content) { _lastSyncTime = Date.now(); setSyncStatus('connected', formatSyncTime()); return; }
@@ -3676,9 +3722,13 @@
       }
       _lastSyncTime = Date.now();
       persistLastSyncTime(_lastSyncTime);
+      resetSyncBackoff();
+      ensurePolling();
       setSyncStatus('connected', formatSyncTime());
     } catch (e) {
-      setSyncStatus('error', '同步失败');
+      if (e && e.code === 'AUTH') setSyncAuthError('Token 无效/无权限，请在 ⚙ 重新配置');
+      else if (e && e.code === 'RATELIMIT') { applySyncBackoff(); setSyncStatus('error', '同步被限流，稍后自动重试'); }
+      else setSyncStatus('error', '同步失败');
     } finally {
       isDesktopSyncing = false;
     }
@@ -5302,9 +5352,7 @@
 
     // 电脑端也加低频轮询，跨端改动不用再手动切页面才看得到
     clearInterval(_pollTimer);
-    _pollTimer = setInterval(() => {
-      if (!document.hidden && gistSyncConfig && navigator.onLine) autoDesktopSync();
-    }, 60000);
+    ensurePolling();
 
     // 新增事项
     function addNewTask() {
