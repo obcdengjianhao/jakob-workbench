@@ -1943,7 +1943,18 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        if (!response.ok) { setMobileSyncStatus('error', '失败'); return; }
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setMobileSyncStatus('error', 'Token 无效');
+            showToast('同步失败：Token 无效或无权限，请在同步设置里重新粘贴');
+          } else if (response.status === 429) {
+            setMobileSyncStatus('error', '限流中');
+            showToast('GitHub 限流，稍后再试');
+          } else {
+            setMobileSyncStatus('error', '失败 ' + response.status);
+          }
+          return;
+        }
         const gistData = await response.json();
         const content = gistData?.files?.['state.json']?.content;
         if (!content) { _mLastSyncTime = Date.now(); setMobileSyncStatus('connected', formatMobileSyncTime()); return; }
@@ -2033,7 +2044,18 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        if (!response.ok) { setMobileSyncStatus('error', '失败'); return; }
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setMobileSyncStatus('error', 'Token 无效');
+            showToast('推送失败：Token 无效或无权限，请在同步设置里重新粘贴');
+          } else if (response.status === 429) {
+            setMobileSyncStatus('error', '限流中');
+            showToast('GitHub 限流，稍后再试');
+          } else {
+            setMobileSyncStatus('error', '推送失败 ' + response.status);
+          }
+          return;
+        }
         _mLastSyncTime = Date.now();
         persistMobileLastSyncTime(_mLastSyncTime);
         setMobileSyncStatus('connected', formatMobileSyncTime());
@@ -2056,10 +2078,23 @@
         if (key) remoteTaskKeys.add(key);
         taskList.push(t);
       });
-      // 仅添加本地独有的任务
+      // 两端都有同名任务时按 updatedAt 取新（与桌面端一致），避免手机改的任务被云端旧值盖回
       localTasks.forEach(t => {
         const key = (t.title || '').trim();
-        if (key && !remoteTaskKeys.has(key)) taskList.push(t);
+        if (!key) return;
+        if (!remoteTaskKeys.has(key)) { taskList.push(t); return; }
+        const idx = taskList.findIndex(tt => (tt.title || '').trim() === key);
+        if (idx < 0) return;
+        const remoteT = taskList[idx];
+        const mergedAttach = mergeAttachmentLists(remoteT.attachments, t.attachments);
+        const localU = Number(t.updatedAt) || 0;
+        const remoteU = Number(remoteT.updatedAt) || 0;
+        if (localU > remoteU) {
+          taskList[idx] = { ...t, attachments: mergedAttach, updatedAt: localU };
+        } else {
+          remoteT.attachments = mergedAttach;
+          remoteT.updatedAt = remoteU;
+        }
       });
 
       const localProjects = localState.projects || [];
@@ -2305,7 +2340,7 @@
     function renderAttachmentPreview(file) {
       if (!file) return '';
       const t = (file.type || '').toLowerCase();
-      const cachedUrl = file.dataUrl || '';
+      const cachedUrl = (file.dataUrl && String(file.dataUrl).startsWith('data:')) ? String(file.dataUrl) : '';
       const url = escapeHtml(cachedUrl);
       let body = '';
       if (!cachedUrl) {
@@ -2392,7 +2427,7 @@
                   <div class="attach-file-name-row">
                     ${renaming
                       ? `<input class="attach-file-name-input" data-attach-rename-input="${realIndex}" value="${escapeHtml(file.name)}">`
-                      : `<a class="attach-file-download" href="${escapeHtml(file.dataUrl || '#')}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`}
+                      : `<a class="attach-file-download" href="${escapeHtml((file.dataUrl && String(file.dataUrl).startsWith('data:')) ? file.dataUrl : '#')}" download="${escapeHtml(file.name)}" target="_blank">${escapeHtml(file.name)}</a>`}
                   </div>
                   <div class="attach-file-meta">${formatFileSize(file.size) || '未知大小'}${file.uploadedAt ? ` · ${escapeHtml(file.uploadedAt)}` : ''}</div>
                   <div class="attach-file-controls">
