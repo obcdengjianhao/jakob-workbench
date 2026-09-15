@@ -2298,6 +2298,7 @@
       next: normalized.next || '补充本周重点或下一步',
       risk: normalized.risk || '/',
       background: normalized.background || '',
+      updatedAt: Number((project || {}).updatedAt) || 0,
       attachments: normalizeAttachments(normalized.attachments),
       progressLog: Array.isArray(normalized.progressLog) ? normalized.progressLog.map(e => ({
         date: String(e.date || ''),
@@ -2361,6 +2362,7 @@
       kind: task?.kind || 'normal',
       deadline: task?.deadline || '',
       createdAt: task?.createdAt || Date.now(),
+      updatedAt: Number(task?.updatedAt) || 0,
       attachments: normalizeAttachments(task?.attachments)
     };
   }
@@ -2374,6 +2376,8 @@
     // 透传附加字段，避免上层（applySharedState）再取时已被丢弃
     if (Array.isArray(state?.versionHistory)) normalized.versionHistory = state.versionHistory;
     if (state?.updatedAt) normalized.updatedAt = state.updatedAt;
+    // 删除墓碑同样要透传，否则合并结果里的删除记录会在落地前被丢掉
+    if (state?.deleted) normalized.deleted = normalizeDeletedRegistry(state.deleted);
     return normalized;
   }
 
@@ -2947,7 +2951,15 @@
   function saveTaskDetail() {
     if (_tdTaskIndex < 0 || !desktopTasks[_tdTaskIndex]) return;
     const task = desktopTasks[_tdTaskIndex];
+    const oldTitle = (task.title || '').trim();
     task.title = document.getElementById('tdTitle').value.trim() || '未命名事项';
+    const newTitle = (task.title || '').trim();
+    // 事项改名：旧标题在云端还有一份，留墓碑，否则改名后旧事项会再冒出来
+    if (oldTitle && newTitle && oldTitle !== newTitle) {
+      markDeleted('tasks', oldTitle);
+      dropStamp('tasks', oldTitle);
+      task.updatedAt = Date.now();
+    }
     task.meta = document.getElementById('tdMeta').value.trim();
     task.deadline = document.getElementById('tdDeadline').value;
     task.kind = document.getElementById('tdKind').value;
@@ -2969,7 +2981,7 @@
     tbody.innerHTML = sortProjectsByPriority(projects).map(project => {
       const latest = getLatestProgress(project);
       return `
-      <tr data-acceptance-criteria="${escapeHtml(encodeAcceptanceCriteria(project.acceptanceCriteria))}">
+      <tr data-acceptance-criteria="${escapeHtml(encodeAcceptanceCriteria(project.acceptanceCriteria))}" data-project-key="${escapeHtml(project.name || '')}">
         <td class="project-name-cell" data-project-detail style="cursor:pointer;color:var(--primary);">${escapeHtml(project.name)}</td>
         <td>${escapeHtml(project.priority)}</td>
         <td>${escapeHtml(project.category)}</td>
@@ -2987,11 +2999,182 @@
     applyProjectSortAndSearch();
   }
 
+  /* ===== 删除墓碑 =====
+     删除只在本地移除界面行，合并又是取并集，云端那份下次同步就会"复活"。
+     所以删除要留下记号：deletedAt 表示删除，revivedAt 表示后来又被重建，
+     两者取最大时间戳比较，谁新听谁的。墓碑 30 天无动作自动丢弃，避免无限膨胀。 */
+  const DELETED_REGISTRY_KEY = 'workbench_deleted_registry';
+  const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+  /* ===== 变更追踪 =====
+     合并时若两端都有同一条目，需要一个客观依据判断谁更新，否则只能"云端优先"，
+     本地改的状态、备注会被旧值盖回去。这里给每条记录记内容签名 + 时间戳：
+     签名变了说明本机这次改过，就把 updatedAt 推到当前时间，合并时新者胜。
+     首次运行时只建立基线不推时间戳，避免整批老数据被误判为"刚刚改过"。 */
+  const STAMP_KEY = 'workbench_field_stamps';
+
+  function readStampMap() {
+    try { return JSON.parse(localStorage.getItem(STAMP_KEY) || '{}') || {}; } catch { return {}; }
+  }
+  function writeStampMap(map) {
+    try { localStorage.setItem(STAMP_KEY, JSON.stringify(map)); return true; } catch { return false; }
+  }
+  function attachSignature(list) {
+    return (list || []).map(a => `${a.name || ''}|${a.size || 0}`).join(',');
+  }
+  // 附件按 名称+大小 去重取并集（累加型数据，合并时不做胜负判断）
+  function mergeAttachmentLists(a, b) {
+    const set = new Set();
+    const out = [];
+    [...(a || []), ...(b || [])].forEach(att => {
+      if (!att) return;
+      const sig = `${att.name || ''}|${att.size || 0}`;
+      if (!set.has(sig)) { set.add(sig); out.push(att); }
+    });
+    return out;
+  }
+  function projectSignature(p) {
+    return JSON.stringify({
+      name: p.name, priority: p.priority, category: p.category, phase: p.phase, status: p.status,
+      next: p.next, risk: p.risk, background: p.background,
+      attachments: attachSignature(p.attachments),
+      progressLog: (p.progressLog || []).length,
+      acceptanceCriteria: (p.acceptanceCriteria || []).length
+    });
+  }
+  function taskSignature(t) {
+    return JSON.stringify({
+      title: t.title, meta: t.meta, done: Boolean(t.done), kind: t.kind, deadline: t.deadline,
+      attachments: attachSignature(t.attachments)
+    });
+  }
+  // 依据签名刷新 updatedAt；返回是否有记录被改动
+  function refreshStamps(items, kind, sigFn) {
+    const map = readStampMap();
+    const isBaseline = Object.keys(map).length === 0;
+    let changed = false;
+    items.forEach(item => {
+      const name = kind === 'projects' ? (item.name || '').trim() : (item.title || '').trim();
+      if (!name) return;
+      const key = (kind === 'projects' ? 'p:' : 't:') + name;
+      const sig = sigFn(item);
+      const prev = map[key];
+      if (prev && prev.sig === sig) { if (prev.u) item.updatedAt = prev.u; return; }
+      if (isBaseline) {
+        // 首次运行：沿用已有时间戳建立基线，不把存量数据全刷成"刚刚修改"
+        item.updatedAt = Number(item.updatedAt) || 0;
+      } else {
+        item.updatedAt = Date.now();
+      }
+      map[key] = { sig, u: item.updatedAt };
+      changed = true;
+    });
+    if (changed) writeStampMap(map);
+    return changed;
+  }
+  // 改名后旧键的基线要清掉，否则旧名被墓碑过滤后基线里还留着垃圾
+  function dropStamp(kind, oldName) {
+    if (!oldName) return;
+    const map = readStampMap();
+    const key = (kind === 'projects' ? 'p:' : 't:') + oldName.trim();
+    if (map[key]) { delete map[key]; writeStampMap(map); }
+  }
+
+  function normalizeDeletedRegistry(data) {
+    const reg = { projects: [], tasks: [] };
+    const now = Date.now();
+    ['projects', 'tasks'].forEach(kind => {
+      const map = new Map();
+      (Array.isArray(data?.[kind]) ? data[kind] : []).forEach(x => {
+        if (!x || typeof x.key !== 'string') return;
+        const rec = {
+          key: x.key,
+          deletedAt: Number(x.deletedAt) || 0,
+          revivedAt: Number(x.revivedAt) || 0
+        };
+        if (now - Math.max(rec.deletedAt, rec.revivedAt) > TOMBSTONE_TTL_MS) return;
+        const prev = map.get(rec.key);
+        if (!prev) { map.set(rec.key, rec); return; }
+        map.set(rec.key, {
+          key: rec.key,
+          deletedAt: Math.max(prev.deletedAt, rec.deletedAt),
+          revivedAt: Math.max(prev.revivedAt, rec.revivedAt)
+        });
+      });
+      reg[kind] = Array.from(map.values());
+    });
+    return reg;
+  }
+
+  function loadDeletedRegistry() {
+    try {
+      return normalizeDeletedRegistry(JSON.parse(localStorage.getItem(DELETED_REGISTRY_KEY) || 'null'));
+    } catch { return { projects: [], tasks: [] }; }
+  }
+
+  function saveDeletedRegistry(reg) {
+    try {
+      localStorage.setItem(DELETED_REGISTRY_KEY, JSON.stringify(normalizeDeletedRegistry(reg)));
+      return true;
+    } catch { return false; }
+  }
+
+  // 记录一次删除（kind: 'projects' | 'tasks'）
+  function markDeleted(kind, key) {
+    if (!key) return;
+    const reg = loadDeletedRegistry();
+    const list = reg[kind] || (reg[kind] = []);
+    const hit = list.find(x => x.key === key);
+    if (hit) { hit.deletedAt = Date.now(); hit.revivedAt = 0; }
+    else list.push({ key, deletedAt: Date.now(), revivedAt: 0 });
+    saveDeletedRegistry(reg);
+  }
+
+  // 合并两份墓碑：同名条目各取最大时间戳
+  function mergeDeletedRegistries(a, b) {
+    return normalizeDeletedRegistry({
+      projects: [...(a?.projects || []), ...(b?.projects || [])],
+      tasks: [...(a?.tasks || []), ...(b?.tasks || [])]
+    });
+  }
+
+  // 取出当前处于"已删除"状态的 key 集合
+  function deadKeysOf(reg, kind) {
+    const dead = new Set();
+    (reg?.[kind] || []).forEach(x => {
+      if (x && x.deletedAt && x.deletedAt > (x.revivedAt || 0)) dead.add(x.key);
+    });
+    return dead;
+  }
+
+  // 界面上仍然存在的条目视为被重建，给其墓碑打上 revivedAt
+  function pruneRevivedTombstones(projects, tasks) {
+    const reg = loadDeletedRegistry();
+    const now = Date.now();
+    let changed = false;
+    const revive = (list, aliveKeys) => {
+      (list || []).forEach(x => {
+        if (aliveKeys.has(x.key) && x.deletedAt && x.deletedAt > (x.revivedAt || 0)) {
+          x.revivedAt = now;
+          changed = true;
+        }
+      });
+    };
+    revive(reg.projects, new Set((projects || []).map(p => (p.name || '').trim()).filter(Boolean)));
+    revive(reg.tasks, new Set((tasks || []).map(t => (t.title || '').trim()).filter(Boolean)));
+    if (changed) saveDeletedRegistry(reg);
+  }
+
   function getDesktopState() {
+    const projects = sortProjectsByPriority(getProjectRows());
+    const tasks = desktopTasks.length ? desktopTasks : extractDesktopTasksFromDom();
+    refreshStamps(tasks, 'tasks', taskSignature);
+    pruneRevivedTombstones(projects, tasks);
     return {
-      tasks: desktopTasks.length ? desktopTasks : extractDesktopTasksFromDom(),
-      projects: sortProjectsByPriority(getProjectRows()),
-      prompts: getDesktopPrompts()
+      tasks,
+      projects,
+      prompts: getDesktopPrompts(),
+      deleted: loadDeletedRegistry()
     };
   }
 
@@ -3066,8 +3249,15 @@
       } catch { setSyncStatus('error', 'Prompt 保存失败'); }
       if (typeof renderPromptList === 'function') renderPromptList();
     }
+    // 落地合并后的删除墓碑：本机后续推送才会带上同样的删除记录
+    if (state.deleted) saveDeletedRegistry(mergeDeletedRegistries(loadDeletedRegistry(), state.deleted));
     // 只持久化核心三块，版本历史不进主状态，避免体积膨胀
-    safeWriteSharedState({ tasks: state.tasks, projects: state.projects, prompts: state.prompts });
+    safeWriteSharedState({
+      tasks: state.tasks,
+      projects: state.projects,
+      prompts: state.prompts,
+      deleted: state.deleted || loadDeletedRegistry()
+    });
     // 保存版本历史
     if (Array.isArray(state.versionHistory) && state.versionHistory.length) {
       try {
@@ -3090,11 +3280,25 @@
       if (key) remoteTaskKeys.add(key);
       taskList.push(t);
     });
-    // 仅添加本地独有的任务
+    // 仅添加本地独有的任务；双方都有时按 updatedAt 取新，避免本机改动被云端旧值盖回
     localTasks.forEach(t => {
       const key = (t.title || '').trim();
-      if (key && !remoteTaskKeys.has(key)) {
+      if (!key) return;
+      if (!remoteTaskKeys.has(key)) {
         taskList.push(t);
+        return;
+      }
+      const idx = taskList.findIndex(tt => (tt.title || '').trim() === key);
+      if (idx < 0) return;
+      const remoteT = taskList[idx];
+      const mergedAttach = mergeAttachmentLists(remoteT.attachments, t.attachments);
+      const localU = Number(t.updatedAt) || 0;
+      const remoteU = Number(remoteT.updatedAt) || 0;
+      if (localU > remoteU) {
+        taskList[idx] = { ...t, attachments: mergedAttach, updatedAt: localU };
+      } else {
+        remoteT.attachments = mergedAttach;
+        remoteT.updatedAt = remoteU;
       }
     });
 
@@ -3119,6 +3323,19 @@
         // 双方都有：合并进度记录和附件（云端字段优先）
         const remoteP = projectList.find(pp => (pp.name || '').trim() === key);
         if (remoteP) {
+          // 字段级「最后修改者胜」：以前无条件以云端为准，本机改过的状态、备注
+          // 会在下一次同步被旧值盖回去。现在比时间戳，谁新听谁的。
+          // 进度记录、附件、验收标准属于累加型，下面仍按并集合并，不参与胜负。
+          const localU = Number(p.updatedAt) || 0;
+          const remoteU = Number(remoteP.updatedAt) || 0;
+          if (localU > remoteU) {
+            ['priority', 'category', 'phase', 'status', 'next', 'risk', 'background'].forEach(f => {
+              remoteP[f] = p[f];
+            });
+            remoteP.updatedAt = localU;
+          } else {
+            remoteP.updatedAt = remoteU;
+          }
           const remoteLogs = Array.isArray(remoteP.progressLog) ? remoteP.progressLog : [];
           const localLogs = Array.isArray(p.progressLog) ? p.progressLog : [];
           const logSet = new Set();
@@ -3167,10 +3384,18 @@
       if (id && !remotePromptIds.has(id)) promptList.push(p);
     });
 
+    // 应用删除墓碑：任一端的删除都要生效，除非另一端的重建时间更晚
+    const mergedDeleted = mergeDeletedRegistries(localState.deleted, remoteState.deleted);
+    const deadProjectKeys = deadKeysOf(mergedDeleted, 'projects');
+    const deadTaskKeys = deadKeysOf(mergedDeleted, 'tasks');
+    const finalProjects = projectList.filter(p => !deadProjectKeys.has((p.name || '').trim()));
+    const finalTasks = taskList.filter(t => !deadTaskKeys.has((t.title || '').trim()));
+
     return {
-      tasks: taskList,
-      projects: projectList,
+      tasks: finalTasks,
+      projects: finalProjects,
       prompts: promptList,
+      deleted: mergedDeleted,
       // 版本历史只在本地保留，不再写回云端：全量快照会让 Gist 体积放大十倍
       versionHistory: [],
       updatedAt: new Date().toISOString()
@@ -3380,6 +3605,7 @@
         tasks: localData.tasks,
         projects: localData.projects,
         prompts: localData.prompts,
+        deleted: localData.deleted,
         versionHistory: [],
         updatedAt: new Date().toISOString()
       };
@@ -3397,6 +3623,7 @@
                 tasks: merged.tasks,
                 projects: merged.projects,
                 prompts: merged.prompts,
+                deleted: merged.deleted,
                 versionHistory: [],
                 updatedAt: new Date().toISOString()
               };
@@ -3438,9 +3665,11 @@
       const merged = mergeDesktopStates(localData, remoteData);
       applySharedState(merged);
 
-      // 只比较核心三块：否则 versionHistory / updatedAt 的差异会让每次打开都无条件回写
+      // 只比较核心数据：否则 versionHistory / updatedAt 的差异会让每次打开都无条件回写
+      // deleted 必须参与比较，否则删除产生的墓碑变化不会触发回写
       const coreSnapshot = (s) => JSON.stringify({
-        tasks: s.tasks || [], projects: s.projects || [], prompts: s.prompts || []
+        tasks: s.tasks || [], projects: s.projects || [], prompts: s.prompts || [],
+        deleted: s.deleted || { projects: [], tasks: [] }
       });
       if (coreSnapshot(localData) !== coreSnapshot(merged)) {
         await patchGist(JSON.stringify(merged));
@@ -3479,10 +3708,25 @@
       project.progressLog = decodeProgressLog(row.querySelector('.progress-cell')?.dataset.progressLog);
       project.acceptanceCriteria = decodeAcceptanceCriteria(row.dataset.acceptanceCriteria);
       // Merge background from cache
-      const cachedProject = cachedMap[project.name];
+      const currentName = (project.name || '').trim();
+      const cachedProject = cachedMap[currentName];
       project.background = cachedProject ? (cachedProject.background || '') : '';
+      // 改名检测：行上记着渲染时的原名，不一致说明用户改了项目名。
+      // 旧名在云端还有一份，必须留墓碑，否则下次同步旧名会和新名同时出现。
+      const originalKey = (row.dataset.projectKey || '').trim();
+      if (originalKey && originalKey !== currentName) {
+        markDeleted('projects', originalKey);
+        dropStamp('projects', originalKey);
+        row.dataset.projectKey = currentName;
+        const oldCached = cachedMap[originalKey];
+        if (!project.background && oldCached) project.background = oldCached.background || '';
+      } else if (!originalKey && currentName) {
+        row.dataset.projectKey = currentName;
+      }
       return project;
     }).filter(project => project.name || project.category || project.phase || project.next || project.risk);
+    refreshStamps(rows, 'projects', projectSignature);
+    return rows;
   }
 
   function findMetricCard(scope, label) {
@@ -3886,7 +4130,12 @@
         return;
       }
       if (event.target.matches('.row-delete-btn')) {
-        event.target.closest('tr')?.remove();
+        const row = event.target.closest('tr');
+        const projectName = row?.querySelector('td')?.textContent.trim() || '';
+        if (!confirm(`确认删除项目「${projectName || '未命名'}」？`)) return;
+        // 记墓碑：否则下次和云端合并时，云端那份会被并回来
+        markDeleted('projects', projectName);
+        row?.remove();
         refreshProjectDashboard();
       }
     });
@@ -4463,20 +4712,26 @@
       }
     });
 
+    // 项目改名：旧名称在云端还有一份，必须留墓碑，否则改名后旧项目会重新冒出来
+    const newNameCell = projectDetailRow.querySelector('td');
+    const newName = newNameCell ? newNameCell.textContent.trim() : oldName;
+    if (oldName && newName && oldName !== newName) {
+      markDeleted('projects', oldName);
+      dropStamp('projects', oldName);
+      projectDetailRow.dataset.projectKey = newName;
+    }
+
     // Save background to localStorage (用旧名称查找)
     const bgField = content.querySelector('[data-pd-field="background"]');
     if (bgField && projectDetailRow) {
       if (oldName) {
         const cached = loadCachedSharedState();
         if (cached) {
-          const proj = cached.projects.find(p => p.name === oldName);
+          const proj = cached.projects.find(p => p.name === oldName) || cached.projects.find(p => p.name === newName);
           if (proj) {
             proj.background = bgField.value.trim();
-            // 如果名称变了，更新 localStorage 中的项目名
-            const newNameCell = projectDetailRow.querySelector('td');
-            const newName = newNameCell ? newNameCell.textContent.trim() : oldName;
             if (newName !== oldName) proj.name = newName;
-            localStorage.setItem(sharedStorageKey, JSON.stringify(cached));
+            try { localStorage.setItem(sharedStorageKey, JSON.stringify(cached)); } catch (e) { /* 配额不足时忽略，主状态另有兜底 */ }
           }
         }
       }
@@ -5104,6 +5359,7 @@
         const idx = Number(event.target.dataset.taskDelete);
         if (!Number.isNaN(idx) && desktopTasks[idx]) {
           if (!confirm('确认删除该事项？')) return;
+          markDeleted('tasks', (desktopTasks[idx].title || '').trim());
           desktopTasks.splice(idx, 1);
           saveDesktopState();
           renderTaskList();
@@ -5137,6 +5393,8 @@
       if (event.target.matches('#tdDelete')) {
         if (_tdTaskIndex >= 0 && desktopTasks[_tdTaskIndex]) {
           if (!confirm('确认删除该事项？')) return;
+          markDeleted('tasks', (desktopTasks[_tdTaskIndex].title || '').trim());
+          dropStamp('tasks', (desktopTasks[_tdTaskIndex].title || '').trim());
           desktopTasks.splice(_tdTaskIndex, 1);
           _tdTaskIndex = -1;
           saveDesktopState();
